@@ -3,14 +3,19 @@
 //! Invariants under check, for every committed `website/data/protocol-graphs/*.json`:
 //!
 //! 1. It conforms to the pinned docs-system schema, `schema/b10x.protocol-graph.v1.schema.json`
-//!    at `929f965` (the commit `website/package.json` pins), transcribed below: closed key sets,
-//!    required keys, the node and edge kind enums, non-empty strings and the predicate shapes.
-//!    Nothing else in this repository checks a generated graph against that schema; the unit
-//!    tests compare one reference rendering byte for byte, which has no obligation in it.
+//!    at docs-system 0.9.0, `de3e7d8` (the commit `website/package.json` pins), transcribed
+//!    below: closed key sets, required keys, the node and edge kind enums, non-empty strings, the
+//!    predicate shapes (the `input` leaf among them), the optional top-level `case.inputs`, and
+//!    `applicable_when`, a predicate on a node of kind `obligation` only. Nothing else in this
+//!    repository checks a generated graph against that schema; the unit tests compare one
+//!    reference rendering byte for byte, which has no obligation in it.
 //! 2. It says what the compiled protocol says: one node per declared action, evidence kind,
 //!    claim, outcome and obligation, ordered by kind then name; each action's effect and
-//!    capabilities are its compiled `effect` and `requires`; and every claim an obligation's
-//!    discharge or an action's precondition tests has an edge into it.
+//!    capabilities are its compiled `effect` and `requires`; every claim an obligation's
+//!    discharge or an action's precondition tests has an edge into it; `case.inputs` declares
+//!    exactly the compiled case inputs with their values, and is absent when there are none; an
+//!    obligation carries `applicable_when` exactly when its compiled one is given; and every
+//!    `input` leaf names a declared input and only values it declares.
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
@@ -102,8 +107,77 @@ fn predicate(value: &Value, at: &str) -> Vec<String> {
             }
             None => vec![format!("{at}.evidence: not an object")],
         },
+        "input" => match inner.as_object() {
+            Some(input) => {
+                let mut problems =
+                    closed(input, &["id", "in"], &["id", "in"], &format!("{at}.input"));
+                if let Some(id) = input.get("id") {
+                    problems.extend(nonempty(id, &format!("{at}.input.id")));
+                }
+                if let Some(values) = input.get("in") {
+                    problems.extend(values_list(values, &format!("{at}.input.in")));
+                }
+                problems
+            }
+            None => vec![format!("{at}.input: not an object")],
+        },
         other => vec![format!("{at}: `{other}` is not a predicate form")],
     }
+}
+
+/// A list of values as the schema requires one: an array of at least one item, each a
+/// non-empty string, no item twice.
+fn values_list(value: &Value, at: &str) -> Vec<String> {
+    let Some(items) = value.as_array() else {
+        return vec![format!("{at}: not an array")];
+    };
+    let mut problems = Vec::new();
+    if items.is_empty() {
+        problems.push(format!("{at}: empty"));
+    }
+    let mut seen = BTreeSet::new();
+    for (index, item) in items.iter().enumerate() {
+        problems.extend(nonempty(item, &format!("{at}[{index}]")));
+        if !seen.insert(item.to_string()) {
+            problems.push(format!("{at}[{index}]: {item} is listed twice"));
+        }
+    }
+    problems
+}
+
+/// Problems with the top-level `case` object against the schema.
+fn case_problems(case: &Value) -> Vec<String> {
+    let Some(case) = case.as_object() else {
+        return vec!["$.case: not an object".to_owned()];
+    };
+    let mut problems = closed(case, &["inputs"], &["inputs"], "$.case");
+    let Some(inputs) = case.get("inputs") else {
+        return problems;
+    };
+    let Some(inputs) = inputs.as_object() else {
+        problems.push("$.case.inputs: not an object".to_owned());
+        return problems;
+    };
+    for (id, input) in inputs {
+        let at = format!("$.case.inputs.{id}");
+        if id.is_empty() {
+            problems.push(format!("{at}: an empty input name"));
+        }
+        let Some(input) = input.as_object() else {
+            problems.push(format!("{at}: not an object"));
+            continue;
+        };
+        problems.extend(closed(input, &["description", "values"], &["values"], &at));
+        if let Some(description) = input.get("description")
+            && !description.is_null()
+        {
+            problems.extend(nonempty(description, &format!("{at}.description")));
+        }
+        if let Some(values) = input.get("values") {
+            problems.extend(values_list(values, &format!("{at}.values")));
+        }
+    }
+    problems
 }
 
 /// Problems with `graph` against the pinned schema.
@@ -113,10 +187,13 @@ fn schema_problems(graph: &Value) -> Vec<String> {
     };
     let mut problems = closed(
         top,
-        &["format", "protocol", "nodes", "edges"],
+        &["format", "case", "protocol", "nodes", "edges"],
         &["format", "protocol", "nodes", "edges"],
         "$",
     );
+    if let Some(case) = top.get("case") {
+        problems.extend(case_problems(case));
+    }
     if top.get("format") != Some(&Value::from("b10x-protocol-graph/1")) {
         problems.push(format!("$.format is {:?}", top.get("format")));
     }
@@ -160,10 +237,20 @@ fn schema_problems(graph: &Value) -> Vec<String> {
                 "predicate",
                 "effect",
                 "capabilities",
+                "applicable_when",
             ],
             &["id", "kind", "name"],
             &at,
         ));
+        if let Some(value) = node.get("applicable_when") {
+            if node.get("kind") != Some(&Value::from("obligation")) {
+                problems.push(format!(
+                    "{at}.applicable_when: on a node of kind {}, not `obligation`",
+                    node.get("kind").unwrap_or(&Value::Null)
+                ));
+            }
+            problems.extend(predicate(value, &format!("{at}.applicable_when")));
+        }
         problems.extend(nonempty(&node["id"], &format!("{at}.id")));
         problems.extend(nonempty(&node["name"], &format!("{at}.name")));
         if !kinds.contains(&node["kind"].as_str().unwrap_or("")) {
@@ -324,7 +411,188 @@ fn fidelity_problems(graph: &Value, ir: &Ir) -> Vec<String> {
             }
         }
     }
+
+    // Case inputs: exactly the compiled ones, each with its compiled values; no `case` without.
+    let declared: Vec<(String, Vec<String>)> = ir
+        .inputs
+        .iter()
+        .map(|(id, input)| {
+            let values = input.values.iter().map(|v| v.as_str().to_owned()).collect();
+            (id.as_str().to_owned(), values)
+        })
+        .collect();
+    match graph.get("case") {
+        None if declared.is_empty() => {}
+        None => problems.push(format!(
+            "no `case`, the compiled protocol declares inputs {declared:?}"
+        )),
+        Some(case) => {
+            let drawn: Vec<(String, Vec<String>)> = case["inputs"]
+                .as_object()
+                .into_iter()
+                .flatten()
+                .map(|(id, input)| {
+                    let values = input["values"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|v| v.as_str().map(str::to_owned))
+                        .collect();
+                    (id.clone(), values)
+                })
+                .collect();
+            if drawn != declared {
+                problems.push(format!(
+                    "case inputs are {drawn:?}, the compiled protocol declares {declared:?}"
+                ));
+            }
+        }
+    }
+    for (id, obligation) in &ir.obligations {
+        let Some(node) = node(&format!("obligation:{id}")) else {
+            continue;
+        };
+        if node.get("applicable_when").is_some() != obligation.applicable_when.is_some() {
+            problems.push(format!(
+                "obligation `{id}`: applicable_when drawn {}, compiled {}",
+                node.get("applicable_when").is_some(),
+                obligation.applicable_when.is_some()
+            ));
+        }
+    }
+    let mut leaves = Vec::new();
+    for node in &nodes {
+        for key in ["predicate", "applicable_when"] {
+            if let Some(value) = node.get(key) {
+                input_leaves(value, &mut leaves);
+            }
+        }
+    }
+    for (input, values) in leaves {
+        match declared.iter().find(|(id, _)| *id == input) {
+            None => problems.push(format!("an input leaf tests undeclared input `{input}`")),
+            Some((_, allowed)) => {
+                for value in values {
+                    if !allowed.contains(&value) {
+                        problems.push(format!(
+                            "an input leaf tests input `{input}` for undeclared value `{value}`"
+                        ));
+                    }
+                }
+            }
+        }
+    }
     problems
+}
+
+/// Every `input` leaf of a drawn predicate, as its input and the values it lists.
+fn input_leaves(value: &Value, found: &mut Vec<(String, Vec<String>)>) {
+    match value {
+        Value::Object(object) => {
+            if let Some(input) = object.get("input") {
+                let values = input["in"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|v| v.as_str().map(str::to_owned))
+                    .collect();
+                found.push((input["id"].as_str().unwrap_or("").to_owned(), values));
+            }
+            for member in object.values() {
+                input_leaves(member, found);
+            }
+        }
+        Value::Array(members) => {
+            for member in members {
+                input_leaves(member, found);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// The transcription refuses what the 0.9.0 schema refuses: `applicable_when` on a node that is
+/// not an obligation, a malformed `case`, and a malformed `input` leaf; and accepts each shape the
+/// schema adds.
+#[test]
+fn the_transcription_follows_the_0_9_0_schema() {
+    let valid = serde_json::json!({
+        "format": "b10x-protocol-graph/1",
+        "case": {"inputs": {
+            "risk": {"description": null, "values": ["high", "low"]},
+            "size": {"description": "how big", "values": ["big"]},
+            "bare": {"values": ["one"]},
+        }},
+        "protocol": {"id": "p", "revision": 1},
+        "nodes": [
+            {"id": "action:go", "kind": "action", "name": "go",
+             "predicate": {"any": [{"claim": {"id": "a"}}, {"input": {"id": "risk", "in": ["low"]}}]}},
+            {"id": "obligation:review", "kind": "obligation", "name": "review",
+             "predicate": {"claim": {"id": "a"}},
+             "applicable_when": {"not": {"input": {"id": "risk", "in": ["low"]}}}},
+        ],
+        "edges": [],
+    });
+    assert_eq!(schema_problems(&valid), Vec::<String>::new());
+
+    let broken = |edit: &dyn Fn(&mut Value)| {
+        let mut graph = valid.clone();
+        edit(&mut graph);
+        schema_problems(&graph)
+    };
+    let applicable_on_action = broken(&|graph| {
+        graph["nodes"][0]["applicable_when"] = serde_json::json!({"claim": {"id": "a"}});
+    });
+    assert_eq!(
+        applicable_on_action,
+        ["$.nodes[0].applicable_when: on a node of kind \"action\", not `obligation`"]
+    );
+    for (what, edit) in [
+        (
+            "an unknown case key",
+            &(|graph: &mut Value| graph["case"]["extra"] = Value::from(1)) as &dyn Fn(&mut Value),
+        ),
+        ("a case without inputs", &|graph: &mut Value| {
+            graph["case"] = serde_json::json!({});
+        }),
+        ("an input without values", &|graph: &mut Value| {
+            graph["case"]["inputs"]["risk"] = serde_json::json!({"description": null});
+        }),
+        ("an input with no value", &|graph: &mut Value| {
+            graph["case"]["inputs"]["risk"]["values"] = serde_json::json!([]);
+        }),
+        ("an input with a value twice", &|graph: &mut Value| {
+            graph["case"]["inputs"]["risk"]["values"] = serde_json::json!(["low", "low"]);
+        }),
+        ("an empty description", &|graph: &mut Value| {
+            graph["case"]["inputs"]["risk"]["description"] = Value::from("");
+        }),
+        ("an unknown input key", &|graph: &mut Value| {
+            graph["case"]["inputs"]["risk"]["default"] = Value::from("low");
+        }),
+        ("an input leaf without `in`", &|graph: &mut Value| {
+            graph["nodes"][0]["predicate"] = serde_json::json!({"input": {"id": "risk"}});
+        }),
+        ("an input leaf with an empty `in`", &|graph: &mut Value| {
+            graph["nodes"][0]["predicate"] = serde_json::json!({"input": {"id": "risk", "in": []}});
+        }),
+        ("an input leaf with an unknown key", &|graph: &mut Value| {
+            graph["nodes"][0]["predicate"] =
+                serde_json::json!({"input": {"id": "risk", "in": ["low"], "is": "true"}});
+        }),
+        (
+            "an input leaf written as canon source",
+            &|graph: &mut Value| {
+                graph["nodes"][0]["predicate"] =
+                    serde_json::json!({"input": "risk", "in": ["low"]});
+            },
+        ),
+        ("a malformed applicable_when", &|graph: &mut Value| {
+            graph["nodes"][1]["applicable_when"] = serde_json::json!({"when": "always"});
+        }),
+    ] {
+        assert!(!broken(edit).is_empty(), "{what} is not a problem");
+    }
 }
 
 #[test]
@@ -332,7 +600,15 @@ fn every_committed_protocol_graph_conforms_to_the_pinned_schema_and_its_protocol
     let graphs = root().join("website/data/protocol-graphs");
     let mut checked = 0;
     let mut problems = Vec::new();
-    for entry in std::fs::read_dir(&graphs).expect("the graph directory reads") {
+    // The example graphs too, when there are any: the directory holds only generated files, so
+    // a checkout without a preview protocol has none.
+    let examples = std::fs::read_dir(root().join("website/data/example-graphs"))
+        .into_iter()
+        .flatten();
+    for entry in std::fs::read_dir(&graphs)
+        .expect("the graph directory reads")
+        .chain(examples)
+    {
         let path = entry.expect("an entry").path();
         let Some(stem) = path
             .file_name()

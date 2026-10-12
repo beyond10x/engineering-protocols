@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 65 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 80 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -71,6 +71,7 @@ Category `claim_id`.
 | `candidate.beats_baseline` | `core` | a comparison of the current candidate found it better than the baseline |
 | `effect.robust` | `core` | a sweep of the current candidate found its effect stable |
 | `hypothesis.supported` | `core` | the experiment is valid and reproducible, and the candidate beats the baseline robustly |
+| `regression.reproduced` | `software.change` | a failing test has reproduced the regression a bugfix repairs |
 
 ## Actions
 
@@ -85,9 +86,10 @@ Category `action_id`.
 | `traffic.shift` | `core` | move traffic between deployments |
 | `emergency.leave` | `core` | leave emergency mode |
 | `repository.inspect` | `software.change` | read the repository |
-| `repository.edit` | `software.change` | change the repository's working revision |
 | `repository.merge` | `software.change` | merge a revision into the repository's mainline |
 | `tests.run` | `software.change` | run the tests against an implementation revision |
+| `tests.write` | `software.change` | change the tests in the repository's working revision |
+| `implementation.edit` | `software.change` | change the implementation in the repository's working revision |
 
 ## Obligations
 
@@ -97,6 +99,10 @@ Category `obligation_id`.
 |---|---|---|
 | `restore_service` | `core` | bring the affected service back to health |
 | `investigate_cause` | `core` | establish why the incident happened |
+| `tests.required` | `software.change` | the tests must pass for the current implementation revision |
+| `review.required` | `software.change` | the current implementation revision must be reviewed |
+| `provenance.required` | `software.change` | the release must be proven, its build provenance recorded |
+| `health.required` | `core` | the deployment must be observed healthy |
 
 ## Outcomes
 
@@ -124,3 +130,26 @@ Category `decision_name`.
 | `explicitly_superseded` | `core` | a recorded decision that another case replaces this one |
 | `explicitly_abandoned` | `core` | a recorded decision to stop the case before it reaches any planned outcome |
 | `explicitly_inconclusive` | `core` | a recorded decision that the case's evidence settles nothing |
+
+## Case inputs
+
+Category `case_input`.
+
+| Term | Marking | Meaning |
+|---|---|---|
+| `risk` | `core` | how much proof a case must carry, fixed when it opens; it selects the obligations that apply |
+| `change_kind` | `software.change` | what a change to software is, fixed when its case opens; it selects whether a regression must be reproduced first |
+
+## Input values
+
+Category `input_value`.
+
+| Term | Marking | Meaning |
+|---|---|---|
+| `trivial` | `core` | the lowest risk; a change whose tests must pass and nothing more |
+| `standard` | `core` | the usual risk; everything trivial requires, and review |
+| `elevated` | `core` | a raised risk; everything standard requires, and a proven release |
+| `critical` | `core` | the highest risk; everything elevated requires, and a healthy deployment |
+| `feature` | `software.change` | a change that adds or alters behaviour |
+| `bugfix` | `software.change` | a change that repairs a regression, which a failing test must reproduce before the implementation is edited |
+| `refactor` | `software.change` | a change to the implementation that keeps its behaviour |

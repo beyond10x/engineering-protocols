@@ -3,7 +3,7 @@
 id: "1"
 title: "software.change/1"
 sidebar_label: "software.change/1"
-description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result."
+description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited."
 slug: /protocols/software-change/1
 hide_table_of_contents: true
 custom_edit_url: null
@@ -11,7 +11,7 @@ custom_edit_url: null
 
 import graph from '@site/data/protocol-graphs/software-change-1.json';
 
-Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result.
+Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited.
 
 - **Id:** `software.change`
 - **Revision:** 1
@@ -29,11 +29,12 @@ What can be done in a case: what it needs first, which authority it requires, th
 
 | Action | Description | Precondition | Requires capability | Effect | May produce |
 |---|---|---|---|---|---|
+| `implementation.edit` | change the implementation in the repository's working revision; a bugfix needs its regression reproduced first | any of (`regression.reproduced` is **TRUE**; input `change_kind` is one of `feature`, `refactor`) | *no authority* | `write` | *no evidence* |
 | `release.rollback` | return to a previous release; needs authority to roll back, and invoking it earns no outcome until a rollback result says it is complete | *none* | `release.rollback` | `write` | `rollback_result` |
-| `repository.edit` | change the repository's working revision | *none* | *no authority* | `write` | *no evidence* |
 | `repository.inspect` | read the repository | *none* | *no authority* | `read` | *no evidence* |
 | `repository.merge` | merge a revision into the repository's mainline; needs the current implementation revision verified and authority to merge, never only a connection to the repository host | `implementation.verified` is **TRUE** | `repository.merge` | `write` | *no evidence* |
 | `tests.run` | run the tests against an implementation revision | *none* | *no authority* | `read` | `test_result` |
+| `tests.write` | change the tests in the repository's working revision | *none* | *no authority* | `write` | *no evidence* |
 
 ## Evidence kinds
 
@@ -46,7 +47,7 @@ The kinds of evidence this protocol admits.
 | `objective_observation` | an observation of whether the intent's objective is met; its result is satisfied or unsatisfied | *no action* | `objective.realized` |
 | `operational_observation` | an observation of the running system; its result is healthy or unhealthy | *no action* | `deployment.healthy` |
 | `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | `release.rollback` | *no claim* |
-| `test_result` | the result of running tests against an implementation revision; its result is pass or fail | `tests.run` | `implementation.verified`, `tests.pass` |
+| `test_result` | the result of running tests against an implementation revision; its result is pass or fail | `tests.run` | `implementation.verified`, `regression.reproduced`, `tests.pass` |
 
 ## Claims
 
@@ -58,6 +59,7 @@ Each claim is TRUE, FALSE or UNKNOWN, established from evidence by its predicate
 | `implementation.reviewed` | the current implementation revision is reviewed | evidence `code_review` with result `approved` about `implementation` |
 | `implementation.verified` | the current implementation revision is verified | all of (evidence `test_result` with result `pass` about `implementation`) |
 | `objective.realized` | the intent's objective is met | evidence `objective_observation` with result `satisfied` about `intent` |
+| `regression.reproduced` | a test has failed on the current implementation revision, reproducing the regression a bugfix repairs | evidence `test_result` with result `fail` about `implementation` |
 | `release.proven` | the current implementation revision is verified and the current release revision carries build provenance; nothing here ties that release to the verified implementation revision | all of (`implementation.verified` is **TRUE**; evidence `build_provenance` about `release`) |
 | `tests.pass` | the tests pass for the current implementation revision | evidence `test_result` with result `pass` about `implementation` |
 
@@ -65,7 +67,12 @@ Each claim is TRUE, FALSE or UNKNOWN, established from evidence by its predicate
 
 What must be done before a case can be complete, and what discharges it. An obligation stays open until its predicate is TRUE; its predicate being UNKNOWN does not discharge it.
 
-*This protocol declares no obligations.*
+| Obligation | Description | Applies when | Discharged when |
+|---|---|---|---|
+| `health.required` | the deployment is healthy; applies at critical risk | input `risk` is one of `critical` | `deployment.healthy` is **TRUE** |
+| `provenance.required` | the release is proven; applies at elevated risk and above | input `risk` is one of `critical`, `elevated` | `release.proven` is **TRUE** |
+| `review.required` | the current implementation revision is reviewed; applies at standard risk and above | input `risk` is one of `critical`, `elevated`, `standard` | `implementation.reviewed` is **TRUE** |
+| `tests.required` | the tests pass for the current implementation revision; applies at every risk | input `risk` is one of `critical`, `elevated`, `standard`, `trivial` | `tests.pass` is **TRUE** |
 
 ## Outcomes
 
@@ -91,3 +98,12 @@ The things whose revisions evidence is bound to.
 | `plan` | the intended steps toward the intent |
 | `release` | a versioned, deployable unit of the system |
 | `system_specification` | the specified behaviour of the system concerned |
+
+## Case inputs
+
+What a case fixes when it opens: each input takes one of the values listed, and is never UNKNOWN.
+
+| Input | Description | Values |
+|---|---|---|
+| `change_kind` | what the change is; a bugfix must reproduce its regression with a failing test before the implementation is edited | `bugfix`, `feature`, `refactor` |
+| `risk` | how much proof the change must carry; each level applies every obligation of the level below it and one more | `critical`, `elevated`, `standard`, `trivial` |

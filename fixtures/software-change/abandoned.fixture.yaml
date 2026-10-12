@@ -10,6 +10,9 @@ case:
   format: canon-case/1
   id: CHG-2003
   protocol: software.change
+  inputs:
+    risk: standard
+    change_kind: refactor
   revision: c1
   artifacts:
     intent: {revision: i1}
@@ -30,9 +33,11 @@ states:
         release.proven: unknown
         deployment.healthy: unknown
         objective.realized: unknown
+        regression.reproduced: unknown
       actions:
         repository.inspect: admissible
-        repository.edit: admissible
+        tests.write: admissible
+        implementation.edit: admissible
         tests.run: admissible
         repository.merge: blocked
         release.rollback: approval-required
@@ -58,9 +63,11 @@ states:
         release.proven: unknown
         deployment.healthy: unknown
         objective.realized: unknown
+        regression.reproduced: unknown
       actions:
         repository.inspect: admissible
-        repository.edit: admissible
+        tests.write: admissible
+        implementation.edit: admissible
         tests.run: admissible
         repository.merge: blocked
         release.rollback: approval-required
@@ -86,9 +93,11 @@ states:
         release.proven: unknown
         deployment.healthy: unknown
         objective.realized: unknown
+        regression.reproduced: unknown
       actions:
         repository.inspect: admissible
-        repository.edit: admissible
+        tests.write: admissible
+        implementation.edit: admissible
         tests.run: admissible
         repository.merge: blocked
         release.rollback: approval-required

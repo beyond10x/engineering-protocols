@@ -94,7 +94,15 @@ fn adversary2_yaml_refuses_each_edge_of_the_spelling_rule() {
         ("release.proven_", "action_id", Category::ActionId),
         ("release2.proven", "claim_id", Category::ClaimId),
         ("Release.proven", "claim_id", Category::ClaimId),
-        ("restore.service", "obligation_id", Category::ObligationId),
+        // An obligation id is one token or dotted (story:software-change-profiles); past either
+        // form it is refused.
+        (
+            "restore.service.now",
+            "obligation_id",
+            Category::ObligationId,
+        ),
+        ("restore._service", "obligation_id", Category::ObligationId),
+        ("Restore.service", "obligation_id", Category::ObligationId),
     ] {
         let text = document(&[(id, category, "core", "an id at the edge of the rule")]);
         assert_eq!(

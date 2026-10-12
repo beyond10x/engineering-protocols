@@ -12,7 +12,9 @@ use Category::{ActionId as Action, ArtifactKind as Artifact, ClaimId as Claim};
 use Category::{EvidenceKind as Evidence, ObligationId as Obligation, OutcomeId as Outcome};
 use Marking::{Core, SoftwareChange};
 
-/// The 35 terms of `crates/els/src/vocabulary.rs` at `13d180f`, in its order:
+/// The 35 terms of `crates/els/src/vocabulary.rs` at `13d180f`, in its order, but
+/// `repository.edit`, which `story:software-change-profiles` split into `tests.write` and
+/// `implementation.edit`:
 /// (id, category, marking, meaning).
 const EXPECTED: &[(&str, Category, Marking, &str)] = &[
     (
@@ -181,12 +183,6 @@ const EXPECTED: &[(&str, Category, Marking, &str)] = &[
         "read the repository",
     ),
     (
-        "repository.edit",
-        Action,
-        SoftwareChange,
-        "change the repository's working revision",
-    ),
-    (
         "repository.merge",
         Action,
         SoftwareChange,
@@ -223,25 +219,25 @@ type Row = (String, Category, Marking, String);
 
 #[test]
 fn vocabulary_yaml_is_the_source() {
-    assert_eq!(EXPECTED.len(), 35, "the expected list has the 35 terms");
+    assert_eq!(EXPECTED.len(), 34, "the expected list has the 34 terms");
     let expected: Vec<Row> = EXPECTED
         .iter()
         .map(|(id, c, m, meaning)| (id.to_string(), *c, *m, meaning.to_string()))
         .collect();
     let text = read_to_string(&vocabulary_yaml());
 
-    // 1. The file's first 35 entries are the 35 terms, in order, read without the crate's
+    // 1. The file's first 34 entries are the 34 terms, in order, read without the crate's
     //    reader. Later stories append their own terms after them and assert those themselves.
     let from_file = rows_in_document(&text);
     assert!(
-        from_file.len() >= 35,
+        from_file.len() >= 34,
         "protocols/vocabulary.yaml holds {} entries",
         from_file.len()
     );
     assert_eq!(
-        from_file[..35],
+        from_file[..34],
         expected[..],
-        "protocols/vocabulary.yaml does not open with the 35 terms of vocabulary.rs at 13d180f"
+        "protocols/vocabulary.yaml does not open with the 34 terms of vocabulary.rs at 13d180f"
     );
 
     // 2. The built-in API returns exactly those entries in file order and finds each by id.
@@ -395,6 +391,8 @@ fn rows_in_document(text: &str) -> Vec<Row> {
                 "obligation_id" => Category::ObligationId,
                 "outcome_id" => Category::OutcomeId,
                 "decision_name" => Category::DecisionName,
+                "case_input" => Category::CaseInput,
+                "input_value" => Category::InputValue,
                 other => panic!("unknown category `{other}`"),
             };
             let marking = match field("marking").as_str() {

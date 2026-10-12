@@ -54,6 +54,8 @@
 //!   - id: rolled-back
 //!     set_revisions:                     # the case snapshot's current revision of an artifact
 //!       service: r2                      # the case lists, from this state on
+//!     set_inputs:                        # the case snapshot's value of a case input the case
+//!       risk: critical                   # gives, from this state on
 //!     add_authority:                     # canon-authority/1 decisions added to those of the
 //!       - {capability: release.rollback, decision: granted}   # states before it
 //!     add_decisions:                     # canon-decisions/1 explicit decisions added to those of
@@ -63,7 +65,7 @@
 //!     expect:
 //!       claims: {service.healthy: true}
 //!       obligations:                     # every obligation the protocol declares, and its
-//!         restore_service: discharged    # status: open or discharged
+//!         restore_service: discharged    # status: open, discharged or not_applicable
 //!       actions:                         # every action the protocol declares, and its status:
 //!         release.rollback: admissible   # admissible, approval-required or blocked
 //!       outcomes:                        # every outcome the protocol declares, and its status:
@@ -71,12 +73,14 @@
 //! ```
 //!
 //! States are cumulative: a state is evaluated over its own `add_evidence`, `add_authority`,
-//! `add_decisions` and `set_revisions` and those of every state before it. A fixture cannot carry
-//! an input the harness would drop or read as something else: an unknown key is refused, a key
-//! written with no value (`add_evidence:`) is refused as Canon refuses one rather than read as its
-//! default, a claim, obligation, action, outcome or artifact written twice in one map is refused,
-//! naming it, and
-//! `set_revisions` naming an artifact the case does not list is refused. [`Fixture::load`]
+//! `add_decisions`, `set_revisions` and `set_inputs` and those of every state before it. A fixture
+//! cannot carry an input the harness would drop or read as something else: an unknown key is
+//! refused, a key written with no value (`add_evidence:`) is refused as Canon refuses one rather
+//! than read as its default, a claim, obligation, action, outcome, artifact or case input written
+//! twice in one map is refused, naming it, `set_revisions` naming an artifact the case does not
+//! list is refused, and `set_inputs` naming a case input the case does not give is refused. Canon
+//! reads each snapshot's inputs and refuses one the protocol does not declare, or a value its input
+//! does not declare, when the state is evaluated. [`Fixture::load`]
 //! refuses a file not named `<id>.fixture.yaml` after the id it declares, so two files cannot
 //! declare one fixture.
 //!
@@ -290,6 +294,8 @@ struct WrittenState {
     id: String,
     #[serde(default, deserialize_with = "revisions_once")]
     set_revisions: Option<BTreeMap<String, Value>>,
+    #[serde(default, deserialize_with = "inputs_once")]
+    set_inputs: Option<BTreeMap<String, Value>>,
     #[serde(default, deserialize_with = "present")]
     add_authority: Option<Vec<Value>>,
     #[serde(default, deserialize_with = "present")]
@@ -446,6 +452,22 @@ fn revisions_once<'de, D: Deserializer<'de>>(
     .map(Some)
 }
 
+/// Reads `set_inputs`, refusing a case input written more than once. The values stay YAML values
+/// until Canon's case reader reads them.
+fn inputs_once<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<BTreeMap<String, Value>>, D::Error> {
+    map_once(
+        deserializer,
+        Once {
+            expecting: "a map of case input ids to values",
+            repeated: |input| format!("case input `{input}` is set more than once"),
+            value: std::marker::PhantomData,
+        },
+    )
+    .map(Some)
+}
+
 impl Fixture {
     /// Loads the fixture at `path`, relative to the repository root. The file must be named
     /// `<id>.fixture.yaml` after the id the fixture declares; a symbolic link is judged by the
@@ -522,6 +544,22 @@ impl Fixture {
                     };
                     *entry = revision.clone();
                 }
+            }
+            if let Some(inputs) = &state.set_inputs {
+                for (input, value) in inputs {
+                    let entry = snapshot
+                        .get_mut("inputs")
+                        .and_then(|inputs| inputs.get_mut(input.as_str()));
+                    let Some(entry) = entry else {
+                        return refuse(format!(
+                            "state `{}`: sets case input `{input}`, which the case does not give",
+                            state.id
+                        ));
+                    };
+                    *entry = value.clone();
+                }
+            }
+            if state.set_revisions.is_some() || state.set_inputs.is_some() {
                 state_case = eval::case_from_value(&snapshot).map_err(|refusal| {
                     FixtureError::Refused(format!(
                         "state `{}`: case: {}: {refusal}",
