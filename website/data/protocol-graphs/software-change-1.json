@@ -1,4 +1,25 @@
 {
+  "case": {
+    "inputs": {
+      "change_kind": {
+        "description": "what the change is; a bugfix must reproduce its regression with a failing test before the implementation is edited",
+        "values": [
+          "bugfix",
+          "feature",
+          "refactor"
+        ]
+      },
+      "risk": {
+        "description": "how much proof the change must carry; each level applies every obligation of the level below it and one more",
+        "values": [
+          "critical",
+          "elevated",
+          "standard",
+          "trivial"
+        ]
+      }
+    }
+  },
   "edges": [
     {
       "from": "action:release.rollback",
@@ -35,6 +56,12 @@
       "to": "claim:objective.realized"
     },
     {
+      "from": "evidence:test_result",
+      "kind": "establishes",
+      "qualifier": "fail",
+      "to": "claim:regression.reproduced"
+    },
+    {
       "from": "claim:implementation.verified",
       "kind": "supports",
       "to": "claim:release.proven"
@@ -67,6 +94,31 @@
       "to": "outcome:accepted"
     },
     {
+      "from": "claim:deployment.healthy",
+      "kind": "requires",
+      "to": "obligation:health.required"
+    },
+    {
+      "from": "claim:release.proven",
+      "kind": "requires",
+      "to": "obligation:provenance.required"
+    },
+    {
+      "from": "claim:implementation.reviewed",
+      "kind": "requires",
+      "to": "obligation:review.required"
+    },
+    {
+      "from": "claim:tests.pass",
+      "kind": "requires",
+      "to": "obligation:tests.required"
+    },
+    {
+      "from": "claim:regression.reproduced",
+      "kind": "gates",
+      "to": "action:implementation.edit"
+    },
+    {
       "from": "claim:implementation.verified",
       "kind": "gates",
       "to": "action:repository.merge"
@@ -74,6 +126,31 @@
   ],
   "format": "b10x-protocol-graph/1",
   "nodes": [
+    {
+      "description": "change the implementation in the repository's working revision; a bugfix needs its regression reproduced first",
+      "effect": "write",
+      "id": "action:implementation.edit",
+      "kind": "action",
+      "name": "implementation.edit",
+      "predicate": {
+        "any": [
+          {
+            "claim": {
+              "id": "regression.reproduced"
+            }
+          },
+          {
+            "input": {
+              "id": "change_kind",
+              "in": [
+                "feature",
+                "refactor"
+              ]
+            }
+          }
+        ]
+      }
+    },
     {
       "capabilities": [
         "release.rollback"
@@ -83,13 +160,6 @@
       "id": "action:release.rollback",
       "kind": "action",
       "name": "release.rollback"
-    },
-    {
-      "description": "change the repository's working revision",
-      "effect": "write",
-      "id": "action:repository.edit",
-      "kind": "action",
-      "name": "repository.edit"
     },
     {
       "description": "read the repository",
@@ -119,6 +189,13 @@
       "id": "action:tests.run",
       "kind": "action",
       "name": "tests.run"
+    },
+    {
+      "description": "change the tests in the repository's working revision",
+      "effect": "write",
+      "id": "action:tests.write",
+      "kind": "action",
+      "name": "tests.write"
     },
     {
       "description": "the record of how a release was built from an implementation",
@@ -209,6 +286,18 @@
       }
     },
     {
+      "description": "a test has failed, reproducing the regression a bugfix repairs; the match names no subject",
+      "id": "claim:regression.reproduced",
+      "kind": "claim",
+      "name": "regression.reproduced",
+      "predicate": {
+        "evidence": {
+          "kind": "test_result",
+          "result": "fail"
+        }
+      }
+    },
+    {
       "description": "the current implementation revision is verified and the current release revision carries build provenance; nothing here ties that release to the verified implementation revision",
       "id": "claim:release.proven",
       "kind": "claim",
@@ -294,10 +383,92 @@
       "id": "outcome:superseded",
       "kind": "outcome",
       "name": "superseded"
+    },
+    {
+      "applicable_when": {
+        "input": {
+          "id": "risk",
+          "in": [
+            "critical"
+          ]
+        }
+      },
+      "description": "the deployment is healthy; applies at critical risk",
+      "id": "obligation:health.required",
+      "kind": "obligation",
+      "name": "health.required",
+      "predicate": {
+        "claim": {
+          "id": "deployment.healthy"
+        }
+      }
+    },
+    {
+      "applicable_when": {
+        "input": {
+          "id": "risk",
+          "in": [
+            "critical",
+            "elevated"
+          ]
+        }
+      },
+      "description": "the release is proven; applies at elevated risk and above",
+      "id": "obligation:provenance.required",
+      "kind": "obligation",
+      "name": "provenance.required",
+      "predicate": {
+        "claim": {
+          "id": "release.proven"
+        }
+      }
+    },
+    {
+      "applicable_when": {
+        "input": {
+          "id": "risk",
+          "in": [
+            "critical",
+            "elevated",
+            "standard"
+          ]
+        }
+      },
+      "description": "the current implementation revision is reviewed; applies at standard risk and above",
+      "id": "obligation:review.required",
+      "kind": "obligation",
+      "name": "review.required",
+      "predicate": {
+        "claim": {
+          "id": "implementation.reviewed"
+        }
+      }
+    },
+    {
+      "applicable_when": {
+        "input": {
+          "id": "risk",
+          "in": [
+            "critical",
+            "elevated",
+            "standard",
+            "trivial"
+          ]
+        }
+      },
+      "description": "the tests pass for the current implementation revision; applies at every risk",
+      "id": "obligation:tests.required",
+      "kind": "obligation",
+      "name": "tests.required",
+      "predicate": {
+        "claim": {
+          "id": "tests.pass"
+        }
+      }
     }
   ],
   "protocol": {
-    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result.",
+    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited.",
     "id": "software.change",
     "revision": 1,
     "source": "protocols/software-change/1.yaml"

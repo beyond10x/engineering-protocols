@@ -4,7 +4,9 @@ use std::path::Path;
 
 use canon_engineering::vocabulary::{self, Category, Marking};
 
-/// The story's *Term set declared here* table, copied: (term, category, marked `software.change`).
+/// The story's *Term set declared here* table, copied: (term, category, marked `software.change`),
+/// without `repository.edit`, which `story:software-change-profiles` split into `tests.write` and
+/// `implementation.edit`.
 const TABLE: &[(&str, Category, bool)] = &[
     // artifact kinds
     ("intent", Category::ArtifactKind, false),
@@ -40,7 +42,6 @@ const TABLE: &[(&str, Category, bool)] = &[
     ("traffic.shift", Category::ActionId, false),
     ("emergency.leave", Category::ActionId, false),
     ("repository.inspect", Category::ActionId, true),
-    ("repository.edit", Category::ActionId, true),
     ("repository.merge", Category::ActionId, true),
     ("tests.run", Category::ActionId, true),
     // obligation ids
@@ -51,11 +52,15 @@ const TABLE: &[(&str, Category, bool)] = &[
 
 #[test]
 fn vocabulary_declares_first_domain_terms() {
-    assert_eq!(TABLE.len(), 35, "the copied table has the story's 35 terms");
+    assert_eq!(
+        TABLE.len(),
+        34,
+        "the copied table has the story's 35 terms but one"
+    );
     assert_eq!(
         TABLE.iter().filter(|(_, _, sc)| *sc).count(),
-        11,
-        "the copied table marks 11 terms software.change"
+        10,
+        "the copied table marks 10 terms software.change"
     );
 
     // 1. Each table term resolves to exactly one entry, in the table's category.
@@ -124,20 +129,30 @@ fn vocabulary_declares_first_domain_terms() {
 fn vocabulary_spells_ids_by_category_and_maps_to_canon_identifiers() {
     for term in vocabulary::terms() {
         assert_eq!(entries_named(term.id), 1, "`{}` is declared twice", term.id);
-        let dotted = matches!(term.category, Category::ClaimId | Category::ActionId);
-        assert_eq!(
-            is_dotted(term.id),
-            dotted,
-            "`{}` is not spelled as a {:?}",
-            term.id,
-            term.category
-        );
-        if !dotted {
+        // An obligation id is either spelling (`restore_service`, `tests.required`); every other
+        // category is one of the two.
+        if term.category == Category::ObligationId {
             assert!(
-                is_token(term.id),
-                "`{}` is not one snake_case token",
+                is_token(term.id) || is_dotted(term.id),
+                "`{}` is not spelled as an obligation id",
                 term.id
             );
+        } else {
+            let dotted = matches!(term.category, Category::ClaimId | Category::ActionId);
+            assert_eq!(
+                is_dotted(term.id),
+                dotted,
+                "`{}` is not spelled as a {:?}",
+                term.id,
+                term.category
+            );
+            if !dotted {
+                assert!(
+                    is_token(term.id),
+                    "`{}` is not one snake_case token",
+                    term.id
+                );
+            }
         }
         assert_eq!(
             term.claim_id().map(|c| c.as_str().to_owned()),

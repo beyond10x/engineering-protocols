@@ -66,10 +66,17 @@ impl Failures {
         }
     }
 
-    fn equal<T: PartialEq + std::fmt::Debug>(&mut self, item: u8, found: T, expected: T, what: &str) {
+    fn equal<T: PartialEq + std::fmt::Debug>(
+        &mut self,
+        item: u8,
+        found: T,
+        expected: T,
+        what: &str,
+    ) {
         if found != expected {
-            self.0
-                .push(format!("item {item}: {what}: found {found:?}, expected {expected:?}"));
+            self.0.push(format!(
+                "item {item}: {what}: found {found:?}, expected {expected:?}"
+            ));
         }
     }
 }
@@ -149,6 +156,24 @@ fn status(decision: &Decision, id: &str) -> String {
         .to_owned()
 }
 
+/// `value` with every array sorted by its members' JSON text: order aside, the same document.
+fn normalized(value: &serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Array(members) => {
+            let mut members: Vec<serde_json::Value> = members.iter().map(normalized).collect();
+            members.sort_by_key(serde_json::Value::to_string);
+            serde_json::Value::Array(members)
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields
+                .iter()
+                .map(|(key, field)| (key.clone(), normalized(field)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
 /// Item 4 and item 8: each of `terms` resolves to exactly one vocabulary entry, in its category.
 fn resolve(failures: &mut Failures, item: u8, terms: &[(&str, &str)]) {
     for (term, category) in terms {
@@ -181,7 +206,12 @@ fn profiles_nest_open_obligations() {
     let (profiles, profiles_document) = fixture("profiles");
     let (kinds, kinds_document) = fixture("change-kinds");
     for loaded in [&profiles, &kinds] {
-        failures.equal(1, loaded.protocol_path(), path.as_str(), "the fixture's protocol");
+        failures.equal(
+            1,
+            loaded.protocol_path(),
+            path.as_str(),
+            "the fixture's protocol",
+        );
         match loaded.compile() {
             Ok(own) => failures.that(1, own.canon_ir() == compiled.canon_ir(), || {
                 format!("{} compiles to another canon-ir/1 document", loaded.id())
@@ -199,7 +229,12 @@ fn profiles_nest_open_obligations() {
         vec![("software-change", 1)],
         "the software.change built-ins",
     );
-    failures.equal(1, profiles.states(), RISKS.to_vec(), "the states of `profiles`");
+    failures.equal(
+        1,
+        profiles.states(),
+        RISKS.to_vec(),
+        "the states of `profiles`",
+    );
     for risk in RISKS {
         failures.equal(
             1,
@@ -214,7 +249,10 @@ fn profiles_nest_open_obligations() {
     //    reported `not_applicable`.
     if let Err(differences) = profiles.check(&compiled) {
         failures.that(2, false, || {
-            format!("`profiles` differs from its expectations:\n{}", differences.join("\n"))
+            format!(
+                "`profiles` differs from its expectations:\n{}",
+                differences.join("\n")
+            )
         });
     }
     let mut below: Option<BTreeSet<String>> = None;
@@ -231,7 +269,12 @@ fn profiles_nest_open_obligations() {
             .iter()
             .map(|id| (*id).to_owned())
             .collect();
-        failures.equal(2, &open, &expected, &format!("the open obligations at `{risk}`"));
+        failures.equal(
+            2,
+            &open,
+            &expected,
+            &format!("the open obligations at `{risk}`"),
+        );
         if let Some(below) = &below {
             failures.that(3, below.is_subset(&open) && below != &open, || {
                 format!("{open:?} at `{risk}` does not strictly contain {below:?}")
@@ -275,7 +318,12 @@ fn profiles_nest_open_obligations() {
     }
     match decide(&kinds, &compiled, "bugfix") {
         Ok(decision) => {
-            failures.equal(5, status(&decision, "tests.write"), "admissible".into(), "tests.write");
+            failures.equal(
+                5,
+                status(&decision, "tests.write"),
+                "admissible".into(),
+                "tests.write",
+            );
             failures.equal(
                 5,
                 status(&decision, "implementation.edit"),
@@ -378,7 +426,9 @@ fn profiles_nest_open_obligations() {
         .get_mut("inputs")
         .and_then(Value::as_mapping_mut)
         .and_then(|inputs| inputs.remove("risk"));
-    failures.that(9, removed.is_some(), || "the profiles case gives no risk".to_owned());
+    failures.that(9, removed.is_some(), || {
+        "the profiles case gives no risk".to_owned()
+    });
     match b10x_canon::eval::case_from_value(&case) {
         Ok(case) => match b10x_canon::eval::evaluate(compiled.ir(), &case, &[]) {
             Ok(_) => failures.that(9, false, || "a case without `risk` is evaluated".to_owned()),
@@ -394,20 +444,40 @@ fn profiles_nest_open_obligations() {
 
     // 10. The committed graph declares both case inputs with their values, every obligation's
     //     `applicable_when`, and the `input` leaf of `implementation.edit`'s precondition.
-    let graph_path = support::repo_root().join("website/data/protocol-graphs/software-change-1.json");
+    let graph_path =
+        support::repo_root().join("website/data/protocol-graphs/software-change-1.json");
     let graph: serde_json::Value = std::fs::read_to_string(&graph_path)
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
         .unwrap_or(serde_json::Value::Null);
+    // Canon compiles input values, `in` lists and `any` members in a canonical order, and the
+    // graph is drawn from the compiled protocol, so order is compared as Canon writes it: the
+    // values in `canon-ir/1`'s order, the predicates with their lists sorted.
     for (input, values) in [
         ("risk", serde_json::json!(RISKS)),
-        ("change_kind", serde_json::json!(["feature", "bugfix", "refactor"])),
+        (
+            "change_kind",
+            serde_json::json!(["feature", "bugfix", "refactor"]),
+        ),
     ] {
         failures.equal(
             10,
-            &graph["case"]["inputs"][input]["values"],
-            &values,
+            normalized(&graph["case"]["inputs"][input]["values"]),
+            normalized(&values),
             &format!("the graph's values of case input `{input}`"),
+        );
+        let compiled_values: Vec<&str> = compiled
+            .ir()
+            .inputs
+            .iter()
+            .find(|(id, _)| id.as_str() == input)
+            .map(|(_, declared)| declared.values.iter().map(|value| value.as_str()).collect())
+            .unwrap_or_default();
+        failures.equal(
+            10,
+            &graph["case"]["inputs"][input]["values"],
+            &serde_json::json!(compiled_values),
+            &format!("the graph's values of case input `{input}` in canon-ir/1's order"),
         );
     }
     let node = |id: &str| {
@@ -422,18 +492,18 @@ fn profiles_nest_open_obligations() {
     for (index, obligation) in OBLIGATIONS.into_iter().enumerate() {
         failures.equal(
             10,
-            node(&format!("obligation:{obligation}"))["applicable_when"].clone(),
-            serde_json::json!({"input": {"id": "risk", "in": RISKS[index..]}}),
+            normalized(&node(&format!("obligation:{obligation}"))["applicable_when"]),
+            normalized(&serde_json::json!({"input": {"id": "risk", "in": RISKS[index..]}})),
             &format!("the graph's applicable_when of `{obligation}`"),
         );
     }
     failures.equal(
         10,
-        node("action:implementation.edit")["predicate"].clone(),
-        serde_json::json!({"any": [
+        normalized(&node("action:implementation.edit")["predicate"]),
+        normalized(&serde_json::json!({"any": [
             {"input": {"id": "change_kind", "in": ["feature", "refactor"]}},
             {"claim": {"id": "regression.reproduced"}},
-        ]}),
+        ]})),
         "the graph's precondition of implementation.edit",
     );
 

@@ -139,7 +139,7 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
     (claims.into_iter().collect(), kinds.into_iter().collect())
 }
 
-const OPEN_ACTIONS: [&str; 3] = ["repository.inspect", "repository.edit", "tests.run"];
+const OPEN_ACTIONS: [&str; 3] = ["repository.inspect", "tests.write", "tests.run"];
 
 /// Every check `chg_1842_merge_waits_for_current_revision_tests_and_authority` makes on a
 /// compiled protocol (`software_change_protocol.rs:135-271`, the name lists aside, which no

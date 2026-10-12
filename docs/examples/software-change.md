@@ -5,6 +5,8 @@ Initial:
 ```text
 Case CHG-1842
 implementation = R2
+risk = standard
+change_kind = refactor
 
 Evidence:
   tests pass for R1
@@ -14,7 +16,8 @@ Claims:
 
 Actions:
   repository.inspect = admissible
-  repository.edit = admissible
+  tests.write = admissible
+  implementation.edit = admissible
   tests.run = admissible
   repository.merge = blocked
 ```

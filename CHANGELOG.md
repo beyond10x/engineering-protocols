@@ -6,6 +6,33 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `software.change/1` case inputs `risk` (`trivial`, `standard`, `elevated`, `critical`) and
+  `change_kind` (`feature`, `bugfix`, `refactor`), which every case now gives. Obligations
+  `tests.required`, `review.required`, `provenance.required` and `health.required` apply by risk,
+  each level adding one, and are reported `not_applicable` otherwise; they do not gate
+  `accepted`. The claim `regression.reproduced` is TRUE on a failing `test_result`, and a bugfix
+  may `implementation.edit` only once it holds. Fixtures `profiles` and `change-kinds` show them.
+- Vocabulary categories `case_input` and `input_value`, and 16 terms for the profiles. An
+  obligation id may be dotted (`tests.required`) as well as one token (`restore_service`).
+- The fixture harness's `set_inputs:` state key sets a case input the case gives.
+- Protocol graphs carry docs-system 0.9.0's `b10x-protocol-graph/1` additions: a top-level
+  `case.inputs`, the `input` predicate leaf and an obligation's `applicable_when`.
+
+### Changed
+
+- `software.change/1`'s `repository.edit` splits into `tests.write`, with no precondition, and
+  `implementation.edit`; the vocabulary drops `repository.edit`. Every `software.change`
+  fixture gives the case inputs.
+- The protocol graph generator no longer refuses a protocol with case inputs or a conditional
+  obligation; `website/package.json` pins docs-system 0.9.0.
+
+### Removed
+
+- The site's preview protocol `software-change-bugfix/1` and its example graph: the built-in
+  carries the `bugfix` profile, and the step-order page draws `software.change/1` instead.
+
 ## [0.4.0] - 2026-10-12
 
 Source release using Canon 0.2.0 and ESS 0.55.0. `software.change/1` gains outcomes and an action,

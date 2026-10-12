@@ -14,7 +14,9 @@ the same rule: specialise only by composing vetted parts, never by relaxing what
 requires.
 
 <StatusStrip items={[
-  {label: 'Profiles of software.change/1 (bugfix, refactor)', status: 'decided', detail: 'Decision record 0084. Canon has no profile construct yet; the bugfix preview is written as its own protocol.'},
+  {label: 'Risk profiles of software.change/1 (trivial, standard, elevated, critical)', status: 'shipped', detail: 'The case input risk selects which of four obligations apply. The obligations report the proof burden; they do not yet gate accepted.'},
+  {label: 'Change-kind profiles of software.change/1 (feature, bugfix, refactor)', status: 'shipped', detail: 'Decision record 0084. The case input change_kind; bugfix adds the red-first rule to implementation.edit.'},
+  {label: 'Authority that varies by profile', status: 'planned', detail: 'Canon cannot make a capability requirement depend on a case input yet.'},
   {label: 'Generated protocols compose vetted parts only', status: 'decided', detail: 'Decision record 0086: no invented evidence kinds, claims or capabilities.'},
   {label: 'Organization floor', status: 'decided', detail: 'The floor construct is not built.'},
   {label: 'canon diff: no relaxation against the floor', status: 'decided', detail: 'The command exists in Canon and reports that it is not built yet.'},
@@ -25,10 +27,28 @@ requires.
 
 ## Profiles
 
-A profile is a named specialisation of a protocol for one kind of work. The `bugfix` profile of
-`software.change/1` adds the red-first rule ([Step order](./step-order.mdx)); the `refactor` profile
-omits it. Below is `software.change/1` itself, the shipped protocol the profiles specialise; its
-full page is under [Protocols](../protocols/software-change/1.mdx).
+A profile is a named specialisation of a protocol for one kind of work. It is not a second protocol:
+it is the value of a case input, which a case fixes when it opens, in Canon's `case: inputs:`. One
+compiled protocol serves every profile, and a profile changes only what its input is tested in.
+`software.change/1` has two such inputs.
+
+- **`risk`**: `trivial`, `standard`, `elevated` or `critical`. Each level applies the obligations of
+  the level below it and one more. An obligation a profile does not apply is reported
+  `not_applicable`.
+- **`change_kind`**: `feature`, `bugfix` or `refactor`. The `bugfix` profile adds the red-first rule
+  ([Step order](./step-order.mdx)); `refactor` omits it, and so does `feature` for now.
+
+| Obligation | Discharged when | Applies at risk |
+|---|---|---|
+| `tests.required` | `tests.pass` | trivial, standard, elevated, critical |
+| `review.required` | `implementation.reviewed` | standard, elevated, critical |
+| `provenance.required` | `release.proven` | elevated, critical |
+| `health.required` | `deployment.healthy` | critical |
+
+The obligations report the proof burden; `accepted` does not wait on them yet. Authority does not
+vary by profile either: Canon cannot make a capability requirement depend on a case input. Below is
+`software.change/1`; its full page, with the case inputs, is under
+[Protocols](../protocols/software-change/1.mdx).
 
 <ProtocolGraph data={softwareChange} />
 
