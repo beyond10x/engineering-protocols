@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 44 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 65 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -24,6 +24,12 @@ Category `artifact_kind`.
 | `deployment` | `core` | a release running in an environment |
 | `service` | `core` | the running service a case concerns |
 | `implementation` | `software.change` | a revision of the code that realizes the plan |
+| `experiment_design` | `core` | the metrics, splits, seeds and success criterion an experiment is run under |
+| `dataset_snapshot` | `core` | the frozen data an experiment's runs read |
+| `baseline` | `core` | the reference model or method a candidate is compared with |
+| `candidate` | `core` | the model or method under test |
+| `run_configuration` | `core` | the settings and environment an experiment's runs used |
+| `results` | `core` | the metrics an experiment's runs produced |
 
 ## Evidence kinds
 
@@ -39,6 +45,11 @@ Category `evidence_kind`.
 | `code_review` | `software.change` | a review of an implementation revision |
 | `build_provenance` | `software.change` | the record of how a release was built from an implementation |
 | `rollback_result` | `core` | the result of returning to a previous release, complete or partial |
+| `design_review` | `core` | a review of an experiment design, passed or failed |
+| `integrity_check` | `core` | a check of the runs behind a set of results for integrity violations, clean or violated |
+| `reproduction` | `core` | a rerun on the same dataset snapshot and run configuration, matched or diverged |
+| `comparison` | `core` | a comparison of a candidate with the baseline, candidate\_better or baseline\_better |
+| `seed_sweep` | `core` | a sweep of a candidate's effect over seeds or ablations, stable or unstable |
 
 ## Claims
 
@@ -55,6 +66,11 @@ Category `claim_id`.
 | `tests.pass` | `software.change` | the tests pass for the current implementation revision |
 | `implementation.reviewed` | `software.change` | the current implementation revision is reviewed |
 | `implementation.verified` | `software.change` | the current implementation revision is verified |
+| `experiment.valid` | `core` | the experiment design passed review and the results carry no integrity violation |
+| `result.reproducible` | `core` | a reproduction of the current results matched them |
+| `candidate.beats_baseline` | `core` | a comparison of the current candidate found it better than the baseline |
+| `effect.robust` | `core` | a sweep of the current candidate found its effect stable |
+| `hypothesis.supported` | `core` | the experiment is valid and reproducible, and the candidate beats the baseline robustly |
 
 ## Actions
 
@@ -93,6 +109,10 @@ Category `outcome_id`.
 | `rolled_back` | `core` | the case closed with its release returned to a previous one |
 | `superseded` | `core` | the case closed on a decision that another case replaces it |
 | `abandoned` | `core` | the case closed on a decision to stop before it reached any planned outcome |
+| `supported` | `core` | the case closed with its hypothesis supported |
+| `refuted` | `core` | the case closed with its hypothesis refuted by a valid, reproducible result |
+| `invalid_experiment` | `core` | the case closed because its experiment is not valid |
+| `inconclusive` | `core` | the case closed on a decision that its experiment settles nothing |
 
 ## Decisions
 
@@ -103,3 +123,4 @@ Category `decision_name`.
 | `explicitly_declined` | `core` | a recorded decision not to carry out the case's intent |
 | `explicitly_superseded` | `core` | a recorded decision that another case replaces this one |
 | `explicitly_abandoned` | `core` | a recorded decision to stop the case before it reaches any planned outcome |
+| `explicitly_inconclusive` | `core` | a recorded decision that the case's evidence settles nothing |

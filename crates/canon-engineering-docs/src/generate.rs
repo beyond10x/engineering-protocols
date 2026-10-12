@@ -562,7 +562,7 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 44);
+        assert_eq!(vocabulary.terms().len(), 65);
         for term in vocabulary.terms() {
             assert!(
                 page.contains(&format!("\n| `{}` |", term.id)),

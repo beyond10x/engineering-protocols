@@ -177,3 +177,87 @@ terms:
     category: decision_name
     marking: core
     meaning: a recorded decision to stop the case before it reaches any planned outcome
+  - id: experiment_design
+    category: artifact_kind
+    marking: core
+    meaning: the metrics, splits, seeds and success criterion an experiment is run under
+  - id: dataset_snapshot
+    category: artifact_kind
+    marking: core
+    meaning: the frozen data an experiment's runs read
+  - id: baseline
+    category: artifact_kind
+    marking: core
+    meaning: the reference model or method a candidate is compared with
+  - id: candidate
+    category: artifact_kind
+    marking: core
+    meaning: the model or method under test
+  - id: run_configuration
+    category: artifact_kind
+    marking: core
+    meaning: the settings and environment an experiment's runs used
+  - id: results
+    category: artifact_kind
+    marking: core
+    meaning: the metrics an experiment's runs produced
+  - id: design_review
+    category: evidence_kind
+    marking: core
+    meaning: a review of an experiment design, passed or failed
+  - id: integrity_check
+    category: evidence_kind
+    marking: core
+    meaning: a check of the runs behind a set of results for integrity violations, clean or violated
+  - id: reproduction
+    category: evidence_kind
+    marking: core
+    meaning: a rerun on the same dataset snapshot and run configuration, matched or diverged
+  - id: comparison
+    category: evidence_kind
+    marking: core
+    meaning: a comparison of a candidate with the baseline, candidate_better or baseline_better
+  - id: seed_sweep
+    category: evidence_kind
+    marking: core
+    meaning: a sweep of a candidate's effect over seeds or ablations, stable or unstable
+  - id: experiment.valid
+    category: claim_id
+    marking: core
+    meaning: the experiment design passed review and the results carry no integrity violation
+  - id: result.reproducible
+    category: claim_id
+    marking: core
+    meaning: a reproduction of the current results matched them
+  - id: candidate.beats_baseline
+    category: claim_id
+    marking: core
+    meaning: a comparison of the current candidate found it better than the baseline
+  - id: effect.robust
+    category: claim_id
+    marking: core
+    meaning: a sweep of the current candidate found its effect stable
+  - id: hypothesis.supported
+    category: claim_id
+    marking: core
+    meaning: the experiment is valid and reproducible, and the candidate beats the baseline robustly
+  - id: supported
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its hypothesis supported
+  - id: refuted
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its hypothesis refuted by a valid, reproducible result
+  - id: invalid_experiment
+    category: outcome_id
+    marking: core
+    meaning: the case closed because its experiment is not valid
+  - id: inconclusive
+    category: outcome_id
+    marking: core
+    meaning: the case closed on a decision that its experiment settles nothing
+  - id: explicitly_inconclusive
+    category: decision_name
+    marking: core
+    meaning: a recorded decision that the case's evidence settles nothing
