@@ -131,7 +131,7 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
             Predicate::Evidence(matching) => {
                 kinds.insert(matching.kind.as_str().to_owned());
             }
-            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) => {}
+            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
         });
     }
     (claims.into_iter().collect(), kinds.into_iter().collect())
@@ -299,13 +299,16 @@ fn a_test_result_about_another_artifact_does_not_verify_the_implementation() {
 /// `test_result` and `code_review` are about the implementation, `build_provenance` about the
 /// release, `operational_observation` about the deployment. § 9 declares no `objective_observation`
 /// evidence kind; its subject is `intent` because § 9's `intent` artifact is the only one that
-/// carries the objective (`artifacts:` section, `required: [objective, …]`).
-const ABOUT: [(&str, &str); 5] = [
+/// carries the objective (`artifacts:` section, `required: [objective, …]`). § 9's
+/// `completion.rolled_back` gives `rollback_result` no subject; it is about the release, the
+/// artifact `release.rollback` returns to a previous revision (story:software-change-negative-outcomes).
+const ABOUT: [(&str, &str); 6] = [
     ("test_result", "implementation"),
     ("code_review", "implementation"),
     ("build_provenance", "release"),
     ("operational_observation", "deployment"),
     ("objective_observation", "intent"),
+    ("rollback_result", "release"),
 ];
 
 /// Each declared artifact's revision in the CHG-1842 snapshot `case("R2")`.
@@ -330,6 +333,7 @@ fn about(kind: &str) -> &'static str {
 fn basis(kind: &str) -> &'static str {
     match kind {
         "objective_observation" => "the intent artifact's required objective field, design § 9",
+        "rollback_result" => "the artifact release.rollback returns to a previous revision",
         _ => "the evidence kind's subject, design § 9",
     }
 }

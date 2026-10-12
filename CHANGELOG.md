@@ -6,6 +6,37 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-12
+
+Source release using Canon 0.2.0 and ESS 0.55.0. `software.change/1` gains outcomes and an action,
+and `ml.experiment/1` is a fourth built-in protocol; the gate and provider contracts are unchanged.
+
+### Added
+
+- `ml.experiment/1` at `protocols/ml-experiment/1.yaml`: artifacts `experiment_design`,
+  `dataset_snapshot`, `baseline`, `candidate`, `run_configuration` and `results`; claims
+  `experiment.valid`, `result.reproducible`, `candidate.beats_baseline`, `effect.robust` and
+  `hypothesis.supported`; outcomes `supported`, `refuted`, `invalid_experiment`, `inconclusive` and
+  `superseded`. A new dataset snapshot or baseline revision invalidates the claims that rest on
+  it. `refuted` needs a comparison that is `FALSE`: one that is missing or about another candidate
+  revision leaves it blocked. Seven fixtures under `fixtures/ml-experiment/` show it.
+- `software.change/1` outcomes `declined`, `superseded` and `abandoned`, each earned only by an
+  explicit decision on the current case revision, and `rolled_back`, earned by a `complete`
+  `rollback_result` about the current release revision. Action `release.rollback` needs the
+  `release.rollback` capability and may produce a `rollback_result`. Fixtures `declined`,
+  `superseded`, `abandoned`, `rolled-back` and `rolled-back-complete` show them.
+- Vocabulary category `decision_name` (titled Decisions) and 29 core terms for the two protocol
+  changes; the generated protocol, index, graph, vocabulary and status pages follow.
+- Protocol pages list the case inputs a protocol declares, with their values, and an "Applies
+  when" column for obligations that carry `applicable_when`.
+
+### Changed
+
+- `b10x-canon` and `b10x-canon-expr` move from Canon 0.1.0 to 0.2.0.
+- The protocol graph generator refuses a protocol that tests a case input or makes an obligation
+  conditional, naming each place, since `b10x-protocol-graph/1` has no shape for either yet. No
+  built-in protocol does.
+
 ## [0.3.0] - 2026-10-08
 
 Source release using Canon 0.1.0 and ESS 0.55.0. `incident.response/1` gains an obligation, so

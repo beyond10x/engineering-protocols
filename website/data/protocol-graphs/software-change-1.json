@@ -1,6 +1,11 @@
 {
   "edges": [
     {
+      "from": "action:release.rollback",
+      "kind": "produces",
+      "to": "evidence:rollback_result"
+    },
+    {
       "from": "action:tests.run",
       "kind": "produces",
       "to": "evidence:test_result"
@@ -70,6 +75,16 @@
   "format": "b10x-protocol-graph/1",
   "nodes": [
     {
+      "capabilities": [
+        "release.rollback"
+      ],
+      "description": "return to a previous release; needs authority to roll back, and invoking it earns no outcome until a rollback result says it is complete",
+      "effect": "write",
+      "id": "action:release.rollback",
+      "kind": "action",
+      "name": "release.rollback"
+    },
+    {
       "description": "change the repository's working revision",
       "effect": "write",
       "id": "action:repository.edit",
@@ -128,6 +143,12 @@
       "id": "evidence:operational_observation",
       "kind": "evidence",
       "name": "operational_observation"
+    },
+    {
+      "description": "the result of returning a release to the one before it; its result is complete or partial",
+      "id": "evidence:rollback_result",
+      "kind": "evidence",
+      "name": "rollback_result"
     },
     {
       "description": "the result of running tests against an implementation revision; its result is pass or fail",
@@ -220,6 +241,12 @@
       }
     },
     {
+      "description": "the case closed because the change was explicitly abandoned without reaching any planned outcome",
+      "id": "outcome:abandoned",
+      "kind": "outcome",
+      "name": "abandoned"
+    },
+    {
       "description": "the case closed with its result accepted; needs the release proven, the deployment healthy and the objective realized",
       "id": "outcome:accepted",
       "kind": "outcome",
@@ -243,10 +270,34 @@
           }
         ]
       }
+    },
+    {
+      "description": "the case closed because the change was explicitly declined; needs no implementation",
+      "id": "outcome:declined",
+      "kind": "outcome",
+      "name": "declined"
+    },
+    {
+      "description": "the case closed with its release rolled back; needs a rollback result about the current release revision that says the rollback is complete",
+      "id": "outcome:rolled_back",
+      "kind": "outcome",
+      "name": "rolled_back",
+      "predicate": {
+        "evidence": {
+          "kind": "rollback_result",
+          "result": "complete"
+        }
+      }
+    },
+    {
+      "description": "the case closed because another change explicitly superseded it",
+      "id": "outcome:superseded",
+      "kind": "outcome",
+      "name": "superseded"
     }
   ],
   "protocol": {
-    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized.",
+    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result.",
     "id": "software.change",
     "revision": 1,
     "source": "protocols/software-change/1.yaml"

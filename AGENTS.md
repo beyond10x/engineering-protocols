@@ -16,8 +16,8 @@ ADRs 0066–0075 and Atlas `docs/design/governed-autonomy/`.
 ## Boundary
 
 This repository owns engineering-domain vocabulary and the protocols written in it (Atlas ADR
-0068): `software.change/1` and `incident.response/1` today, investigation, ML experiment, migration
-and security response later. `support.triage/1` is the one protocol outside engineering, placed
+0068): `software.change/1`, `incident.response/1` and `ml.experiment/1` today, investigation,
+migration and security response later. `support.triage/1` is the one protocol outside engineering, placed
 here by operator decision of 2026-10-05 as the rules half of a support triage example; its terms
 stay out of `protocols/vocabulary.yaml`, and its actions are tool-agnostic like every other
 protocol's.
@@ -42,6 +42,7 @@ protocols.
 | A malformed protocol path under `protocols/` fails the build rather than being skipped | `build.rs`, rule in `src/builtin_name.rs` |
 | `UNKNOWN` is not `FALSE`: tests on a stale revision leave `tests.pass` `UNKNOWN` and merge blocked | `tests/software_change_protocol.rs::chg_1842_merge_waits_for_current_revision_tests_and_authority` |
 | An incident leaves emergency mode while its cause is still `UNKNOWN` | `tests/incident_response_protocol.rs::inc_492_leaves_emergency_while_cause_unknown` |
+| A hypothesis is refuted only by a comparison that is `FALSE`: a missing comparison, or one about another candidate revision, leaves `refuted` blocked | `tests/ml_experiment_protocol.rs::ml_experiment_outcomes_are_earned` |
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
