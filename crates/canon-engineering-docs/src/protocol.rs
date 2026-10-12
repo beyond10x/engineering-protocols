@@ -4,7 +4,7 @@
 use std::fmt::Write as _;
 
 use b10x_canon::ir::Ir;
-use b10x_canon::model::{OutcomeRequirement, Predicate, Truth};
+use b10x_canon::model::{InputValue, OutcomeRequirement, Predicate, Truth};
 
 use crate::markdown::{HEADER, code, text, yaml_string};
 
@@ -41,6 +41,15 @@ fn truth(value: Truth) -> &'static str {
     }
 }
 
+/// Case input values as a code-formatted list, in the order given.
+fn values(values: &[InputValue]) -> String {
+    values
+        .iter()
+        .map(|value| code(value.as_str()))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 /// A predicate as one readable line, nested with parentheses.
 pub fn predicate(predicate: &Predicate) -> String {
     let list = |members: &[Predicate]| -> String {
@@ -62,6 +71,11 @@ pub fn predicate(predicate: &Predicate) -> String {
             line
         }
         Predicate::Claim(test) => format!("{} is {}", code(test.claim.as_str()), truth(test.is)),
+        Predicate::Input(test) => format!(
+            "input {} is one of {}",
+            code(test.input.as_str()),
+            values(&test.r#in)
+        ),
         Predicate::All(members) if members.is_empty() => "always true".to_owned(),
         Predicate::Any(members) if members.is_empty() => "never true".to_owned(),
         Predicate::All(members) => format!("all of ({})", list(members)),
@@ -251,19 +265,42 @@ pub fn page(ir: &Ir, source: &Source) -> String {
             .collect(),
     );
 
+    // The "Applies when" column appears only when some obligation is conditional, so the page of a
+    // protocol without `applicable_when` is the page it was before Canon 0.2.0.
+    let conditional = ir
+        .obligations
+        .values()
+        .any(|obligation| obligation.applicable_when.is_some());
+    let obligation_head: &[&str] = if conditional {
+        &[
+            "Obligation",
+            "Description",
+            "Applies when",
+            "Discharged when",
+        ]
+    } else {
+        &["Obligation", "Description", "Discharged when"]
+    };
     table(
         &mut out,
         "Obligations",
         "What must be done before a case can be complete, and what discharges it. An obligation stays open until its predicate is TRUE; its predicate being UNKNOWN does not discharge it.",
-        &["Obligation", "Description", "Discharged when"],
+        obligation_head,
         ir.obligations
             .iter()
             .map(|(id, obligation)| {
-                vec![
-                    code(id.as_str()),
-                    description(&obligation.description),
-                    predicate(&obligation.discharged_when),
-                ]
+                let mut row = vec![code(id.as_str()), description(&obligation.description)];
+                if conditional {
+                    row.push(
+                        obligation
+                            .applicable_when
+                            .as_ref()
+                            .map(predicate)
+                            .unwrap_or_else(|| "*always*".to_owned()),
+                    );
+                }
+                row.push(predicate(&obligation.discharged_when));
+                row
             })
             .collect(),
     );
@@ -295,6 +332,27 @@ pub fn page(ir: &Ir, source: &Source) -> String {
             .map(|(id, artifact)| vec![code(id.as_str()), description(&artifact.description)])
             .collect(),
     );
+
+    // Written only when the protocol declares a case input, so a protocol without a `case`
+    // section keeps the page it had before Canon 0.2.0.
+    if !ir.inputs.is_empty() {
+        table(
+            &mut out,
+            "Case inputs",
+            "What a case fixes when it opens: each input takes one of the values listed, and is never UNKNOWN.",
+            &["Input", "Description", "Values"],
+            ir.inputs
+                .iter()
+                .map(|(id, input)| {
+                    vec![
+                        code(id.as_str()),
+                        description(&input.description),
+                        values(&input.values),
+                    ]
+                })
+                .collect(),
+        );
+    }
     out
 }
 
