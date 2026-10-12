@@ -1,0 +1,78 @@
+format: els-fixture/1
+id: inconclusive
+protocol: protocols/ml-experiment/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# An experiment with no evidence. A decision that it is inconclusive taken at the case's earlier
+# revision c0 applies to nothing at c1; the same decision taken at c1 earns `inconclusive`.
+case:
+  format: canon-case/1
+  id: EXP-106
+  protocol: ml.experiment
+  revision: c1
+  artifacts:
+    experiment_design: {revision: x1}
+    dataset_snapshot: {revision: d1}
+    baseline: {revision: b1}
+    candidate: {revision: m1}
+    run_configuration: {revision: k1}
+    results: {revision: s1}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        result.reproducible: unknown
+        candidate.beats_baseline: unknown
+        effect.robust: unknown
+        hypothesis.supported: unknown
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked
+
+  - id: inconclusive-at-c0
+    add_decisions:
+      - decision: explicitly_inconclusive
+        outcome: inconclusive
+        principal: lead-investigator
+        case_revision: c0
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        result.reproducible: unknown
+        candidate.beats_baseline: unknown
+        effect.robust: unknown
+        hypothesis.supported: unknown
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked
+
+  - id: inconclusive
+    add_decisions:
+      - decision: explicitly_inconclusive
+        outcome: inconclusive
+        principal: lead-investigator
+        case_revision: c1
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        result.reproducible: unknown
+        candidate.beats_baseline: unknown
+        effect.robust: unknown
+        hypothesis.supported: unknown
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: legitimate
+        superseded: blocked

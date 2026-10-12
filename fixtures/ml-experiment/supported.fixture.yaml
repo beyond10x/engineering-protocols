@@ -1,0 +1,69 @@
+format: els-fixture/1
+id: supported
+protocol: protocols/ml-experiment/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# An experiment with no evidence and no decision: every claim is unknown and every outcome blocked.
+# A passed design review, clean integrity, a matched reproduction, a comparison that finds the
+# current candidate m1 better and a stable seed sweep make every claim true and earn `supported`
+# alone: `refuted` and `invalid_experiment` stay blocked.
+case:
+  format: canon-case/1
+  id: EXP-101
+  protocol: ml.experiment
+  revision: c1
+  artifacts:
+    experiment_design: {revision: x1}
+    dataset_snapshot: {revision: d1}
+    baseline: {revision: b1}
+    candidate: {revision: m1}
+    run_configuration: {revision: k1}
+    results: {revision: s1}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        result.reproducible: unknown
+        candidate.beats_baseline: unknown
+        effect.robust: unknown
+        hypothesis.supported: unknown
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked
+
+  - id: supported
+    add_evidence:
+      - observed_at: "2026-10-12T09:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-x1, kind: design_review,
+                 result: passed, subject: experiment_design, subject_revision: x1}
+      - observed_at: "2026-10-12T10:00:00Z"
+        record: {format: canon-evidence/1, id: integrity-s1, kind: integrity_check,
+                 result: clean, subject: results, subject_revision: s1}
+      - observed_at: "2026-10-12T10:10:00Z"
+        record: {format: canon-evidence/1, id: reproduction-s1, kind: reproduction,
+                 result: matched, subject: results, subject_revision: s1}
+      - observed_at: "2026-10-12T10:20:00Z"
+        record: {format: canon-evidence/1, id: comparison-m1, kind: comparison,
+                 result: candidate_better, subject: candidate, subject_revision: m1}
+      - observed_at: "2026-10-12T10:30:00Z"
+        record: {format: canon-evidence/1, id: seed-sweep-m1, kind: seed_sweep,
+                 result: stable, subject: candidate, subject_revision: m1}
+    expect:
+      claims:
+        experiment.valid: true
+        result.reproducible: true
+        candidate.beats_baseline: true
+        effect.robust: true
+        hypothesis.supported: true
+      outcomes:
+        supported: legitimate
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked

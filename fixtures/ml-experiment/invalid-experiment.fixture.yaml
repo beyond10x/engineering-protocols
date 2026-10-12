@@ -1,0 +1,46 @@
+format: els-fixture/1
+id: invalid-experiment
+protocol: protocols/ml-experiment/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# A reviewed design whose results carry an integrity violation, and a comparison that finds the
+# baseline better: the experiment is not valid, so `invalid_experiment` is legitimate and the
+# comparison refutes nothing.
+case:
+  format: canon-case/1
+  id: EXP-105
+  protocol: ml.experiment
+  revision: c1
+  artifacts:
+    experiment_design: {revision: x1}
+    dataset_snapshot: {revision: d1}
+    baseline: {revision: b1}
+    candidate: {revision: m1}
+    run_configuration: {revision: k1}
+    results: {revision: s1}
+
+states:
+  - id: invalid
+    add_evidence:
+      - observed_at: "2026-10-12T09:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-x1, kind: design_review,
+                 result: passed, subject: experiment_design, subject_revision: x1}
+      - observed_at: "2026-10-12T10:00:00Z"
+        record: {format: canon-evidence/1, id: integrity-s1, kind: integrity_check,
+                 result: violated, subject: results, subject_revision: s1}
+      - observed_at: "2026-10-12T10:20:00Z"
+        record: {format: canon-evidence/1, id: comparison-m1, kind: comparison,
+                 result: baseline_better, subject: candidate, subject_revision: m1}
+    expect:
+      claims:
+        experiment.valid: false
+        result.reproducible: unknown
+        candidate.beats_baseline: false
+        effect.robust: unknown
+        hypothesis.supported: false
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: legitimate
+        inconclusive: blocked
+        superseded: blocked
