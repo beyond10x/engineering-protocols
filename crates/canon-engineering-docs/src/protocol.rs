@@ -357,4 +357,46 @@ mod tests {
             "{section}"
         );
     }
+
+    /// The page section that starts at `heading`, up to the next one.
+    fn section<'a>(page: &'a str, heading: &str) -> &'a str {
+        let start = page
+            .find(heading)
+            .unwrap_or_else(|| panic!("a {heading} section in\n{page}"));
+        let section = &page[start..];
+        &section[..section[2..]
+            .find("\n## ")
+            .map_or(section.len(), |end| end + 2)]
+    }
+
+    #[test]
+    fn the_page_lists_case_inputs_and_when_an_obligation_applies() {
+        let source = include_str!("../tests/fixtures/case-inputs.yaml");
+        let ir = b10x_canon::ir::compile(&parse(source).expect("parses")).expect("compiles");
+        let page = page(
+            &ir,
+            &Source {
+                name: "p".to_owned(),
+                major: 1,
+                path: "protocols/p/1.yaml".to_owned(),
+                text: source.to_owned(),
+            },
+        );
+        let inputs = section(&page, "## Case inputs");
+        assert!(
+            inputs.contains("| Input | Description | Values |"),
+            "{inputs}"
+        );
+        assert!(inputs.contains("| `risk` |  | `high`, `low` |"), "{inputs}");
+        let obligations = section(&page, "## Obligations");
+        assert!(
+            obligations.contains("| Obligation | Description | Applies when | Discharged when |"),
+            "{obligations}"
+        );
+        assert!(
+            obligations
+                .contains("| `review` |  | input `risk` is one of `high` | `a` is **TRUE** |"),
+            "{obligations}"
+        );
+    }
 }

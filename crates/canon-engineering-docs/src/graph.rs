@@ -410,6 +410,31 @@ mod tests {
         assert_eq!(edges, expected);
     }
 
+    /// `b10x-protocol-graph/1` has no shape for a case input, so a protocol that tests one, in an
+    /// obligation's `applicable_when` or in any predicate, is refused rather than drawn without it.
+    #[test]
+    fn the_graph_refuses_case_inputs_the_schema_cannot_carry() {
+        const CASE_INPUTS: &str = include_str!("../tests/fixtures/case-inputs.yaml");
+        const APPLICABLE_WHEN: &str = "    applicable_when: {input: risk, in: [high]}\n";
+        assert!(CASE_INPUTS.contains(APPLICABLE_WHEN));
+        let gated = format!(
+            "{}actions:\n  go:\n    precondition: {{input: risk, in: [low]}}\n",
+            CASE_INPUTS.replacen(APPLICABLE_WHEN, "", 1)
+        );
+        for (source, place) in [
+            (CASE_INPUTS, "obligation `review`"),
+            (gated.as_str(), "action `go`"),
+        ] {
+            let ir = compile(&parse(source).expect("parses")).expect("compiles");
+            let error = document(&ir, "x")
+                .expect_err("the graph refuses a case input")
+                .to_string();
+            assert!(error.contains(FORMAT), "{error}");
+            assert!(error.contains("`risk`"), "{error}");
+            assert!(error.contains(place), "{error}");
+        }
+    }
+
     /// A bound match carries its subject on its edge, with or without a result and under `not`,
     /// and two matches of one kind about different artifacts stay two edges.
     #[test]
