@@ -76,7 +76,7 @@ scope:
   path: website/package-lock.json
 - confidence: cited
   path: website/package.json
-revision: 37
+revision: 38
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 32, decided_on: {"recorded":{"review_outcome":4}}}
 - {from: "proposed", to: "active", at: "2026-10-12T23:31:32Z", actor: "human:timo", revision: 37, decided_on: {"recorded":{"review_outcome":4}}}
@@ -186,3 +186,12 @@ TASKBOARD E-003; Atlas ADR 0084 § Decision 1 and § Also needed; aep `principle
 Third of the three stories https://github.com/beyond10x/engineering-protocols/issues/7 asks to order: `story:software-change-negative-outcomes`, then `story:ml-experiment-protocol`, then this story. Canon 0.2.0 cleared `blocker:canon-case-inputs`; this story also depends on `story:canon-0-2-0-pin`, which moves the pin and renders case inputs in the generated pages.
 
 `blocker:graph-schema-case-inputs` is cleared: docs-system 0.9.0 (`de3e7d84b463d1b6b26e30c28efc07426e8cf012`) extends `b10x-protocol-graph/1` with the `input` leaf, a top-level `case.inputs` and an obligation's `applicable_when`, and `website/package.json` pins that commit.
+
+## Amendment
+
+Amended 2026-10-13, after the protocol-first commit `270cea4`, in one later commit that changes the protocol YAML and the fixture `change-kinds`:
+
+- **Item 6 as Canon 0.2.0 evaluates it.** Canon binds every evidence record to the subject's current revision whatever the match names, so a `test_result` on R1 says nothing once the implementation is at R2 (measured on `270cea4`: at state `bugfix-red-r2`, `regression.reproduced` is `unknown` and `implementation.edit` is `blocked`). Item 6 now reads: starting from `change-kinds` with `change_kind` `bugfix` and one `test_result` on R1 whose result is `fail`, `implementation.edit` is admissible at R1; after the implementation moves to R2 that record no longer counts, `regression.reproduced` is `unknown` and `implementation.edit` is blocked until red is recorded on R2. Keeping red from R1 across the fix needs Canon's evidence-order predicate (canon `story:evidence-order-predicate`), the later change § ADR 0084 addition names.
+- **`regression.reproduced` names its subject.** With no subject the match broke `every_evidence_match_names_the_artifact_its_kind_is_about` and `evidence_about_another_artifact_moves_no_claim` and gained nothing (see above), so its match is `{kind: test_result, result: fail, subject: implementation}`.
+- **Obligation ids may be dotted.** The reader took one-token obligation ids only; the four obligations this story names are dotted, so an obligation id is one token or dotted, and `tests/adversary2_yaml_errors.rs` tests the edges of that rule instead of refusing `restore.service`.
+- **The bugfix preview is retired.** `website/examples/protocols/software-change-bugfix/1.yaml` and its example graph are removed: the built-in now carries the bugfix rule, and the preview's names differed from it. `step-order.mdx` draws the built-in graph.
