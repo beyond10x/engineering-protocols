@@ -1,0 +1,269 @@
+{
+  "edges": [
+    {
+      "from": "evidence:comparison",
+      "kind": "establishes",
+      "qualifier": "candidate_better about candidate",
+      "to": "claim:candidate.beats_baseline"
+    },
+    {
+      "from": "evidence:seed_sweep",
+      "kind": "establishes",
+      "qualifier": "stable about candidate",
+      "to": "claim:effect.robust"
+    },
+    {
+      "from": "evidence:design_review",
+      "kind": "establishes",
+      "qualifier": "passed about experiment_design",
+      "to": "claim:experiment.valid"
+    },
+    {
+      "from": "evidence:integrity_check",
+      "kind": "establishes",
+      "qualifier": "clean about results",
+      "to": "claim:experiment.valid"
+    },
+    {
+      "from": "claim:candidate.beats_baseline",
+      "kind": "supports",
+      "to": "claim:hypothesis.supported"
+    },
+    {
+      "from": "claim:effect.robust",
+      "kind": "supports",
+      "to": "claim:hypothesis.supported"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "supports",
+      "to": "claim:hypothesis.supported"
+    },
+    {
+      "from": "claim:result.reproducible",
+      "kind": "supports",
+      "to": "claim:hypothesis.supported"
+    },
+    {
+      "from": "evidence:reproduction",
+      "kind": "establishes",
+      "qualifier": "matched about results",
+      "to": "claim:result.reproducible"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "requires",
+      "qualifier": "false",
+      "to": "outcome:invalid_experiment"
+    },
+    {
+      "from": "claim:candidate.beats_baseline",
+      "kind": "requires",
+      "qualifier": "false",
+      "to": "outcome:refuted"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "requires",
+      "to": "outcome:refuted"
+    },
+    {
+      "from": "claim:result.reproducible",
+      "kind": "requires",
+      "to": "outcome:refuted"
+    },
+    {
+      "from": "claim:hypothesis.supported",
+      "kind": "requires",
+      "to": "outcome:supported"
+    }
+  ],
+  "format": "b10x-protocol-graph/1",
+  "nodes": [
+    {
+      "description": "a comparison of a candidate with the baseline on the design's metrics; its result is candidate_better or baseline_better",
+      "id": "evidence:comparison",
+      "kind": "evidence",
+      "name": "comparison"
+    },
+    {
+      "description": "a review of an experiment design; its result is passed or failed",
+      "id": "evidence:design_review",
+      "kind": "evidence",
+      "name": "design_review"
+    },
+    {
+      "description": "a check of the runs behind a set of results for leakage, contamination or other integrity violations; its result is clean or violated",
+      "id": "evidence:integrity_check",
+      "kind": "evidence",
+      "name": "integrity_check"
+    },
+    {
+      "description": "a rerun on the same dataset snapshot and run configuration; its result is matched or diverged",
+      "id": "evidence:reproduction",
+      "kind": "evidence",
+      "name": "reproduction"
+    },
+    {
+      "description": "a sweep of a candidate's effect over seeds or ablations; its result is stable or unstable",
+      "id": "evidence:seed_sweep",
+      "kind": "evidence",
+      "name": "seed_sweep"
+    },
+    {
+      "description": "a comparison of the current candidate revision found it better than the baseline",
+      "id": "claim:candidate.beats_baseline",
+      "kind": "claim",
+      "name": "candidate.beats_baseline",
+      "predicate": {
+        "evidence": {
+          "kind": "comparison",
+          "result": "candidate_better"
+        }
+      }
+    },
+    {
+      "description": "a seed sweep of the current candidate revision found its effect stable",
+      "id": "claim:effect.robust",
+      "kind": "claim",
+      "name": "effect.robust",
+      "predicate": {
+        "evidence": {
+          "kind": "seed_sweep",
+          "result": "stable"
+        }
+      }
+    },
+    {
+      "description": "the current experiment design passed review and the current results carry no integrity violation",
+      "id": "claim:experiment.valid",
+      "kind": "claim",
+      "name": "experiment.valid",
+      "predicate": {
+        "all": [
+          {
+            "evidence": {
+              "kind": "design_review",
+              "result": "passed"
+            }
+          },
+          {
+            "evidence": {
+              "kind": "integrity_check",
+              "result": "clean"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "the experiment is valid, its result reproducible, and the candidate beats the baseline with a robust effect",
+      "id": "claim:hypothesis.supported",
+      "kind": "claim",
+      "name": "hypothesis.supported",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "candidate.beats_baseline"
+            }
+          },
+          {
+            "claim": {
+              "id": "effect.robust"
+            }
+          },
+          {
+            "claim": {
+              "id": "experiment.valid"
+            }
+          },
+          {
+            "claim": {
+              "id": "result.reproducible"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "a reproduction of the current results matched them",
+      "id": "claim:result.reproducible",
+      "kind": "claim",
+      "name": "result.reproducible",
+      "predicate": {
+        "evidence": {
+          "kind": "reproduction",
+          "result": "matched"
+        }
+      }
+    },
+    {
+      "description": "the case closed on an explicit decision that the experiment settles nothing",
+      "id": "outcome:inconclusive",
+      "kind": "outcome",
+      "name": "inconclusive"
+    },
+    {
+      "description": "the case closed because the experiment itself is not valid",
+      "id": "outcome:invalid_experiment",
+      "kind": "outcome",
+      "name": "invalid_experiment",
+      "predicate": {
+        "claim": {
+          "id": "experiment.valid",
+          "is": "false"
+        }
+      }
+    },
+    {
+      "description": "the case closed with the hypothesis refuted; needs a valid experiment and a reproducible result in which the candidate does not beat the baseline. A comparison that is missing, or about another candidate revision, refutes nothing: it leaves the comparison unknown, not false",
+      "id": "outcome:refuted",
+      "kind": "outcome",
+      "name": "refuted",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "candidate.beats_baseline",
+              "is": "false"
+            }
+          },
+          {
+            "claim": {
+              "id": "experiment.valid"
+            }
+          },
+          {
+            "claim": {
+              "id": "result.reproducible"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "the case closed because another case explicitly superseded it",
+      "id": "outcome:superseded",
+      "kind": "outcome",
+      "name": "superseded"
+    },
+    {
+      "description": "the case closed with the hypothesis supported",
+      "id": "outcome:supported",
+      "kind": "outcome",
+      "name": "supported",
+      "predicate": {
+        "claim": {
+          "id": "hypothesis.supported"
+        }
+      }
+    }
+  ],
+  "protocol": {
+    "description": "Test a hypothesis by experiment: run a candidate against a baseline on a frozen dataset snapshot under a reviewed design, and close the case supported when the experiment is valid and its result reproducible, beats the baseline and is robust; refuted when a valid, reproducible result does not beat the baseline; invalid when the experiment itself is not valid; or inconclusive or superseded on an explicit decision.",
+    "id": "ml.experiment",
+    "revision": 1,
+    "source": "protocols/ml-experiment/1.yaml"
+  }
+}

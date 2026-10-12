@@ -1,0 +1,71 @@
+format: els-fixture/1
+id: refuted
+protocol: protocols/ml-experiment/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# The evidence of `supported` with a comparison that finds the baseline better than candidate m1:
+# the experiment is valid and its result reproducible, `candidate.beats_baseline` is false and
+# `refuted` is legitimate. Moving the candidate to m2 leaves the comparison about m1 out: the
+# comparison is unknown, not false, and `refuted` is blocked again. UNKNOWN is not FALSE.
+case:
+  format: canon-case/1
+  id: EXP-102
+  protocol: ml.experiment
+  revision: c1
+  artifacts:
+    experiment_design: {revision: x1}
+    dataset_snapshot: {revision: d1}
+    baseline: {revision: b1}
+    candidate: {revision: m1}
+    run_configuration: {revision: k1}
+    results: {revision: s1}
+
+states:
+  - id: refuted
+    add_evidence:
+      - observed_at: "2026-10-12T09:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-x1, kind: design_review,
+                 result: passed, subject: experiment_design, subject_revision: x1}
+      - observed_at: "2026-10-12T10:00:00Z"
+        record: {format: canon-evidence/1, id: integrity-s1, kind: integrity_check,
+                 result: clean, subject: results, subject_revision: s1}
+      - observed_at: "2026-10-12T10:10:00Z"
+        record: {format: canon-evidence/1, id: reproduction-s1, kind: reproduction,
+                 result: matched, subject: results, subject_revision: s1}
+      - observed_at: "2026-10-12T10:20:00Z"
+        record: {format: canon-evidence/1, id: comparison-m1, kind: comparison,
+                 result: baseline_better, subject: candidate, subject_revision: m1}
+      - observed_at: "2026-10-12T10:30:00Z"
+        record: {format: canon-evidence/1, id: seed-sweep-m1, kind: seed_sweep,
+                 result: stable, subject: candidate, subject_revision: m1}
+    expect:
+      claims:
+        experiment.valid: true
+        result.reproducible: true
+        candidate.beats_baseline: false
+        effect.robust: true
+        hypothesis.supported: false
+      outcomes:
+        supported: blocked
+        refuted: legitimate
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked
+
+  - id: candidate-moved
+    set_revisions:
+      candidate: m2
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: true
+        result.reproducible: true
+        candidate.beats_baseline: unknown
+        effect.robust: unknown
+        hypothesis.supported: unknown
+      outcomes:
+        supported: blocked
+        refuted: blocked
+        invalid_experiment: blocked
+        inconclusive: blocked
+        superseded: blocked
