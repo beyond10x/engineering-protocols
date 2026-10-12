@@ -131,7 +131,7 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
             Predicate::Evidence(matching) => {
                 kinds.insert(matching.kind.as_str().to_owned());
             }
-            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) => {}
+            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
         });
     }
     (claims.into_iter().collect(), kinds.into_iter().collect())
