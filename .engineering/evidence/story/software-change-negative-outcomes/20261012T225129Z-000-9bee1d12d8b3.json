@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-12T22:51:29Z",
+  "actor": "human:timo",
+  "artifact": "story:software-change-negative-outcomes",
+  "kind": "story",
+  "revision": 22,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "package gates exit 0 at 249fb4a; negative_outcomes_are_earned passes",
+    "reference": "249fb4a"
+  }
+}

@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:ml-experiment-protocol
 kind: story
-status: active
+status: implemented
 title: Ship the ml.experiment/1 protocol as data
 relations:
 - decomposes: epic:els-first-domain
@@ -37,10 +37,11 @@ scope:
   path: website/docs/status.mdx
 - confidence: cited
   path: website/docs/vocabulary.md
-revision: 10
+revision: 11
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-12T21:36:06Z", actor: "human:timo", revision: 10, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-12T23:08:14Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 ## Outcome
 

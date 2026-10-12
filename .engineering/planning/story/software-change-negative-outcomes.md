@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:software-change-negative-outcomes
 kind: story
-status: active
+status: implemented
 title: Add declined, rolled-back, superseded and abandoned outcomes to software.change/1
 summary: Terminal outcomes other than accepted, each earned by its own decision or evidence.
 refs:
@@ -49,10 +49,11 @@ scope:
   path: website/docs/protocols/software-change/1.mdx
 - confidence: cited
   path: website/docs/vocabulary.md
-revision: 22
+revision: 24
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"review_outcome":3}}}
 - {from: "proposed", to: "active", at: "2026-10-12T21:36:06Z", actor: "human:timo", revision: 22, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-10-12T23:08:14Z", actor: "human:timo", revision: 23, decided_on: {"recorded":{"test_result":1,"review_outcome":3}}}
 ---
 ## Outcome
 
@@ -140,7 +141,7 @@ The test `negative_outcomes_are_earned` in `crates/canon-engineering/tests/softw
 4. Starting from the fixture `abandoned` with an `explicitly_abandoned` decision whose `case_revision` is `c0`, not the case's `c1`, `abandoned` is `blocked`: a decision on another revision of the case does not earn it.
 5. Starting from the fixture `rolled-back` (release revision v2, a `deployment`, no authority decision, no `rollback_result`), `release.rollback` is `approval-required` and `rolled_back` is `blocked`.
 6. Starting from the state of 5, with authority granted for `release.rollback` and a `rollback_result` about release v2 whose result is `partial`, `release.rollback` is `admissible` and `rolled_back` is `blocked`.
-7. Starting from the state of 6 and adding a `rollback_result` about release v1 whose result is `complete`, `rolled_back` is still `blocked` (the record is about another release revision, so it is UNKNOWN, not TRUE); adding one about release v2 whose result is `complete` makes `rolled_back` `legitimate`.
+7. Starting from the fixture `rolled-back-complete` (the case of `rolled-back` with authority granted and no `partial` result), adding a `rollback_result` about release v1 whose result is `complete` leaves `rolled_back` `blocked` (the record is about another release revision, so it is UNKNOWN, not TRUE); adding one about release v2 whose result is `complete` makes `rolled_back` `legitimate`. In the fixture `rolled-back`, a `complete` result about v2 added after the `partial` one of 6 leaves `rolled_back` `blocked`: Canon 0.2.0 reads two results about one release revision that disagree as UNKNOWN. (Amended at the close of wave 2026-10-12-w1: the item as first written built on the state of 6, which Canon 0.2.0 cannot bring to `legitimate`; measured on the unit's red commit.)
 8. Starting from `protocols/vocabulary.yaml` as this story leaves it, read through `crates/canon-engineering/src/vocabulary.rs`, each of `declined`, `rolled_back`, `superseded`, `abandoned`, `rollback_result`, `explicitly_declined`, `explicitly_superseded` and `explicitly_abandoned` resolves to exactly one vocabulary entry.
 
 ## Source

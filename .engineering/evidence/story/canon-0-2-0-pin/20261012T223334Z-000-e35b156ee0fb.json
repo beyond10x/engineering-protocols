@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-12T22:33:34Z",
+  "actor": "human:timo",
+  "artifact": "story:canon-0-2-0-pin",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "package gates (fmt, clippy and test -p of the three crates, generate --check) exit 0 at 90e042a",
+    "reference": "90e042a"
+  }
+}

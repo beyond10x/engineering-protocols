@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:canon-0-2-0-pin
 kind: story
-status: active
+status: implemented
 title: Depend on Canon 0.2.0 and render case inputs
 relations:
 - decomposes: epic:els-first-domain
@@ -32,10 +32,11 @@ scope:
   path: crates/canon-engineering/tests/software_change_protocol.rs
 - confidence: cited
   path: crates/canon-engineering/tests/support_triage_protocol.rs
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:49Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":1}}}
 - {from: "proposed", to: "active", at: "2026-10-12T21:36:06Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "active", to: "implemented", at: "2026-10-12T23:08:14Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1,"review_outcome":1}}}
 ---
 ## Outcome
 
