@@ -105,11 +105,13 @@ claims:
         subject: intent
   regression.reproduced:
     description: >-
-      a test has failed, reproducing the regression a bugfix repairs; the match names no subject
+      a test has failed on the current implementation revision, reproducing the regression a
+      bugfix repairs
     true_when:
       evidence:
         kind: test_result
         result: fail
+        subject: implementation
 
 obligations:
   tests.required:

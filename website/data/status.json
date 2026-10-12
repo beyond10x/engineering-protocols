@@ -50,7 +50,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "Canon protocol/1 data declaring 7 claims, 6 evidence kinds, 6 actions, 4 obligations and 5 outcomes.",
+      "detail": "Canon protocol/1 data declaring 7 claims, 6 evidence kinds, 6 actions, 4 obligations and 5 outcomes, with every evidence match bound to its artifact.",
       "href": "/docs/protocols/software-change/1",
       "label": "software.change/1",
       "status": "shipped"

@@ -58,7 +58,7 @@
     {
       "from": "evidence:test_result",
       "kind": "establishes",
-      "qualifier": "fail",
+      "qualifier": "fail about implementation",
       "to": "claim:regression.reproduced"
     },
     {
@@ -286,7 +286,7 @@
       }
     },
     {
-      "description": "a test has failed, reproducing the regression a bugfix repairs; the match names no subject",
+      "description": "a test has failed on the current implementation revision, reproducing the regression a bugfix repairs",
       "id": "claim:regression.reproduced",
       "kind": "claim",
       "name": "regression.reproduced",

@@ -350,8 +350,8 @@ fn profiles_nest_open_obligations() {
         Err(refusal) => failures.that(5, false, || refusal),
     }
 
-    // 6. One failing test makes the bugfix's edit admissible, and it stays admissible once the
-    //    implementation is at R2.
+    // 6. One failing test on R1 makes the bugfix's edit of R1 admissible; once the
+    //    implementation is at R2 that red no longer counts, and the edit is blocked again.
     failures.equal(
         6,
         set_input(&kinds_document, "bugfix-red", "change_kind").as_deref(),
@@ -376,12 +376,12 @@ fn profiles_nest_open_obligations() {
         vec!["test_result fail implementation".to_owned()],
         "the evidence of `bugfix-red`",
     );
-    for state in ["bugfix-red", "bugfix-red-r2"] {
+    for (state, expected) in [("bugfix-red", "admissible"), ("bugfix-red-r2", "blocked")] {
         match decide(&kinds, &compiled, state) {
             Ok(decision) => failures.equal(
                 6,
                 status(&decision, "implementation.edit"),
-                "admissible".into(),
+                expected.into(),
                 &format!("implementation.edit at `{state}`"),
             ),
             Err(refusal) => failures.that(6, false, || refusal),

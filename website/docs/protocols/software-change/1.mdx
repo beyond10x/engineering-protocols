@@ -59,7 +59,7 @@ Each claim is TRUE, FALSE or UNKNOWN, established from evidence by its predicate
 | `implementation.reviewed` | the current implementation revision is reviewed | evidence `code_review` with result `approved` about `implementation` |
 | `implementation.verified` | the current implementation revision is verified | all of (evidence `test_result` with result `pass` about `implementation`) |
 | `objective.realized` | the intent's objective is met | evidence `objective_observation` with result `satisfied` about `intent` |
-| `regression.reproduced` | a test has failed, reproducing the regression a bugfix repairs; the match names no subject | evidence `test_result` with result `fail` |
+| `regression.reproduced` | a test has failed on the current implementation revision, reproducing the regression a bugfix repairs | evidence `test_result` with result `fail` about `implementation` |
 | `release.proven` | the current implementation revision is verified and the current release revision carries build provenance; nothing here ties that release to the verified implementation revision | all of (`implementation.verified` is **TRUE**; evidence `build_provenance` about `release`) |
 | `tests.pass` | the tests pass for the current implementation revision | evidence `test_result` with result `pass` about `implementation` |
 
