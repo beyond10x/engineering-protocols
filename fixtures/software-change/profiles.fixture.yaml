@@ -1,0 +1,97 @@
+format: els-fixture/1
+id: profiles
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# One refactor at implementation revision R1, with no evidence and no authority decision, under
+# each risk in turn. The risk selects which obligations apply; nothing else changes, so every
+# claim, action and outcome is the same in every state.
+case:
+  format: canon-case/1
+  id: CHG-3001
+  protocol: software.change
+  inputs:
+    risk: trivial
+    change_kind: refactor
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: trivial
+    set_inputs:
+      risk: trivial
+    add_evidence: []
+    expect:
+      claims: &claims
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+      obligations:
+        tests.required: open
+        review.required: not_applicable
+        provenance.required: not_applicable
+        health.required: not_applicable
+      actions: &actions
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes: &outcomes
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: standard
+    set_inputs:
+      risk: standard
+    add_evidence: []
+    expect:
+      claims: *claims
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+      actions: *actions
+      outcomes: *outcomes
+
+  - id: elevated
+    set_inputs:
+      risk: elevated
+    add_evidence: []
+    expect:
+      claims: *claims
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: open
+        health.required: not_applicable
+      actions: *actions
+      outcomes: *outcomes
+
+  - id: critical
+    set_inputs:
+      risk: critical
+    add_evidence: []
+    expect:
+      claims: *claims
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: open
+        health.required: open
+      actions: *actions
+      outcomes: *outcomes

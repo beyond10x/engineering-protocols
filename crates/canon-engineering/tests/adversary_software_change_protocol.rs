@@ -50,10 +50,12 @@ fn mutant(from: &str, to: &str) -> Ir {
     compile(&text.replacen(from, to, 1))
 }
 
-/// A `canon-case/1` snapshot of CHG-1842 with implementation revision `implementation`.
+/// A `canon-case/1` snapshot of CHG-1842 with implementation revision `implementation`, with the
+/// case inputs `chg-1842.fixture.yaml` gives.
 fn case(implementation: &str) -> Value {
     serde_yaml_ng::from_str(&format!(
-        "{{format: canon-case/1, id: CHG-1842, protocol: software.change, artifacts: \
+        "{{format: canon-case/1, id: CHG-1842, protocol: software.change, \
+         inputs: {{risk: standard, change_kind: refactor}}, artifacts: \
          {{intent: {{revision: i1}}, system_specification: {{revision: s1}}, \
          plan: {{revision: p1}}, implementation: {{revision: {implementation}}}, \
          release: {{revision: v0}}, deployment: {{revision: d0}}}}}}"
