@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:software-change-profiles
 kind: story
-status: proposed
+status: active
 title: Define risk profiles and bugfix/refactor change-kind profiles for software.change/1
 summary: Risk profiles change which obligations apply; the bugfix profile adds the red-first rule, refactor and feature omit it; repository.edit splits into tests.write and implementation.edit.
 refs:
@@ -76,9 +76,10 @@ scope:
   path: website/package-lock.json
 - confidence: cited
   path: website/package.json
-revision: 33
+revision: 37
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 32, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "proposed", to: "active", at: "2026-10-12T23:31:32Z", actor: "human:timo", revision: 37, decided_on: {"recorded":{"review_outcome":4}}}
 ---
 ## Outcome
 
@@ -113,7 +114,7 @@ Atlas ADR 0084 (accepted 2026-10-04, option C) § Also needed: AEP's `applies_wh
 
 ## Scope
 
-Read 2026-10-12 against Canon 0.2.0 (`dbb04ea`). Each line is cited (read in the tree) or inferred.
+Read 2026-10-12 against Canon 0.2.0 (`dbb04ea`), and 2026-10-13 against docs-system 0.9.0 (`de3e7d84b463d1b6b26e30c28efc07426e8cf012`). Each line is cited (read in the tree) or inferred.
 
 - `protocols/software-change/1.yaml`: case inputs, obligations, the split of `repository.edit` (`:92-94`), `regression.reproduced` (cited)
 - `fixtures/software-change/`: new `profiles` and `change-kinds`; `chg-1842.fixture.yaml:6-16` gains `inputs:` (`risk: standard`, `change_kind: refactor`) and its seven action maps replace `repository.edit` (cited)
@@ -129,7 +130,7 @@ Read 2026-10-12 against Canon 0.2.0 (`dbb04ea`). Each line is cited (read in the
 - hand-written: `docs/examples/software-change.md:17`, `AGENTS.md:12-14`, `website/docs/concepts/profiles-and-generated-protocols.mdx:17,26-31`, `website/docs/concepts/step-order.mdx:54-58,76-80` (both say Canon has no profile construct) (cited)
 - `website/examples/protocols/software-change-bugfix/1.yaml` and `website/data/example-graphs/software-change-bugfix-1.json`: the preview the built-in now supersedes, kept or retired with the concept pages (inferred)
 - `CHANGELOG.md` `[Unreleased]` (inferred)
-- `crates/canon-engineering-docs/src/graph.rs`: `graph::document` emits the `input` leaf and an obligation's `applicable_when` in the shape docs-system gives `b10x-protocol-graph/1`, the `canon-ir/1` form `{"input": {"id": <id>, "in": [<values>]}}` (agreed 2026-10-12, not the flat source form), replacing the refusal `story:canon-0-2-0-pin` adds and its test `the_graph_refuses_case_inputs_the_schema_cannot_carry`; `crates/canon-engineering-docs/tests/review_graph_schema.rs:53-120`, the schema transcription, follows the extended schema; `website/package.json:18` and `website/package-lock.json` pin the docs-system commit that extends it (cited: pin story, `blocker:graph-schema-case-inputs`)
+- `crates/canon-engineering-docs/src/graph.rs`: `graph::document` emits what docs-system 0.9.0 gives `b10x-protocol-graph/1` (`schema/b10x.protocol-graph.v1.schema.json` at `de3e7d8`): the `input` predicate leaf in the `canon-ir/1` form `{"input": {"id": <id>, "in": [<values>]}}`, a top-level `case` object `{"inputs": {<id>: {"description": <text or null>, "values": [<values>]}}}` declaring every case input, written only when the protocol declares one, and `applicable_when` on obligation nodes only, omitted when the obligation always applies. It replaces the refusal `story:canon-0-2-0-pin` added and its test `the_graph_refuses_case_inputs_the_schema_cannot_carry`. `crates/canon-engineering-docs/tests/review_graph_schema.rs:53-120`, the schema transcription, follows the 0.9.0 schema. `website/package.json:18` and `website/package-lock.json` pin `de3e7d8` (cited: the schema at that commit, read through `gh api` on 2026-10-13)
 
 ## Shared surface
 
@@ -174,7 +175,7 @@ The test `profiles_nest_open_obligations` in `crates/canon-engineering/tests/sof
 7. Starting from `change-kinds` with `change_kind` `refactor`, and again with `feature`, and no evidence, `implementation.edit` is admissible.
 8. Starting from `protocols/vocabulary.yaml` as this story leaves it, each of `change_kind`, `feature`, `bugfix`, `refactor`, `tests.write`, `implementation.edit` and `regression.reproduced` resolves to exactly one vocabulary entry, and `repository.edit` resolves to none.
 9. Starting from a `software.change` case that gives no `risk`, Canon refuses it as `missing-input`.
-10. Starting from the protocol as this story leaves it, the committed `website/data/protocol-graphs/software-change-1.json` carries the four obligations' applicability and the `input` leaf of `implementation.edit`'s precondition, `generate --check` reports no drift, and `every_committed_protocol_graph_conforms_to_the_pinned_schema_and_its_protocol` passes against the transcription of the extended schema.
+10. Starting from the protocol as this story leaves it, the committed `website/data/protocol-graphs/software-change-1.json` carries a top-level `case.inputs` declaring `risk` and `change_kind` with their values, the four obligations' `applicable_when`, and the `input` leaf of `implementation.edit`'s precondition; `generate --check` reports no drift; and `every_committed_protocol_graph_conforms_to_the_pinned_schema_and_its_protocol` passes against the transcription of the docs-system 0.9.0 schema, which rejects `applicable_when` on a node that is not an obligation.
 
 ## Source
 
@@ -184,4 +185,4 @@ TASKBOARD E-003; Atlas ADR 0084 § Decision 1 and § Also needed; aep `principle
 
 Third of the three stories https://github.com/beyond10x/engineering-protocols/issues/7 asks to order: `story:software-change-negative-outcomes`, then `story:ml-experiment-protocol`, then this story. Canon 0.2.0 cleared `blocker:canon-case-inputs`; this story also depends on `story:canon-0-2-0-pin`, which moves the pin and renders case inputs in the generated pages.
 
-It also waits on `blocker:graph-schema-case-inputs`: the generated dependency graph cannot carry a case input or an obligation's applicability until docs-system extends `b10x-protocol-graph/1`, and from `story:canon-0-2-0-pin` on the generator refuses rather than write a graph the schema rejects.
+`blocker:graph-schema-case-inputs` is cleared: docs-system 0.9.0 (`de3e7d84b463d1b6b26e30c28efc07426e8cf012`) extends `b10x-protocol-graph/1` with the `input` leaf, a top-level `case.inputs` and an obligation's `applicable_when`, and `website/package.json` pins that commit.
