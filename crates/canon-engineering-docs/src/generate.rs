@@ -123,6 +123,7 @@ fn category_title(category: Category) -> &'static str {
         Category::ActionId => "Actions",
         Category::ObligationId => "Obligations",
         Category::OutcomeId => "Outcomes",
+        Category::DecisionName => "Decisions",
     }
 }
 
@@ -561,7 +562,7 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 36);
+        assert_eq!(vocabulary.terms().len(), 44);
         for term in vocabulary.terms() {
             assert!(
                 page.contains(&format!("\n| `{}` |", term.id)),

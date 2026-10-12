@@ -125,8 +125,8 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     assert_eq!(ir.protocol.id.as_str(), "software.change");
     assert_eq!(ir.protocol.revision, 1);
 
-    // Every name the protocol declares is a term of the vocabulary, in its category; this story
-    // adds none.
+    // Every name the protocol declares is a term of the vocabulary, in its category, the names of
+    // the explicit decisions its outcomes require included.
     let declared = |category: Category, names: Vec<&str>| {
         for name in names {
             let term = vocabulary::lookup(name).unwrap_or_else(|error| panic!("{error}"));
@@ -153,6 +153,14 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         Category::OutcomeId,
         ir.outcomes.keys().map(|id| id.as_str()).collect(),
     );
+    declared(
+        Category::DecisionName,
+        ir.outcomes
+            .values()
+            .filter_map(|outcome| outcome.requires.decision())
+            .map(|name| name.as_str())
+            .collect(),
+    );
     let names = |ids: Vec<&str>| ids.into_iter().map(str::to_owned).collect::<Vec<_>>();
     assert_eq!(
         names(ir.artifacts.keys().map(|id| id.as_str()).collect()),
@@ -172,6 +180,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "code_review",
             "objective_observation",
             "operational_observation",
+            "rollback_result",
             "test_result",
         ]
     );
@@ -190,6 +199,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     assert_eq!(
         names(ir.actions.keys().map(|id| id.as_str()).collect()),
         [
+            "release.rollback",
             "repository.edit",
             "repository.inspect",
             "repository.merge",
@@ -198,7 +208,13 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     );
     assert_eq!(
         names(ir.outcomes.keys().map(|id| id.as_str()).collect()),
-        ["accepted"]
+        [
+            "abandoned",
+            "accepted",
+            "declined",
+            "rolled_back",
+            "superseded",
+        ]
     );
 
     // `implementation.verified` is a conjunction whose one conjunct, for now, is a passing test
@@ -214,14 +230,21 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     assert_eq!(matching.kind.as_str(), "test_result");
     assert_eq!(matching.result.as_deref(), Some("pass"));
 
-    // Only merging needs authority, and it rests on the verified implementation and through it on
-    // test results; the other actions need nothing.
+    // Merging needs authority, and it rests on the verified implementation and through it on
+    // test results. Rolling back a release needs authority and nothing else, and may produce a
+    // rollback result. The other actions need nothing.
     let merge = &ir.actions[&ActionId::new("repository.merge")];
     let capabilities: Vec<&str> = merge.requires.iter().map(|id| id.as_str()).collect();
     assert_eq!(capabilities, ["repository.merge"]);
     let (claims, kinds) = reached(ir, &merge.precondition);
     assert_eq!(claims, ["implementation.verified"]);
     assert_eq!(kinds, ["test_result"]);
+    let rollback = &ir.actions[&ActionId::new("release.rollback")];
+    let capabilities: Vec<&str> = rollback.requires.iter().map(|id| id.as_str()).collect();
+    assert_eq!(capabilities, ["release.rollback"]);
+    assert_eq!(rollback.precondition, Predicate::All(Vec::new()));
+    let produces: Vec<&str> = rollback.may_produce.iter().map(|id| id.as_str()).collect();
+    assert_eq!(produces, ["rollback_result"]);
     for open in OPEN_ACTIONS {
         let declared = &ir.actions[&ActionId::new(open)];
         assert!(declared.requires.is_empty(), "{open}");
@@ -234,7 +257,8 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         .collect();
     assert_eq!(produces, ["test_result"]);
 
-    // Reading the repository and running the tests are reads; editing and merging are writes.
+    // Reading the repository and running the tests are reads; editing, merging and rolling back
+    // are writes.
     let effect = |action: &str| {
         ir.actions[&ActionId::new(action)]
             .effect
@@ -244,7 +268,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     for read in ["repository.inspect", "tests.run"] {
         assert_eq!(effect(read).as_deref(), Some("read"), "{read}");
     }
-    for write in ["repository.edit", "repository.merge"] {
+    for write in ["repository.edit", "repository.merge", "release.rollback"] {
         assert_eq!(effect(write).as_deref(), Some("write"), "{write}");
     }
 

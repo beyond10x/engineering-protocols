@@ -10,8 +10,9 @@
 //! an obligation *is*, and how one is decided, is Canon's.
 //!
 //! Spelling: claim and action ids are dotted, `<subject>.<predicate>`; artifact, evidence,
-//! obligation and outcome ids are single snake_case tokens of lowercase ASCII letters and
-//! underscores. Every term has a meaning. [`Vocabulary::from_yaml`] refuses a document that breaks
+//! obligation and outcome ids, and the names of the explicit decisions an outcome may require
+//! (`decision_name`), are single snake_case tokens of lowercase ASCII letters and underscores.
+//! Every term has a meaning. [`Vocabulary::from_yaml`] refuses a document that breaks
 //! either rule, the released one included.
 
 use std::collections::BTreeSet;
@@ -40,17 +41,19 @@ pub enum Category {
     ActionId,
     ObligationId,
     OutcomeId,
+    DecisionName,
 }
 
 impl Category {
     /// Every category, in declaration order.
-    pub const ALL: [Category; 6] = [
+    pub const ALL: [Category; 7] = [
         Category::ArtifactKind,
         Category::EvidenceKind,
         Category::ClaimId,
         Category::ActionId,
         Category::ObligationId,
         Category::OutcomeId,
+        Category::DecisionName,
     ];
 
     /// The category as a vocabulary document spells it.
@@ -62,6 +65,7 @@ impl Category {
             Category::ActionId => "action_id",
             Category::ObligationId => "obligation_id",
             Category::OutcomeId => "outcome_id",
+            Category::DecisionName => "decision_name",
         }
     }
 }
@@ -378,6 +382,33 @@ terms:
         for marking in [Marking::Core, Marking::SoftwareChange] {
             let written = serde_yaml_ng::to_string(&marking).unwrap();
             assert_eq!(written.trim_end(), marking.as_str());
+        }
+    }
+
+    /// A decision name is one snake_case token, as an outcome id is: dotted or otherwise
+    /// misspelled, it is refused naming the category.
+    #[test]
+    fn a_decision_name_is_one_token() {
+        let decision = ONE.replace("evidence_kind", "decision_name");
+        let read = Vocabulary::from_yaml(&decision).unwrap();
+        assert_eq!(
+            read.lookup("alpha").map(|t| t.category),
+            Ok(Category::DecisionName)
+        );
+        for id in [
+            "explicitly.declined",
+            "Explicitly_declined",
+            "_declined",
+            "declined2",
+        ] {
+            assert_eq!(
+                Vocabulary::from_yaml(&decision.replace("id: alpha", &format!("id: {id}"))),
+                Err(VocabularyError::Spelling {
+                    id: id.to_owned(),
+                    category: Category::DecisionName
+                }),
+                "`{id}`"
+            );
         }
     }
 
