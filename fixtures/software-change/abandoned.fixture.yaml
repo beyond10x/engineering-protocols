@@ -1,0 +1,100 @@
+format: els-fixture/1
+id: abandoned
+protocol: protocols/software-change/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# A change that stopped at implementation R1 without reaching any planned outcome, with no
+# evidence. A decision to abandon it taken at the case's earlier revision c0 applies to nothing at
+# c1; the same decision taken at c1 earns `abandoned`, and `accepted` stays blocked.
+case:
+  format: canon-case/1
+  id: CHG-2003
+  protocol: software.change
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: abandoned-at-c0
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: change-owner
+        case_revision: c0
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: abandoned
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: change-owner
+        case_revision: c1
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: legitimate

@@ -6,7 +6,8 @@ protocol:
   description: >-
     Deliver a change to a software system: implement it, verify the current implementation
     revision, merge it under authority, release and deploy it, and accept it once its objective is
-    realized.
+    realized; or close it declined, superseded or abandoned on an explicit decision, or rolled
+    back on a complete rollback result.
 
 artifacts:
   intent:
@@ -36,6 +37,9 @@ evidence_kinds:
     description: >-
       an observation of whether the intent's objective is met; its result is satisfied or
       unsatisfied
+  rollback_result:
+    description: >-
+      the result of returning a release to the one before it; its result is complete or partial
 
 claims:
   tests.pass:
@@ -107,6 +111,15 @@ actions:
       is: true
     requires:
       - capability: repository.merge
+  release.rollback:
+    description: >-
+      return to a previous release; needs authority to roll back, and invoking it earns no outcome
+      until a rollback result says it is complete
+    effect: write
+    requires:
+      - capability: release.rollback
+    may_produce:
+      - evidence: rollback_result
 
 outcomes:
   accepted:
@@ -118,3 +131,27 @@ outcomes:
         - claim: objective.realized
         - claim: deployment.healthy
         - claim: release.proven
+  declined:
+    description: >-
+      the case closed because the change was explicitly declined; needs no implementation
+    requires:
+      decision: explicitly_declined
+  rolled_back:
+    description: >-
+      the case closed with its release rolled back; needs a rollback result about the current
+      release revision that says the rollback is complete
+    requires:
+      evidence:
+        kind: rollback_result
+        result: complete
+        subject: release
+  superseded:
+    description: the case closed because another change explicitly superseded it
+    requires:
+      decision: explicitly_superseded
+  abandoned:
+    description: >-
+      the case closed because the change was explicitly abandoned without reaching any planned
+      outcome
+    requires:
+      decision: explicitly_abandoned

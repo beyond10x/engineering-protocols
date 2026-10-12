@@ -47,6 +47,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: blocked
 
   - id: tests-pass-r2
@@ -72,6 +73,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: approval-required
 
   - id: merge-approved
@@ -90,6 +92,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: admissible
 
   - id: review-rejected
@@ -115,6 +118,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: admissible
 
   - id: objective-unmet
@@ -140,6 +144,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: admissible
 
   - id: deployment-unhealthy
@@ -165,6 +170,7 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: admissible
 
   - id: tests-fail-r2
@@ -190,4 +196,5 @@ states:
         repository.inspect: admissible
         repository.edit: admissible
         tests.run: admissible
+        release.rollback: approval-required
         repository.merge: blocked
