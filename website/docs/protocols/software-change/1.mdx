@@ -3,7 +3,7 @@
 id: "1"
 title: "software.change/1"
 sidebar_label: "software.change/1"
-description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized."
+description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result."
 slug: /protocols/software-change/1
 hide_table_of_contents: true
 custom_edit_url: null
@@ -11,7 +11,7 @@ custom_edit_url: null
 
 import graph from '@site/data/protocol-graphs/software-change-1.json';
 
-Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized.
+Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result.
 
 - **Id:** `software.change`
 - **Revision:** 1
@@ -29,6 +29,7 @@ What can be done in a case: what it needs first, which authority it requires, th
 
 | Action | Description | Precondition | Requires capability | Effect | May produce |
 |---|---|---|---|---|---|
+| `release.rollback` | return to a previous release; needs authority to roll back, and invoking it earns no outcome until a rollback result says it is complete | *none* | `release.rollback` | `write` | `rollback_result` |
 | `repository.edit` | change the repository's working revision | *none* | *no authority* | `write` | *no evidence* |
 | `repository.inspect` | read the repository | *none* | *no authority* | `read` | *no evidence* |
 | `repository.merge` | merge a revision into the repository's mainline; needs the current implementation revision verified and authority to merge, never only a connection to the repository host | `implementation.verified` is **TRUE** | `repository.merge` | `write` | *no evidence* |
@@ -44,6 +45,7 @@ The kinds of evidence this protocol admits.
 | `code_review` | a review of an implementation revision; its result is approved or rejected | *no action* | `implementation.reviewed` |
 | `objective_observation` | an observation of whether the intent's objective is met; its result is satisfied or unsatisfied | *no action* | `objective.realized` |
 | `operational_observation` | an observation of the running system; its result is healthy or unhealthy | *no action* | `deployment.healthy` |
+| `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | `release.rollback` | *no claim* |
 | `test_result` | the result of running tests against an implementation revision; its result is pass or fail | `tests.run` | `implementation.verified`, `tests.pass` |
 
 ## Claims
@@ -71,7 +73,11 @@ The legitimate terminal interpretations of a case, and what each requires.
 
 | Outcome | Description | Requires |
 |---|---|---|
+| `abandoned` | the case closed because the change was explicitly abandoned without reaching any planned outcome | decision `explicitly_abandoned` |
 | `accepted` | the case closed with its result accepted; needs the release proven, the deployment healthy and the objective realized | all of (`deployment.healthy` is **TRUE**; `objective.realized` is **TRUE**; `release.proven` is **TRUE**) |
+| `declined` | the case closed because the change was explicitly declined; needs no implementation | decision `explicitly_declined` |
+| `rolled_back` | the case closed with its release rolled back; needs a rollback result about the current release revision that says the rollback is complete | evidence `rollback_result` with result `complete` about `release` |
+| `superseded` | the case closed because another change explicitly superseded it | decision `explicitly_superseded` |
 
 ## Artifacts
 

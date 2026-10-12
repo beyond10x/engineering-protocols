@@ -1,0 +1,98 @@
+format: els-fixture/1
+id: rolled-back-complete
+protocol: protocols/software-change/1.yaml
+at: "2026-10-12T12:00:00Z"
+
+# The case of `rolled-back` with the rollback authorized and no partial result. A complete result
+# about release v1 is about another revision of the release than the current v2: it is excluded,
+# so `rolled_back` is UNKNOWN, not TRUE, and stays blocked. A complete result about v2 earns it.
+case:
+  format: canon-case/1
+  id: CHG-2004
+  protocol: software.change
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R2}
+    release: {revision: v2}
+    deployment: {revision: d2}
+
+states:
+  - id: authorized
+    add_authority:
+      - {capability: release.rollback, decision: granted}
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: admissible
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: complete-v1
+    add_evidence:
+      - observed_at: "2026-10-12T10:10:00Z"
+        record: {format: canon-evidence/1, id: rollback-v1-complete, kind: rollback_result,
+                 result: complete, subject: release, subject_revision: v1}
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: admissible
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: complete-v2
+    add_evidence:
+      - observed_at: "2026-10-12T10:20:00Z"
+        record: {format: canon-evidence/1, id: rollback-v2-complete, kind: rollback_result,
+                 result: complete, subject: release, subject_revision: v2}
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+      actions:
+        repository.inspect: admissible
+        repository.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: admissible
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        rolled_back: legitimate
+        superseded: blocked
+        abandoned: blocked

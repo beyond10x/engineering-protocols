@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 36 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 44 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -38,6 +38,7 @@ Category `evidence_kind`.
 | `test_result` | `software.change` | the result of running tests against an implementation revision |
 | `code_review` | `software.change` | a review of an implementation revision |
 | `build_provenance` | `software.change` | the record of how a release was built from an implementation |
+| `rollback_result` | `core` | the result of returning to a previous release, complete or partial |
 
 ## Claims
 
@@ -88,3 +89,17 @@ Category `outcome_id`.
 | Term | Marking | Meaning |
 |---|---|---|
 | `accepted` | `core` | the case closed with its result accepted |
+| `declined` | `core` | the case closed on a decision not to carry out its intent |
+| `rolled_back` | `core` | the case closed with its release returned to a previous one |
+| `superseded` | `core` | the case closed on a decision that another case replaces it |
+| `abandoned` | `core` | the case closed on a decision to stop before it reached any planned outcome |
+
+## Decisions
+
+Category `decision_name`.
+
+| Term | Marking | Meaning |
+|---|---|---|
+| `explicitly_declined` | `core` | a recorded decision not to carry out the case's intent |
+| `explicitly_superseded` | `core` | a recorded decision that another case replaces this one |
+| `explicitly_abandoned` | `core` | a recorded decision to stop the case before it reaches any planned outcome |

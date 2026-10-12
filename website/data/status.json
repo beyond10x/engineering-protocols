@@ -17,7 +17,7 @@
     },
     {
       "area": "Foundations",
-      "detail": "36 terms, each with its category, marking and meaning, in protocols/vocabulary.yaml.",
+      "detail": "44 terms, each with its category, marking and meaning, in protocols/vocabulary.yaml.",
       "href": "/docs/vocabulary",
       "label": "Engineering vocabulary",
       "status": "shipped"
@@ -43,7 +43,7 @@
     },
     {
       "area": "Protocols",
-      "detail": "Canon protocol/1 data declaring 6 claims, 5 evidence kinds, 4 actions and 1 outcome, with every evidence match bound to its artifact.",
+      "detail": "Canon protocol/1 data declaring 6 claims, 6 evidence kinds, 5 actions and 5 outcomes, with every evidence match bound to its artifact.",
       "href": "/docs/protocols/software-change/1",
       "label": "software.change/1",
       "status": "shipped"

@@ -394,6 +394,7 @@ fn rows_in_document(text: &str) -> Vec<Row> {
                 "action_id" => Category::ActionId,
                 "obligation_id" => Category::ObligationId,
                 "outcome_id" => Category::OutcomeId,
+                "decision_name" => Category::DecisionName,
                 other => panic!("unknown category `{other}`"),
             };
             let marking = match field("marking").as_str() {

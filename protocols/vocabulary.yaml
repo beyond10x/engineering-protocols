@@ -145,3 +145,35 @@ terms:
     category: obligation_id
     marking: core
     meaning: establish why the incident happened
+  - id: declined
+    category: outcome_id
+    marking: core
+    meaning: the case closed on a decision not to carry out its intent
+  - id: rolled_back
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its release returned to a previous one
+  - id: superseded
+    category: outcome_id
+    marking: core
+    meaning: the case closed on a decision that another case replaces it
+  - id: abandoned
+    category: outcome_id
+    marking: core
+    meaning: the case closed on a decision to stop before it reached any planned outcome
+  - id: rollback_result
+    category: evidence_kind
+    marking: core
+    meaning: the result of returning to a previous release, complete or partial
+  - id: explicitly_declined
+    category: decision_name
+    marking: core
+    meaning: a recorded decision not to carry out the case's intent
+  - id: explicitly_superseded
+    category: decision_name
+    marking: core
+    meaning: a recorded decision that another case replaces this one
+  - id: explicitly_abandoned
+    category: decision_name
+    marking: core
+    meaning: a recorded decision to stop the case before it reaches any planned outcome
