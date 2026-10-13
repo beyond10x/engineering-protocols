@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T15:43:04Z",
+  "actor": "human:timo",
+  "artifact": "story:stale-evidence-fixtures",
+  "kind": "story",
+  "revision": 16,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p b10x-canon-engineering --locked --no-fail-fast on 6d96f29 (wave merge 3e2b82a): 165 passed, 0 failed, exit 0"
+  }
+}

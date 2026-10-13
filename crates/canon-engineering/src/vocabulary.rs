@@ -11,8 +11,9 @@
 //!
 //! Spelling: claim and action ids are dotted, `<subject>.<predicate>`; artifact, evidence and
 //! outcome ids, the names of the explicit decisions an outcome may require (`decision_name`), the
-//! case inputs a protocol declares (`case_input`) and the values they take (`input_value`) are
-//! single snake_case tokens of lowercase ASCII letters and underscores. An obligation id is either:
+//! case inputs a protocol declares (`case_input`), the values they take (`input_value`) and the
+//! independence dimensions an evidence match may demand (`independence_dimension`) are single
+//! snake_case tokens of lowercase ASCII letters and underscores. An obligation id is either:
 //! one token (`restore_service`) or dotted (`tests.required`). Every term has a meaning.
 //! [`Vocabulary::from_yaml`] refuses a document that breaks either rule, the released one
 //! included.
@@ -48,11 +49,14 @@ pub enum Category {
     CaseInput,
     /// A value a case input may take.
     InputValue,
+    /// An independence dimension: a relation between who produced a record and the case's work
+    /// that an evidence match may demand (Canon's `independence_dimensions`).
+    IndependenceDimension,
 }
 
 impl Category {
     /// Every category, in declaration order.
-    pub const ALL: [Category; 9] = [
+    pub const ALL: [Category; 10] = [
         Category::ArtifactKind,
         Category::EvidenceKind,
         Category::ClaimId,
@@ -62,6 +66,7 @@ impl Category {
         Category::DecisionName,
         Category::CaseInput,
         Category::InputValue,
+        Category::IndependenceDimension,
     ];
 
     /// The category as a vocabulary document spells it.
@@ -76,6 +81,7 @@ impl Category {
             Category::DecisionName => "decision_name",
             Category::CaseInput => "case_input",
             Category::InputValue => "input_value",
+            Category::IndependenceDimension => "independence_dimension",
         }
     }
 }
@@ -344,7 +350,8 @@ fn spelling(category: Category) -> Spelling {
         | Category::OutcomeId
         | Category::DecisionName
         | Category::CaseInput
-        | Category::InputValue => Spelling::Token,
+        | Category::InputValue
+        | Category::IndependenceDimension => Spelling::Token,
     }
 }
 
@@ -444,11 +451,15 @@ terms:
         }
     }
 
-    /// A case input and an input value are one snake_case token each: dotted or otherwise
-    /// misspelled, they are refused naming the category.
+    /// A case input, an input value and an independence dimension are one snake_case token each:
+    /// dotted or otherwise misspelled, they are refused naming the category.
     #[test]
-    fn a_case_input_and_an_input_value_are_one_token() {
-        for category in [Category::CaseInput, Category::InputValue] {
+    fn a_case_input_an_input_value_and_an_independence_dimension_are_one_token() {
+        for category in [
+            Category::CaseInput,
+            Category::InputValue,
+            Category::IndependenceDimension,
+        ] {
             let document = ONE.replace("evidence_kind", category.as_str());
             let read = Vocabulary::from_yaml(&document).unwrap();
             assert_eq!(read.lookup("alpha").map(|t| t.category), Ok(category));

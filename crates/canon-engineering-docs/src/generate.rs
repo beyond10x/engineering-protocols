@@ -126,6 +126,7 @@ fn category_title(category: Category) -> &'static str {
         Category::DecisionName => "Decisions",
         Category::CaseInput => "Case inputs",
         Category::InputValue => "Input values",
+        Category::IndependenceDimension => "Independence dimensions",
     }
 }
 
@@ -564,7 +565,10 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 84);
+        assert_eq!(vocabulary.terms().len(), 93);
+        assert!(
+            page.contains("\n## Independence dimensions\n\nCategory `independence_dimension`.")
+        );
         for term in vocabulary.terms() {
             assert!(
                 page.contains(&format!("\n| `{}` |", term.id)),

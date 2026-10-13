@@ -25,7 +25,9 @@
 //! format: els-fixture/1
 //! id: smoke                              # the fixture's name; the file is <id>.fixture.yaml
 //! protocol: fixtures/smoke/protocol.yaml # the protocol/1 document the fixture evaluates
-//! at: "2026-10-04T00:00:00Z"             # the evaluation instant, YYYY-MM-DDTHH:MM:SSZ (UTC)
+//! at: "2026-10-04T00:00:00Z"             # the evaluation instant, YYYY-MM-DDTHH:MM:SSZ (UTC),
+//!                                        # of the first state and those after it until one
+//!                                        # gives its own
 //! case:                                  # a canon-case/1 document: the case and the current
 //!   format: canon-case/1                 # revision of every artifact the protocol declares
 //!   id: SMOKE-1
@@ -40,7 +42,8 @@
 //!         service.healthy: unknown       # true, false or unknown
 //!   - id: healthy-observed
 //!     add_evidence:
-//!       - observed_at: "2026-10-03T23:00:00Z"   # when it was observed, not after `at`
+//!       - observed_at: "2026-10-03T23:00:00Z"   # when it was observed, not after the
+//!                                               # state's evaluation instant
 //!         record: {format: canon-evidence/1, id: observation-1, kind: operational_observation,
 //!                  result: healthy, subject: service, subject_revision: r1}
 //!     expect:
@@ -52,7 +55,10 @@
 //!
 //! ```yaml
 //!   - id: rolled-back
-//!     set_revisions:                     # the case snapshot's current revision of an artifact
+//!     at: "2026-10-04T00:31:00Z"         # the evaluation instant of this state and those after
+//!                                        # it until one gives its own; not before the instant
+//!                                        # of the state before it (the fixture's, for the first)
+//!     set_revisions:                    # the case snapshot's current revision of an artifact
 //!       service: r2                      # the case lists, from this state on
 //!     set_inputs:                        # the case snapshot's value of a case input the case
 //!       risk: critical                   # gives, from this state on
@@ -72,8 +78,9 @@
 //!         abandoned: legitimate          # legitimate or blocked
 //! ```
 //!
-//! States are cumulative: a state is evaluated over its own `add_evidence`, `add_authority`,
-//! `add_decisions`, `set_revisions` and `set_inputs` and those of every state before it. A fixture
+//! States are cumulative: a state is evaluated, at its instant, over its own `add_evidence`,
+//! `add_authority`, `add_decisions`, `set_revisions` and `set_inputs` and those of every state
+//! before it. A fixture
 //! cannot carry an input the harness would drop or read as something else: an unknown key is
 //! refused, a key written with no value (`add_evidence:`) is refused as Canon refuses one rather
 //! than read as its default, a claim, obligation, action, outcome, artifact or case input written
@@ -105,19 +112,30 @@
 //! wait on decisions gives its case one. A fixture in which no state so far gives `add_decisions`
 //! passes none.
 //!
-//! The evaluation instant is an input of the fixture, never read from a clock. The harness does
-//! not pass the instant to Canon yet, so nothing expires; the instant reaches Canon with
-//! story:stale-evidence-fixtures. It refuses, when loading, a fixture holding evidence observed
-//! after its instant, instead of evaluating evidence the instant excludes. Each record reaches
-//! Canon with its entry's `observed_at` as the record's own (`canon-evidence/1` reads one), which
-//! is what Canon's order forms, `first` and `before`, order the evidence history by. A record may
-//! also write its own `observed_at`: it must be an instant, not after the fixture's, and the same
-//! as its entry's `observed_at`, or the fixture is refused. Instants are written in the one form
-//! above and name a day that exists in its month (leap years counted), so they compare as text.
+//! The evaluation instant is an input of the fixture, never read from a clock. Each state is
+//! evaluated at its own instant: the state's `at`, or else that of the state before it, or else,
+//! for the first, the fixture's `at`. The harness passes it to Canon (`--at`, `Supplied::at`),
+//! which excludes a record older than its kind's `max_age` at that instant as `expired`, so one
+//! fixture can evaluate the same observation before and after its horizon. A state's `at` must be
+//! an instant and not before the instant of the state before it (the fixture's, for the first),
+//! so time in a fixture never runs backwards and no state is evaluated before evidence an earlier
+//! state already holds; a fixture that breaks either rule is refused when loading, naming the
+//! state. It also refuses a state adding evidence observed after the state's instant, instead of
+//! evaluating evidence the instant excludes. Each record reaches Canon with its entry's
+//! `observed_at` as the record's own (`canon-evidence/1` reads one), which is what Canon's order
+//! forms, `first` and `before`, order the evidence history by and what `max_age` is counted from.
+//! A record may also write its own `observed_at`: it must be an instant, not after the state's
+//! instant, and the same as its entry's `observed_at`, or the fixture is refused. Instants are
+//! written in the one form above and name a day that exists in its month (leap years counted), so
+//! they compare as text.
 //!
-//! Independence decisions are not part of the format yet: Canon does not evaluate them, and a
-//! fixture that gives them (`independence:`) is refused as having an unknown key. They join the
-//! format with the Canon capability that reads them.
+//! Independence decisions are part of the case: a fixture's `case` may give Canon's `canon-case/1`
+//! `independence` map (`independence: {p1: [], p2: [different_principal]}`), the dimensions on
+//! which each evidence producer is independent of the case's work, as the trusted context that
+//! writes the case resolved them. Canon reads it with the case, refuses a dimension the protocol
+//! does not declare, and excludes a record whose `producer` it does not list on every dimension an
+//! evidence match demands (`independent_on`) as `not_independent`. The harness reads no
+//! independence of its own: `independence:` anywhere but in the case is an unknown key.
 //!
 //! The items only later protocol stories call carry `#[allow(dead_code)]`, each marked as
 //! later-story API; everything else is used by this story's tests.
@@ -243,6 +261,9 @@ pub struct Fixture {
 #[derive(Debug, Clone)]
 struct State {
     id: String,
+    /// The instant the state is evaluated at: its own `at`, or else that of the state before it,
+    /// or else the fixture's.
+    at: String,
     add_evidence: Vec<EvidenceRecord>,
     /// The fixture's case with every revision set by this state and the states before it.
     case: Case,
@@ -292,6 +313,8 @@ struct Written {
 struct WrittenState {
     #[serde(deserialize_with = "required")]
     id: String,
+    #[serde(default, deserialize_with = "present")]
+    at: Option<String>,
     #[serde(default, deserialize_with = "revisions_once")]
     set_revisions: Option<BTreeMap<String, Value>>,
     #[serde(default, deserialize_with = "inputs_once")]
@@ -525,9 +548,32 @@ impl Fixture {
         let mut state_case = case.clone();
         let mut authority: Option<Vec<Value>> = None;
         let mut decisions: Option<Vec<Value>> = None;
+        // The instant of the state before the one being read; the fixture's before the first.
+        let mut at = written.at.clone();
         for state in written.states {
             if !seen.insert(state.id.clone()) {
                 return refuse(format!("state `{}` is given more than once", state.id));
+            }
+            if let Some(own) = &state.at {
+                if !is_instant(own) {
+                    return refuse(format!(
+                        "state `{}`: evaluation instant `{own}` is not written \
+                         YYYY-MM-DDTHH:MM:SSZ",
+                        state.id
+                    ));
+                }
+                if *own < at {
+                    let before = if states.is_empty() {
+                        "the fixture's evaluation instant"
+                    } else {
+                        "the evaluation instant of the state before it"
+                    };
+                    return refuse(format!(
+                        "state `{}`: evaluation instant `{own}` is before {before}, `{at}`",
+                        state.id
+                    ));
+                }
+                at.clone_from(own);
             }
             if let Some(revisions) = &state.set_revisions {
                 for (artifact, revision) in revisions {
@@ -601,11 +647,11 @@ impl Fixture {
                         state.id, observation.observed_at
                     ));
                 }
-                if observation.observed_at > written.at {
+                if observation.observed_at > at {
                     return refuse(format!(
                         "state `{}`: evidence `{evidence}` is observed at `{}`, after the \
-                         evaluation instant `{}`",
-                        state.id, observation.observed_at, written.at
+                         evaluation instant `{at}`",
+                        state.id, observation.observed_at
                     ));
                 }
                 // A record may write its own `observed_at` (`canon-evidence/1` reads one). It is
@@ -619,11 +665,11 @@ impl Fixture {
                             state.id
                         ));
                     }
-                    if own > written.at.as_str() {
+                    if own > at.as_str() {
                         return refuse(format!(
                             "state `{}`: evidence `{evidence}` record is observed at `{own}`, \
-                             after the evaluation instant `{}`",
-                            state.id, written.at
+                             after the evaluation instant `{at}`",
+                            state.id
                         ));
                     }
                     if own != observation.observed_at {
@@ -635,12 +681,13 @@ impl Fixture {
                     }
                 }
                 // The record reaches Canon observed at its entry's instant, which the order forms
-                // read; without the evaluation instant nothing expires.
+                // read and its kind's `max_age`, if any, is counted from.
                 record.observed_at = Some(Instant::new(observation.observed_at.as_str()));
                 add_evidence.push(record);
             }
             states.push(State {
                 id: state.id,
+                at: at.clone(),
                 add_evidence,
                 case: state_case.clone(),
                 authority: authority_text,
@@ -668,9 +715,24 @@ impl Fixture {
         &self.protocol
     }
 
-    /// The evaluation instant.
+    /// The fixture's evaluation instant: that of its first state, unless the state gives its own.
     pub fn at(&self) -> &str {
         &self.at
+    }
+
+    /// The instant state `state` is evaluated at: its own `at`, or else that of the state before
+    /// it, or else the fixture's. Panics when the fixture has no such state.
+    #[allow(dead_code)] // fixture_harness.rs reads it; a protocol test need not
+    pub fn instant(&self, state: &str) -> &str {
+        &self.state(state).at
+    }
+
+    /// The state `state`. Panics when the fixture has no such state.
+    fn state(&self, state: &str) -> &State {
+        self.states
+            .iter()
+            .find(|candidate| candidate.id == state)
+            .unwrap_or_else(|| panic!("fixture `{}` has no state `{state}`", self.id))
     }
 
     /// The fixture's case snapshot, before any state sets a revision.
@@ -705,18 +767,14 @@ impl Fixture {
     }
 
     /// Canon's evaluation of state `state`, unchanged: of the state's case snapshot, its evidence,
-    /// its authority decisions and its explicit decisions. Panics when the fixture has no such
-    /// state.
+    /// its authority decisions and its explicit decisions, at the state's instant. Panics when the
+    /// fixture has no such state.
     pub fn evaluate(&self, compiled: &Compiled, state: &str) -> Result<Decision, Refusal> {
-        let found = self
-            .states
-            .iter()
-            .find(|candidate| candidate.id == state)
-            .unwrap_or_else(|| panic!("fixture `{}` has no state `{state}`", self.id));
+        let found = self.state(state);
         let supplied = eval::Supplied {
             authority: found.authority.as_deref(),
+            at: Some(&found.at),
             decisions: found.decisions.as_deref(),
-            ..eval::Supplied::default()
         };
         eval::evaluate_with(compiled.ir(), &found.case, &self.evidence(state), supplied)
     }

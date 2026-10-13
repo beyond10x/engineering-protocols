@@ -17,7 +17,7 @@ page, with its graph, is [support.triage/1](../protocols/support-triage/1.mdx).
   {label: 'Protocol and three fixtures', status: 'shipped', detail: 'protocols/support-triage/1.yaml; fixtures tri-48213, tri-48214 and tri-48215; canon check clean.'},
   {label: 'Classify before route', status: 'shipped', detail: 'By precondition: ticket.route is blocked until the classification is proposed, reviewed and approved for the current revision.'},
   {label: 'Current revision and a fresh read', status: 'shipped', detail: 'Evidence is bound to the ticket revision; a ticket read expires after 15 minutes.'},
-  {label: 'Review by someone other than the proposer', status: 'planned', detail: 'Evidence independence; not in Canon.'},
+  {label: 'Review by someone other than the proposer', status: 'planned', detail: 'Evidence independence is in Canon 0.4.0 (independent_on); support.triage/1 does not demand it yet.'},
   {label: 'Capabilities scoped to one ticket or queue', status: 'planned', detail: 'The scope field of decision record 0083; not in Canon.'},
   {label: 'Escalation opens an incident case', status: 'planned', detail: 'case.open and case_outcome, decision record 0081; not in Canon.'},
 ]} />
@@ -55,12 +55,16 @@ an action of this protocol.
 
 | Gap | What the protocol does instead | Status |
 |---|---|---|
-| The review must come from someone other than the proposer | nothing; the reviewer holds the `classification.review` capability, which a composition grants | planned |
-| The review approves *this* classification record, made before it | both are bound to the current ticket revision; Canon has no evidence-order predicate and no reference from one record to another | planned |
+| The review must come from someone other than the proposer | nothing; the reviewer holds the `classification.review` capability, which a composition grants. Canon 0.4.0 can demand that a record's producer be independent of the case's work (`independent_on`), but this protocol declares no independence dimension and demands none | planned |
+| The review approves *this* classification record, made before it | both are bound to the current ticket revision; the protocol uses none of Canon's evidence-order forms (`first`, `before`), and Canon has no reference from one record to another | planned |
 | A category and a priority from the deployment's own lists | a classification is a record; Canon matches one result text and reads no structured value | planned |
 | Routing only to queues the case may use | the capability is unscoped; the scope of decision record 0083 is not in Canon | planned |
 | An escalation opens an `incident.response` case whose outcome counts here | the escalation is a record; `case.open` and `case_outcome` of decision record 0081 are not in Canon | planned |
 | A second classification after a rejection, on the same revision | a rejecting and an approving review of one revision make `classification.reviewed` `UNKNOWN`; the case goes to a person | planned |
 
 The 15-minute expiry of a ticket read is Canon freshness and is shipped. The fixture harness passes
-no evaluation instant, so the expiry is tested with Canon's evaluator directly rather than in a fixture.
+each state's evaluation instant to Canon. Each triage fixture evaluates every state at the
+fixture's one instant, at which its read of the ticket's current revision is fresh; the expiry is
+tested by evaluating `tri-48213`'s routed state with Canon's evaluator at 15 minutes after the
+current read, where triage still holds, and at 16, where the read is expired and `triaged` is no
+longer legitimate.

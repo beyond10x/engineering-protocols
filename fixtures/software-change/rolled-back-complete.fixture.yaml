@@ -13,6 +13,7 @@ case:
   inputs:
     risk: standard
     change_kind: refactor
+    affects_security_boundary: false
   revision: c1
   artifacts:
     intent: {revision: i1}
@@ -37,6 +38,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -66,6 +68,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -95,6 +98,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible

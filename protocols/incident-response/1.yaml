@@ -7,7 +7,13 @@ protocol:
     Respond to an incident through two obligations that progress independently: restore_service,
     on which emergency mode is left, and investigate_cause, which stays open after emergency mode
     ends until a cause analysis of a current revision of the service or the release identifies
-    the cause.
+    the cause. A rollback of the release is verified only on a complete rollback result from a
+    verifier the case lists as another principal than the one who rolled it back. The service is
+    healthy only on an observation at most 30 minutes old.
+
+independence_dimensions:
+  different_principal:
+    description: the producer is another principal than the one who did the case's work
 
 artifacts:
   service:
@@ -19,9 +25,15 @@ evidence_kinds:
   impact_assessment:
     description: an assessment of who and what an incident affects
   operational_observation:
-    description: an observation of the running system; its result is healthy or unhealthy
+    description: >-
+      an observation of the running system; its result is healthy or unhealthy, and it applies
+      for 30 minutes after it is observed, after which it no longer says anything
+    max_age: 30m
   cause_analysis:
     description: an analysis of why an incident happened
+  rollback_result:
+    description: >-
+      the result of returning a release to the one before it; its result is complete or partial
 
 claims:
   impact.bounded:
@@ -44,6 +56,16 @@ claims:
       evidence:
         kind: cause_analysis
         result: identified
+  rollback.verified:
+    description: >-
+      the release's rollback is complete, by a rollback result from a producer the case lists as
+      another principal than the one who rolled it back
+    true_when:
+      evidence:
+        kind: rollback_result
+        result: complete
+        subject: release
+        independent_on: [different_principal]
 
 obligations:
   restore_service:
@@ -86,6 +108,8 @@ actions:
     effect: write
     requires:
       - capability: release.rollback
+    may_produce:
+      - evidence: rollback_result
   emergency.leave:
     description: >-
       leave emergency mode; admissible once restore_service is discharged and the impact is

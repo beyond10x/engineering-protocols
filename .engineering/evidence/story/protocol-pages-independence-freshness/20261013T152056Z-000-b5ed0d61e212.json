@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T15:20:56Z",
+  "actor": "human:timo",
+  "artifact": "story:protocol-pages-independence-freshness",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p canon-engineering-docs --locked --no-fail-fast on ffb708f: exit 101 (red, test first): graph::tests::an_evidence_edge_carries_the_independence_its_match_demands, protocol::tests::the_page_shows_independence_demands_and_evidence_horizons and the 3 cases of tests/protocol_pages_independence_freshness.rs fail; 57 others pass"
+  }
+}

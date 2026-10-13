@@ -212,7 +212,7 @@ fn every_artifact_the_incident_protocol_and_inc_492_name_is_a_vocabulary_artifac
         .for_each(|action| collect(&action.precondition));
     assert_eq!(
         subjects.iter().collect::<Vec<_>>(),
-        ["service"],
+        ["release", "service"],
         "the subjects the protocol's matches name"
     );
     for subject in subjects {

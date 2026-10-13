@@ -10,7 +10,9 @@ protocol:
     back on a complete rollback result. A case fixes its risk, which selects the obligations that
     apply, and its change kind, which selects whether a regression must be reproduced before the
     implementation is edited, and whether its regression test must fail on its first run, before
-    the implementation is first changed.
+    the implementation is first changed; and whether it affects a security boundary, in which case
+    the implementation is verified only once a principal other than the implementer approved its
+    security review. A deployment is healthy only on an observation at most 30 minutes old.
 
 case:
   inputs:
@@ -25,6 +27,17 @@ case:
         implementation is edited, and its regression test must fail on its first run, before the
         implementation is first changed
       values: [feature, bugfix, refactor]
+    affects_security_boundary:
+      description: >-
+        whether the change affects a security boundary; one that does needs an approving security
+        review from a principal other than the implementer before its implementation is verified
+      values: [true, false]
+
+independence_dimensions:
+  different_principal:
+    description: the producer is another principal than the one who did the case's work
+  different_agent_run:
+    description: the producer is another agent run than the one that did the case's work
 
 artifacts:
   intent:
@@ -47,7 +60,10 @@ evidence_kinds:
   code_review:
     description: a review of an implementation revision; its result is approved or rejected
   operational_observation:
-    description: an observation of the running system; its result is healthy or unhealthy
+    description: >-
+      an observation of the running system; its result is healthy or unhealthy, and it applies
+      for 30 minutes after it is observed, after which it no longer says anything
+    max_age: 30m
   build_provenance:
     description: the record of how a release was built from an implementation
   objective_observation:
@@ -64,6 +80,10 @@ evidence_kinds:
   implementation_change:
     description: >-
       the record that the implementation was changed, moving it to a new revision
+  security_review:
+    description: >-
+      a review of an implementation revision's effect on a security boundary; its result is
+      approved or rejected
 
 claims:
   tests.pass:
@@ -80,14 +100,30 @@ claims:
         kind: code_review
         result: approved
         subject: implementation
+  security.reviewed:
+    description: >-
+      the current implementation revision's security review is approved by a producer the case
+      lists as another principal than the implementer
+    true_when:
+      evidence:
+        kind: security_review
+        result: approved
+        subject: implementation
+        independent_on: [different_principal]
   implementation.verified:
-    description: the current implementation revision is verified
+    description: >-
+      the current implementation revision is verified: its tests pass and, when the change
+      affects a security boundary, it is security reviewed
     true_when:
       all:
         - evidence:
             kind: test_result
             result: pass
             subject: implementation
+        - any:
+            - input: affects_security_boundary
+              in: [false]
+            - claim: security.reviewed
   release.proven:
     description: >-
       the current implementation revision is verified and the current release revision carries
@@ -182,6 +218,15 @@ obligations:
       in: [bugfix]
     discharged_when:
       claim: regression.shown_first
+  security_review.required:
+    description: >-
+      the current implementation revision is security reviewed by another principal than the
+      implementer; applies to a change that affects a security boundary, at every risk
+    applicable_when:
+      input: affects_security_boundary
+      in: [true]
+    discharged_when:
+      claim: security.reviewed
 
 actions:
   repository.inspect:

@@ -21,6 +21,11 @@
       "to": "evidence:cause_analysis"
     },
     {
+      "from": "action:release.rollback",
+      "kind": "produces",
+      "to": "evidence:rollback_result"
+    },
+    {
       "from": "evidence:cause_analysis",
       "kind": "establishes",
       "qualifier": "identified",
@@ -31,6 +36,12 @@
       "kind": "establishes",
       "qualifier": "bounded about service",
       "to": "claim:impact.bounded"
+    },
+    {
+      "from": "evidence:rollback_result",
+      "kind": "establishes",
+      "qualifier": "complete about release, independent on different_principal",
+      "to": "claim:rollback.verified"
     },
     {
       "from": "evidence:operational_observation",
@@ -135,10 +146,16 @@
       "name": "impact_assessment"
     },
     {
-      "description": "an observation of the running system; its result is healthy or unhealthy",
+      "description": "an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything",
       "id": "evidence:operational_observation",
       "kind": "evidence",
       "name": "operational_observation"
+    },
+    {
+      "description": "the result of returning a release to the one before it; its result is complete or partial",
+      "id": "evidence:rollback_result",
+      "kind": "evidence",
+      "name": "rollback_result"
     },
     {
       "description": "the incident's cause is known",
@@ -161,6 +178,18 @@
         "evidence": {
           "kind": "impact_assessment",
           "result": "bounded"
+        }
+      }
+    },
+    {
+      "description": "the release's rollback is complete, by a rollback result from a producer the case lists as another principal than the one who rolled it back",
+      "id": "claim:rollback.verified",
+      "kind": "claim",
+      "name": "rollback.verified",
+      "predicate": {
+        "evidence": {
+          "kind": "rollback_result",
+          "result": "complete"
         }
       }
     },
@@ -200,7 +229,7 @@
     }
   ],
   "protocol": {
-    "description": "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause.",
+    "description": "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back. The service is healthy only on an observation at most 30 minutes old.",
     "id": "incident.response",
     "revision": 1,
     "source": "protocols/incident-response/1.yaml"

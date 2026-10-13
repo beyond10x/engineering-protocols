@@ -13,6 +13,7 @@ case:
   inputs:
     risk: trivial
     change_kind: refactor
+    affects_security_boundary: false
   artifacts:
     intent: {revision: i1}
     system_specification: {revision: s1}
@@ -36,12 +37,14 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       obligations:
         tests.required: open
         review.required: not_applicable
         provenance.required: not_applicable
         health.required: not_applicable
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: &actions
         repository.inspect: admissible
         tests.write: admissible
@@ -68,6 +71,7 @@ states:
         provenance.required: not_applicable
         health.required: not_applicable
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: *actions
       outcomes: *outcomes
 
@@ -83,6 +87,7 @@ states:
         provenance.required: open
         health.required: not_applicable
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: *actions
       outcomes: *outcomes
 
@@ -98,5 +103,6 @@ states:
         provenance.required: open
         health.required: open
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: *actions
       outcomes: *outcomes

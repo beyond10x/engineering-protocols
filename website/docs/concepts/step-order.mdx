@@ -110,7 +110,7 @@ on an unrelated flake satisfies it. Nothing yet says that the failing test is a 
 | The failing result must come before the fix | the evidence-order forms: the first `regression_test_result` is `fail`, and it precedes the first recorded `implementation_change` | shipped |
 | Red and green must be about the same test, across the fix | revision order: red on revision R1 (test added, fix absent), green on R2 descended from R1, same test id | decided, later |
 | A test edit must not touch the implementation | a path scope on capabilities that `tests.write` and `implementation.edit` would require | decided, not built |
-| The red result must come from the test runner, not the agent | evidence independence, declared on the evidence kind or the requirement | decided, syntax open |
+| The red result must come from the test runner, not the agent | evidence independence: Canon 0.4.0's `independent_on` on an evidence match, which `software.change/1` demands of its security review but of no test result | decided, not applied |
 
 Until those land, the order is enforced at the moment an action is invoked (the agent cannot edit the
 implementation before red exists) and recorded as the `red_first.required` obligation, and the rest

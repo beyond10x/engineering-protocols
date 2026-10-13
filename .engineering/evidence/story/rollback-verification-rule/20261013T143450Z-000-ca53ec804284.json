@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T14:34:50Z",
+  "actor": "human:timo",
+  "artifact": "story:rollback-verification-rule",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --locked -p b10x-canon-engineering --test rollback_verification_rule on 4e2b4c6: exit 101 (red, protocol first; fails at item 4 only)"
+  }
+}

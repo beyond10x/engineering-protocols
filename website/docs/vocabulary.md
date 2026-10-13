@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 84 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 93 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -52,6 +52,7 @@ Category `evidence_kind`.
 | `seed_sweep` | `core` | a sweep of a candidate's effect over seeds or ablations, stable or unstable |
 | `regression_test_result` | `software.change` | the result of running a bugfix's regression test against an implementation revision |
 | `implementation_change` | `software.change` | the record that the implementation was changed, moving it to a new revision |
+| `security_review` | `software.change` | a review of an implementation revision's effect on a security boundary |
 
 ## Claims
 
@@ -75,6 +76,8 @@ Category `claim_id`.
 | `hypothesis.supported` | `core` | the experiment is valid and reproducible, and the candidate beats the baseline robustly |
 | `regression.reproduced` | `software.change` | a failing test has reproduced the regression a bugfix repairs |
 | `regression.shown_first` | `software.change` | a bugfix's regression test failed on its first run, before the implementation was first changed |
+| `security.reviewed` | `software.change` | the current implementation revision's security review is approved by another principal than the implementer |
+| `rollback.verified` | `core` | the release's rollback is complete, by a rollback result from another principal than the one who rolled it back |
 
 ## Actions
 
@@ -107,6 +110,7 @@ Category `obligation_id`.
 | `provenance.required` | `software.change` | the release must be proven, its build provenance recorded |
 | `health.required` | `core` | the deployment must be observed healthy |
 | `red_first.required` | `software.change` | a bugfix's regression test must fail on its first run, before the implementation is first changed |
+| `security_review.required` | `software.change` | a change that affects a security boundary must be security reviewed by another principal than the implementer |
 
 ## Outcomes
 
@@ -143,6 +147,7 @@ Category `case_input`.
 |---|---|---|
 | `risk` | `core` | how much proof a case must carry, fixed when it opens; it selects the obligations that apply |
 | `change_kind` | `software.change` | what a change to software is, fixed when its case opens; it selects whether a regression must be reproduced first |
+| `affects_security_boundary` | `core` | whether a change affects a security boundary, fixed when its case opens; one that does needs an independent security review |
 
 ## Input values
 
@@ -157,3 +162,14 @@ Category `input_value`.
 | `feature` | `software.change` | a change that adds or alters behaviour |
 | `bugfix` | `software.change` | a change that repairs a regression, which a failing test must reproduce before the implementation is edited |
 | `refactor` | `software.change` | a change to the implementation that keeps its behaviour |
+| `true` | `core` | the value of a yes-or-no case input when what it asks holds |
+| `false` | `core` | the value of a yes-or-no case input when what it asks does not hold |
+
+## Independence dimensions
+
+Category `independence_dimension`.
+
+| Term | Marking | Meaning |
+|---|---|---|
+| `different_principal` | `core` | the producer of a record is another principal than the one who did the case's work |
+| `different_agent_run` | `core` | the producer of a record is another agent run than the one that did the case's work |

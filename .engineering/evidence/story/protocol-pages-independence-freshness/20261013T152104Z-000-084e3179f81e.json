@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T15:21:04Z",
+  "actor": "human:timo",
+  "artifact": "story:protocol-pages-independence-freshness",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "correction to the previous record of the red run on ffb708f: 61 cases passed and 5 failed (unit 30 passed, 2 failed; integration 31 passed, 3 failed), not 57 others"
+  }
+}

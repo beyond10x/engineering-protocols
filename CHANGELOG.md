@@ -6,6 +6,81 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-13
+
+### Added
+
+- `software.change/1` gains an independent security-review rule, on Canon 0.4.0's independence
+  requirements. Case input `affects_security_boundary` (`true`, `false`); independence dimensions
+  `different_principal` and `different_agent_run`; evidence kind `security_review` about the
+  implementation; claim `security.reviewed`, an approving `security_review` about the current
+  implementation revision whose `producer` the case's `independence` map lists on
+  `different_principal`; obligation `security_review.required`, which applies on a security
+  boundary at every risk and is discharged by `security.reviewed`. `implementation.verified` now
+  also needs `security.reviewed` when the change affects a security boundary. A review by a
+  producer not listed as independent is excluded as `not_independent` and leaves the claim
+  unknown, never false. The trusted context that writes the case resolves who is independent;
+  the protocol only declares what it demands. Fixtures `security-boundary` and
+  `security-boundary-independent` show it.
+- `incident.response/1` gains an independent rollback-verification rule. Independence dimension
+  `different_principal`; evidence kind `rollback_result` (`complete`, `partial`), which
+  `release.rollback` may produce; claim `rollback.verified`, a complete `rollback_result` about the
+  release whose `producer` the case's `independence` map lists on `different_principal`. A result
+  from a producer not listed as independent, such as the actor who rolled back, is excluded as
+  `not_independent` and leaves the claim unknown, never false. No case input and no obligation
+  are added, so existing incident cases stay valid; a case with no `independence` map leaves
+  `rollback.verified` unknown. Fixtures `rollback-verification` and
+  `rollback-verification-independent` show it; `inc-492` expects `rollback.verified` unknown in
+  every state.
+- Vocabulary term `rollback.verified` (claim, marked `core`).
+- Vocabulary category `independence_dimension`, and the terms `affects_security_boundary`,
+  `true`, `false`, `security_review`, `security.reviewed`, `security_review.required`,
+  `different_principal` and `different_agent_run`.
+- The fixture harness documents the case's `independence` map, which Canon reads with the case.
+- Fixtures `stale-review`, `stale-observation` (`fixtures/software-change/`) and `stale-health`
+  (`fixtures/incident-response/`): a review of a revision the implementation no longer has leaves
+  `implementation.reviewed` unknown, and one healthy observation evaluated 29 and then 31 minutes
+  after it was made holds and then leaves `deployment.healthy` or `service.healthy` unknown, never
+  false; in the incident, `restore_service` reopens and `emergency.leave` is blocked again.
+- The fixture harness passes each state's evaluation instant to Canon, and a state may give its
+  own `at`, not before the instant of the state before it; a state without one inherits it.
+- Protocol pages list a protocol's independence dimensions, say "from a producer independent on
+  `<dimension>`" for an evidence match that demands one, and show an evidence kind's `max_age` in
+  an "Applies for" column; a protocol graph's `establishes` edge appends `, independent on
+  <dimensions>` to its qualifier (`b10x-protocol-graph/1` is unchanged).
+
+### Changed
+
+- `operational_observation` expires after 30 minutes (`max_age: 30m`) in both
+  `software.change/1` and `incident.response/1`: at an evaluation instant more than 30 minutes
+  after a record's `observed_at`, Canon excludes the record as `expired`, and the claim it would
+  have decided (`deployment.healthy`, `service.healthy`) is unknown, not false. A caller that
+  evaluates without an instant (no `--at`) gets no expiry: Canon reads no clock, so without an
+  instant, or for a record without `observed_at`, nothing expires. Fixtures `chg-1842`, `inc-492`,
+  `rollback-verification` and `rollback-verification-independent` moved their observation times
+  into the 30 minutes before their instant and keep every expectation.
+- Every `software.change/1` case must now give `affects_security_boundary`: Canon refuses a case
+  that leaves out a declared input (`missing-input`). Every fixture under
+  `fixtures/software-change/` gives `affects_security_boundary: false` and keeps its
+  expectations.
+- Canon moves from 0.3.0 to 0.4.0 (`b10x-canon`, `b10x-canon-expr`); protocols that demand no
+  independence evaluate as before.
+- Fixtures `security-boundary-rejected`, `security-boundary-other-subject`,
+  `rollback-verification-partial` and `rollback-verification-other-subject` hold a record that
+  contradicts each condition of `security.reviewed` and `rollback.verified` (result, subject,
+  independence), so dropping any one of them fails a fixture.
+
+### Known limits
+
+- `rollback.verified` is a claim only: no obligation, action or outcome of `incident.response/1`
+  reads it yet. `software.change/1`'s `rolled_back` outcome still accepts a complete
+  `rollback_result` from any producer.
+- Who is independent of whom is the case writer's word: the protocols declare the demand, and
+  the trusted context that writes the case's `independence` map resolves identities. A case
+  writer can also change `affects_security_boundary` between snapshots, as it can `risk`.
+- The rules are held by this repository's fixtures, not by an entry in Canon's requirements
+  catalogue, which Canon has not yet released.
+
 ## [0.6.0] - 2026-10-13
 
 ### Added

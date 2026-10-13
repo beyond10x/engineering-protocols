@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:stale-evidence-fixtures
 kind: story
-status: draft
+status: implemented
 title: Add stale-evidence fixtures across both protocols
 summary: Revision-stale reviews and freshness-expired observations evaluate UNKNOWN, never FALSE, in delivery and incident fixtures.
 refs:
@@ -21,9 +21,12 @@ relations:
 - depends_on: story:security-independence-rules
 - depends_on: story:rollback-verification-rule
 - depends_on: story:incident-investigation-obligation
+- depends_on: story:canon-0-4-0-pin
 scope:
 - confidence: cited
   path: crates/canon-engineering/tests/stale_evidence.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/support/mod.rs
 - confidence: cited
   path: fixtures/incident-response/
 - confidence: cited
@@ -32,7 +35,11 @@ scope:
   path: protocols/incident-response/1.yaml
 - confidence: cited
   path: protocols/software-change/1.yaml
-revision: 10
+revision: 16
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-13T13:41:49Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "proposed", to: "active", at: "2026-10-13T13:41:49Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-10-13T15:42:48Z", actor: "human:timo", revision: 16, decided_on: {"recorded":{"test_result":1,"review_outcome":3}}}
 ---
 ## Outcome
 
@@ -53,6 +60,7 @@ The fixtures exercise Canon behaviour through ELS protocols; ELS does not implem
 - `fixtures/software-change/`
 - `protocols/incident-response/1.yaml`
 - `fixtures/incident-response/`
+- `crates/canon-engineering/tests/support/mod.rs` (the evaluation instant reaches Canon; per-state `at`)
 - `crates/canon-engineering/tests/stale_evidence.rs` (new)
 
 ## Shared surface
@@ -76,7 +84,11 @@ The red test is `stale_evidence_is_unknown_and_fresh_evidence_holds`. **This sto
 
 ## Canon capability
 
-Evidence applicability and revision binding (C-004), and invalidation and freshness (C-008).
+Carried since Canon 0.1.0 and pinned at 0.4.0: revision binding (C-004: a record applies only while its `subject_revision` is the case's current revision of its subject) and freshness (C-008: an evidence kind's `max_age`, here `30m`, excludes a record older than that at the evaluation instant as expired, leaving the claim `UNKNOWN`). The instant reaches Canon as `eval::Supplied.at`.
+
+Harness change, in this story's scope (`crates/canon-engineering/tests/support/mod.rs`): the harness passes the fixture's `at` to Canon, and a state may give its own `at` (an instant not before any evidence so far and not before the previous state's), so one fixture evaluates the same observation at T0 + 29 and T0 + 31 minutes. Existing fixtures whose operational observations would be older than 30 minutes at their instant move their instants, not their expectations, and the change says which.
+
+`code_review` is already bound to the implementation revision (`subject: implementation`), so expectations 1 and 2 may pass on the first commit; that run is recorded as their baseline, and the implementation commit for them is the harness change only.
 
 ## Domain relations
 

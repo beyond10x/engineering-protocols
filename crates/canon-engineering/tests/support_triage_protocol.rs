@@ -15,8 +15,9 @@
 //! - `tri-48215`: a rejected classification and an unidentified requester: `needs_human`, and
 //!   routing stays blocked.
 //!
-//! The ticket read expires after 15 minutes (`max_age`). The harness passes no instant, so the
-//! expiry is evaluated here directly with Canon's evaluator.
+//! The ticket read expires after 15 minutes (`max_age`). The harness passes each state's instant
+//! to Canon, and each read of a ticket's current revision in the fixtures is fresh at its state's
+//! instant; the expiry itself is evaluated here directly with Canon's evaluator.
 
 mod support;
 

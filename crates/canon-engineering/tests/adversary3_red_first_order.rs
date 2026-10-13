@@ -32,6 +32,7 @@ case:
   inputs:
     risk: standard
     change_kind: bugfix
+    affects_security_boundary: false
   artifacts:
     intent: {{revision: i1}}
     system_specification: {{revision: s1}}
