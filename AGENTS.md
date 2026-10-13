@@ -43,6 +43,7 @@ protocols.
 | A malformed protocol path under `protocols/` fails the build rather than being skipped | `build.rs`, rule in `src/builtin_name.rs` |
 | `UNKNOWN` is not `FALSE`: tests on a stale revision leave `tests.pass` `UNKNOWN` and merge blocked | `tests/software_change_protocol.rs::chg_1842_merge_waits_for_current_revision_tests_and_authority` |
 | A profile is a case input, not a protocol: one compiled `software.change/1` serves every risk, and each risk's open obligations strictly contain those of the risk below | `tests/software_change_profiles.rs::profiles_nest_open_obligations` |
+| A change on a security boundary is verified only on an approving security review by a producer the case lists as independent on `different_principal`; the implementer's own approval is excluded as `not_independent` and leaves `security.reviewed` `UNKNOWN`, not `FALSE` | `tests/security_independence_rules.rs::independent_security_review_gates_implementation_verified` |
 | An incident leaves emergency mode while its cause is still `UNKNOWN` | `tests/incident_response_protocol.rs::inc_492_leaves_emergency_while_cause_unknown` |
 | A hypothesis is refuted only by a comparison that is `FALSE`: a missing comparison, or one about another candidate revision, leaves `refuted` blocked | `tests/ml_experiment_protocol.rs::ml_experiment_outcomes_are_earned` |
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |

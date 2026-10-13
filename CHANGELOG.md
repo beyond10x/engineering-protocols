@@ -6,6 +6,32 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `software.change/1` gains an independent security-review rule, on Canon 0.4.0's independence
+  requirements. Case input `affects_security_boundary` (`true`, `false`); independence dimensions
+  `different_principal` and `different_agent_run`; evidence kind `security_review` about the
+  implementation; claim `security.reviewed`, an approving `security_review` about the current
+  implementation revision whose `producer` the case's `independence` map lists on
+  `different_principal`; obligation `security_review.required`, which applies on a security
+  boundary at every risk and is discharged by `security.reviewed`. `implementation.verified` now
+  also needs `security.reviewed` when the change affects a security boundary. A review by a
+  producer not listed as independent is excluded as `not_independent` and leaves the claim
+  unknown, never false. The trusted context that writes the case resolves who is independent;
+  the protocol only declares what it demands. Fixtures `security-boundary` and
+  `security-boundary-independent` show it.
+- Vocabulary category `independence_dimension`, and the terms `affects_security_boundary`,
+  `true`, `false`, `security_review`, `security.reviewed`, `security_review.required`,
+  `different_principal` and `different_agent_run`.
+- The fixture harness documents the case's `independence` map, which Canon reads with the case.
+
+### Changed
+
+- Every `software.change/1` case must now give `affects_security_boundary`: Canon refuses a case
+  that leaves out a declared input (`missing-input`). Every fixture under
+  `fixtures/software-change/` gives `affects_security_boundary: false` and keeps its
+  expectations.
+
 ## [0.6.0] - 2026-10-13
 
 ### Added
