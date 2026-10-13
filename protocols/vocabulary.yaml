@@ -337,3 +337,35 @@ terms:
     category: obligation_id
     marking: software.change
     meaning: a bugfix's regression test must fail on its first run, before the implementation is first changed
+  - id: affects_security_boundary
+    category: case_input
+    marking: core
+    meaning: whether a change affects a security boundary, fixed when its case opens; one that does needs an independent security review
+  - id: "true"
+    category: input_value
+    marking: core
+    meaning: the value of a yes-or-no case input when what it asks holds
+  - id: "false"
+    category: input_value
+    marking: core
+    meaning: the value of a yes-or-no case input when what it asks does not hold
+  - id: security_review
+    category: evidence_kind
+    marking: software.change
+    meaning: a review of an implementation revision's effect on a security boundary
+  - id: security.reviewed
+    category: claim_id
+    marking: software.change
+    meaning: the current implementation revision's security review is approved by another principal than the implementer
+  - id: security_review.required
+    category: obligation_id
+    marking: software.change
+    meaning: a change that affects a security boundary must be security reviewed by another principal than the implementer
+  - id: different_principal
+    category: independence_dimension
+    marking: core
+    meaning: the producer of a record is another principal than the one who did the case's work
+  - id: different_agent_run
+    category: independence_dimension
+    marking: core
+    meaning: the producer of a record is another agent run than the one that did the case's work

@@ -55,7 +55,8 @@ fn mutant(from: &str, to: &str) -> Ir {
 fn case(implementation: &str) -> Value {
     serde_yaml_ng::from_str(&format!(
         "{{format: canon-case/1, id: CHG-1842, protocol: software.change, \
-         inputs: {{risk: standard, change_kind: refactor}}, artifacts: \
+         inputs: {{risk: standard, change_kind: refactor, affects_security_boundary: false}}, \
+         artifacts: \
          {{intent: {{revision: i1}}, system_specification: {{revision: s1}}, \
          plan: {{revision: p1}}, implementation: {{revision: {implementation}}}, \
          release: {{revision: v0}}, deployment: {{revision: d0}}}}}}"
@@ -159,10 +160,12 @@ fn acceptance_differences(ir: &Ir) -> Vec<String> {
 
     let verified = &ir.claims[&ClaimId::new("implementation.verified")].true_when;
     let verified_ok = matches!(verified, Predicate::All(conjuncts)
-        if conjuncts.len() == 1
-            && matches!(&conjuncts[0], Predicate::Evidence(matching)
+        if conjuncts.len() == 2
+            && conjuncts.iter().filter(|conjunct| matches!(conjunct, Predicate::Evidence(_))).count()
+                == 1
+            && conjuncts.iter().any(|conjunct| matches!(conjunct, Predicate::Evidence(matching)
                 if matching.kind.as_str() == "test_result"
-                    && matching.result.as_deref() == Some("pass")));
+                    && matching.result.as_deref() == Some("pass"))));
     check(verified_ok, "implementation.verified shape");
 
     let merge = &ir.actions[&ActionId::new("repository.merge")];
@@ -170,10 +173,13 @@ fn acceptance_differences(ir: &Ir) -> Vec<String> {
     check(capabilities == ["repository.merge"], "merge capabilities");
     let (claims, kinds) = reached(ir, &merge.precondition);
     check(
-        claims == ["implementation.verified"],
+        claims == ["implementation.verified", "security.reviewed"],
         "merge reached claims",
     );
-    check(kinds == ["test_result"], "merge reached kinds");
+    check(
+        kinds == ["security_review", "test_result"],
+        "merge reached kinds",
+    );
     for open in OPEN_ACTIONS {
         let declared = &ir.actions[&ActionId::new(open)];
         check(declared.requires.is_empty(), open);
@@ -312,13 +318,16 @@ fn a_test_result_about_another_artifact_does_not_verify_the_implementation() {
 /// carries the objective (`artifacts:` section, `required: [objective, …]`). § 9's
 /// `completion.rolled_back` gives `rollback_result` no subject; it is about the release, the
 /// artifact `release.rollback` returns to a previous revision (story:software-change-negative-outcomes).
-const ABOUT: [(&str, &str); 6] = [
+/// `security_review` is about the implementation revision it reviews
+/// (story:security-independence-rules).
+const ABOUT: [(&str, &str); 7] = [
     ("test_result", "implementation"),
     ("code_review", "implementation"),
     ("build_provenance", "release"),
     ("operational_observation", "deployment"),
     ("objective_observation", "intent"),
     ("rollback_result", "release"),
+    ("security_review", "implementation"),
 ];
 
 /// Each declared artifact's revision in the CHG-1842 snapshot `case("R2")`.
@@ -344,6 +353,7 @@ fn basis(kind: &str) -> &'static str {
     match kind {
         "objective_observation" => "the intent artifact's required objective field, design § 9",
         "rollback_result" => "the artifact release.rollback returns to a previous revision",
+        "security_review" => "the implementation revision it reviews",
         _ => "the evidence kind's subject, design § 9",
     }
 }
