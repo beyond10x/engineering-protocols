@@ -2,7 +2,7 @@
   "case": {
     "inputs": {
       "change_kind": {
-        "description": "what the change is; a bugfix must reproduce its regression with a failing test before the implementation is edited",
+        "description": "what the change is; a bugfix must reproduce its regression with a failing test before the implementation is edited, and its regression test must fail on its first run, before the implementation is first changed",
         "values": [
           "bugfix",
           "feature",
@@ -22,9 +22,19 @@
   },
   "edges": [
     {
+      "from": "action:implementation.edit",
+      "kind": "produces",
+      "to": "evidence:implementation_change"
+    },
+    {
       "from": "action:release.rollback",
       "kind": "produces",
       "to": "evidence:rollback_result"
+    },
+    {
+      "from": "action:tests.run",
+      "kind": "produces",
+      "to": "evidence:regression_test_result"
     },
     {
       "from": "action:tests.run",
@@ -60,6 +70,30 @@
       "kind": "establishes",
       "qualifier": "fail about implementation",
       "to": "claim:regression.reproduced"
+    },
+    {
+      "from": "evidence:regression_test_result",
+      "kind": "establishes",
+      "qualifier": "first fail about implementation",
+      "to": "claim:regression.reproduced"
+    },
+    {
+      "from": "evidence:regression_test_result",
+      "kind": "establishes",
+      "qualifier": "before implementation_change about implementation",
+      "to": "claim:regression.shown_first"
+    },
+    {
+      "from": "evidence:implementation_change",
+      "kind": "establishes",
+      "qualifier": "after regression_test_result about implementation",
+      "to": "claim:regression.shown_first"
+    },
+    {
+      "from": "evidence:regression_test_result",
+      "kind": "establishes",
+      "qualifier": "first fail about implementation",
+      "to": "claim:regression.shown_first"
     },
     {
       "from": "claim:implementation.verified",
@@ -102,6 +136,11 @@
       "from": "claim:release.proven",
       "kind": "requires",
       "to": "obligation:provenance.required"
+    },
+    {
+      "from": "claim:regression.shown_first",
+      "kind": "requires",
+      "to": "obligation:red_first.required"
     },
     {
       "from": "claim:implementation.reviewed",
@@ -210,6 +249,12 @@
       "name": "code_review"
     },
     {
+      "description": "the record that the implementation was changed, moving it to a new revision",
+      "id": "evidence:implementation_change",
+      "kind": "evidence",
+      "name": "implementation_change"
+    },
+    {
       "description": "an observation of whether the intent's objective is met; its result is satisfied or unsatisfied",
       "id": "evidence:objective_observation",
       "kind": "evidence",
@@ -220,6 +265,12 @@
       "id": "evidence:operational_observation",
       "kind": "evidence",
       "name": "operational_observation"
+    },
+    {
+      "description": "the result of running a bugfix's regression test against an implementation revision; its result is pass or fail",
+      "id": "evidence:regression_test_result",
+      "kind": "evidence",
+      "name": "regression_test_result"
     },
     {
       "description": "the result of returning a release to the one before it; its result is complete or partial",
@@ -286,15 +337,50 @@
       }
     },
     {
-      "description": "a test has failed on the current implementation revision, reproducing the regression a bugfix repairs",
+      "description": "the regression a bugfix repairs is reproduced: a test has failed on the current implementation revision, or the first run of the regression test, on any revision of the implementation, failed",
       "id": "claim:regression.reproduced",
       "kind": "claim",
       "name": "regression.reproduced",
       "predicate": {
-        "evidence": {
-          "kind": "test_result",
-          "result": "fail"
-        }
+        "any": [
+          {
+            "evidence": {
+              "kind": "test_result",
+              "result": "fail"
+            }
+          },
+          {
+            "first": {
+              "kind": "regression_test_result",
+              "result": "fail",
+              "subject": "implementation"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "the regression test failed first, before the implementation was first changed: the first regression test result about the implementation failed, and it was observed before the implementation's first change",
+      "id": "claim:regression.shown_first",
+      "kind": "claim",
+      "name": "regression.shown_first",
+      "predicate": {
+        "all": [
+          {
+            "before": {
+              "first": "regression_test_result",
+              "subject": "implementation",
+              "then": "implementation_change"
+            }
+          },
+          {
+            "first": {
+              "kind": "regression_test_result",
+              "result": "fail",
+              "subject": "implementation"
+            }
+          }
+        ]
       }
     },
     {
@@ -426,6 +512,25 @@
     {
       "applicable_when": {
         "input": {
+          "id": "change_kind",
+          "in": [
+            "bugfix"
+          ]
+        }
+      },
+      "description": "the regression test failed on its first run, before the implementation was first changed; applies to a bugfix, at every risk",
+      "id": "obligation:red_first.required",
+      "kind": "obligation",
+      "name": "red_first.required",
+      "predicate": {
+        "claim": {
+          "id": "regression.shown_first"
+        }
+      }
+    },
+    {
+      "applicable_when": {
+        "input": {
           "id": "risk",
           "in": [
             "critical",
@@ -468,7 +573,7 @@
     }
   ],
   "protocol": {
-    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited.",
+    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed.",
     "id": "software.change",
     "revision": 1,
     "source": "protocols/software-change/1.yaml"

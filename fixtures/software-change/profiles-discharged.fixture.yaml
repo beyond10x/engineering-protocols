@@ -53,12 +53,14 @@ states:
         release.proven: true
         deployment.healthy: unknown
         objective.realized: unknown
-        regression.reproduced: false
+        regression.reproduced: unknown
+        regression.shown_first: unknown
       obligations:
         tests.required: discharged
         review.required: open
         provenance.required: discharged
         health.required: open
+        red_first.required: not_applicable
       actions: &actions
         repository.inspect: admissible
         tests.write: admissible
@@ -86,5 +88,6 @@ states:
         review.required: not_applicable
         provenance.required: not_applicable
         health.required: not_applicable
+        red_first.required: not_applicable
       actions: *actions
       outcomes: *outcomes

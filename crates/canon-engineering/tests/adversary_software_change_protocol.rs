@@ -133,6 +133,11 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
             Predicate::Evidence(matching) => {
                 kinds.insert(matching.kind.as_str().to_owned());
             }
+            Predicate::First(_) | Predicate::Before(_) => {
+                for (kind, _) in node.order_reads() {
+                    kinds.insert(kind.as_str().to_owned());
+                }
+            }
             Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
         });
     }
@@ -179,7 +184,10 @@ fn acceptance_differences(ir: &Ir) -> Vec<String> {
         .iter()
         .map(|id| id.as_str())
         .collect();
-    check(produces == ["test_result"], "tests.run produces");
+    check(
+        produces == ["regression_test_result", "test_result"],
+        "tests.run produces",
+    );
 
     let fixture = support::Fixture::load(CHG_1842).unwrap_or_else(|error| panic!("{error}"));
     let document: Value = serde_yaml_ng::from_str(&read(CHG_1842)).unwrap();

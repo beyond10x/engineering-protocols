@@ -321,3 +321,19 @@ terms:
     category: input_value
     marking: software.change
     meaning: a change to the implementation that keeps its behaviour
+  - id: regression_test_result
+    category: evidence_kind
+    marking: software.change
+    meaning: the result of running a bugfix's regression test against an implementation revision
+  - id: implementation_change
+    category: evidence_kind
+    marking: software.change
+    meaning: the record that the implementation was changed, moving it to a new revision
+  - id: regression.shown_first
+    category: claim_id
+    marking: software.change
+    meaning: a bugfix's regression test failed on its first run, before the implementation was first changed
+  - id: red_first.required
+    category: obligation_id
+    marking: software.change
+    meaning: a bugfix's regression test must fail on its first run, before the implementation is first changed

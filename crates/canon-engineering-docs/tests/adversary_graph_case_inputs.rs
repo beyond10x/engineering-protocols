@@ -15,7 +15,8 @@ fn root() -> PathBuf {
 
 /// A predicate as the schema's `$defs/predicate` writes it, transcribed here from the schema: a
 /// claim test without `is` when it is `true`, an evidence match without `subject`, an input test
-/// as `{"input": {"id", "in"}}`.
+/// as `{"input": {"id", "in"}}`, and, from docs-system 0.10.0, an order form as `{"first":
+/// {"kind", "result", "subject"?}}` or `{"before": {"first", "then", "subject"?}}`.
 fn drawn(predicate: &Predicate) -> Value {
     match predicate {
         Predicate::All(members) => json!({"all": members.iter().map(drawn).collect::<Vec<_>>()}),
@@ -35,6 +36,22 @@ fn drawn(predicate: &Predicate) -> Value {
             "id": test.input.as_str(),
             "in": test.r#in.iter().map(|value| value.as_str()).collect::<Vec<_>>(),
         }}),
+        Predicate::First(form) => match &form.subject {
+            Some(subject) => json!({"first": {
+                "kind": form.kind.as_str(),
+                "result": form.result,
+                "subject": subject.as_str(),
+            }}),
+            None => json!({"first": {"kind": form.kind.as_str(), "result": form.result}}),
+        },
+        Predicate::Before(form) => match &form.subject {
+            Some(subject) => json!({"before": {
+                "first": form.first.as_str(),
+                "then": form.then.as_str(),
+                "subject": subject.as_str(),
+            }}),
+            None => json!({"before": {"first": form.first.as_str(), "then": form.then.as_str()}}),
+        },
     }
 }
 

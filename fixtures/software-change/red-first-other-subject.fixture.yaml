@@ -1,0 +1,140 @@
+format: els-fixture/1
+id: red-first-other-subject
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# One bugfix at standard risk and implementation revision R1 whose history opens with records about
+# the release, not the implementation: an `implementation_change` about release v0 at 07:00, then
+# a regression test result about v0 that passes at 07:30 and one that fails at 08:00. Both order
+# forms of the red-first rule read the implementation only, so none of them reproduces the
+# regression or places the implementation's first change: the edit stays blocked. The regression
+# test then fails on R1 at 09:00, which reproduces the regression, and the edit at 10:00 moves the
+# implementation to R2 after it, which discharges `red_first.required`.
+# Read without `subject: implementation`, the `first` of `regression.reproduced` would see the
+# release's pass at 07:30 first and never reproduce the regression; the `first` of
+# `regression.shown_first` would see that pass and never hold; its `before` would see the release's
+# change at 07:00 before any regression test ran and never hold either.
+case:
+  format: canon-case/1
+  id: CHG-3006
+  protocol: software.change
+  inputs:
+    risk: standard
+    change_kind: bugfix
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: release-records
+    add_evidence:
+      - observed_at: "2026-10-13T07:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: change-v0
+          kind: implementation_change
+          subject: release
+          subject_revision: v0
+      - observed_at: "2026-10-13T07:30:00Z"
+        record:
+          format: canon-evidence/1
+          id: regression-v0-pass
+          kind: regression_test_result
+          result: pass
+          subject: release
+          subject_revision: v0
+      - observed_at: "2026-10-13T08:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: regression-v0-fail
+          kind: regression_test_result
+          result: fail
+          subject: release
+          subject_revision: v0
+    expect:
+      claims: &unreproduced
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+      obligations: &open
+        tests.required: open
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  # The regression test fails on R1: the first result about the implementation is a fail.
+  - id: regression-red
+    add_evidence:
+      - observed_at: "2026-10-13T09:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: regression-r1-fail
+          kind: regression_test_result
+          result: fail
+          subject: implementation
+          subject_revision: R1
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: true
+        regression.shown_first: unknown
+      obligations: *open
+      actions: &editable
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  # The edit moves the implementation to R2: its first change, after the red run.
+  - id: edited
+    set_revisions:
+      implementation: R2
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: change-r2
+          kind: implementation_change
+          subject: implementation
+          subject_revision: R2
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: true
+        regression.shown_first: true
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: discharged
+      actions: *editable

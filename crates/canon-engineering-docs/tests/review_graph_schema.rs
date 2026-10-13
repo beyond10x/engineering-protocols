@@ -3,10 +3,12 @@
 //! Invariants under check, for every committed `website/data/protocol-graphs/*.json`:
 //!
 //! 1. It conforms to the pinned docs-system schema, `schema/b10x.protocol-graph.v1.schema.json`
-//!    at docs-system 0.9.0, `de3e7d8` (the commit `website/package.json` pins), transcribed
+//!    at docs-system 0.10.0, `48afe6a` (the commit `website/package.json` pins), transcribed
 //!    below: closed key sets, required keys, the node and edge kind enums, non-empty strings, the
-//!    predicate shapes (the `input` leaf among them), the optional top-level `case.inputs`, and
-//!    `applicable_when`, a predicate on a node of kind `obligation` only. Nothing else in this
+//!    predicate shapes (the `input` leaf and the order-form leaves `first` and `before` among
+//!    them, and the renderer's refusal of a `before` of one kind before itself), the optional
+//!    top-level `case.inputs`, and `applicable_when`, a predicate on a node of kind `obligation`
+//!    only. Nothing else in this
 //!    repository checks a generated graph against that schema; the unit tests compare one
 //!    reference rendering byte for byte, which has no obligation in it.
 //! 2. It says what the compiled protocol says: one node per declared action, evidence kind,
@@ -120,6 +122,48 @@ fn predicate(value: &Value, at: &str) -> Vec<String> {
                 problems
             }
             None => vec![format!("{at}.input: not an object")],
+        },
+        "first" => match inner.as_object() {
+            Some(first) => {
+                let mut problems = closed(
+                    first,
+                    &["kind", "result", "subject"],
+                    &["kind", "result"],
+                    &format!("{at}.first"),
+                );
+                for key in ["kind", "result", "subject"] {
+                    if let Some(value) = first.get(key) {
+                        problems.extend(nonempty(value, &format!("{at}.first.{key}")));
+                    }
+                }
+                problems
+            }
+            None => vec![format!("{at}.first: not an object")],
+        },
+        "before" => match inner.as_object() {
+            Some(before) => {
+                let mut problems = closed(
+                    before,
+                    &["first", "then", "subject"],
+                    &["first", "then"],
+                    &format!("{at}.before"),
+                );
+                for key in ["first", "then", "subject"] {
+                    if let Some(value) = before.get(key) {
+                        problems.extend(nonempty(value, &format!("{at}.before.{key}")));
+                    }
+                }
+                // Not the schema's rule but its renderer's: `parseProtocolGraph` refuses it.
+                if let (Some(first), Some(then)) = (before.get("first"), before.get("then"))
+                    && first == then
+                {
+                    problems.push(format!(
+                        "{at}.before: orders kind {first} before itself, which the renderer refuses"
+                    ));
+                }
+                problems
+            }
+            None => vec![format!("{at}.before: not an object")],
         },
         other => vec![format!("{at}: `{other}` is not a predicate form")],
     }
@@ -482,7 +526,56 @@ fn fidelity_problems(graph: &Value, ir: &Ir) -> Vec<String> {
             }
         }
     }
+    let mut reads = Vec::new();
+    for node in &nodes {
+        for key in ["predicate", "applicable_when"] {
+            if let Some(value) = node.get(key) {
+                order_reads(value, &mut reads);
+            }
+        }
+    }
+    for (kind, subject) in reads {
+        if !ir.evidence_kinds.keys().any(|id| id.as_str() == kind) {
+            problems.push(format!(
+                "an order leaf reads undeclared evidence kind `{kind}`"
+            ));
+        }
+        if let Some(subject) = subject
+            && !ir.artifacts.keys().any(|id| id.as_str() == subject)
+        {
+            problems.push(format!(
+                "an order leaf is about undeclared artifact `{subject}`"
+            ));
+        }
+    }
     problems
+}
+
+/// Every evidence kind a drawn `first` or `before` leaf reads, each with the subject it names.
+fn order_reads(value: &Value, found: &mut Vec<(String, Option<String>)>) {
+    match value {
+        Value::Object(object) => {
+            let text = |value: &Value| value.as_str().unwrap_or("").to_owned();
+            if let Some(first) = object.get("first").and_then(Value::as_object) {
+                let subject = first.get("subject").map(text);
+                found.push((text(&first["kind"]), subject));
+            }
+            if let Some(before) = object.get("before").and_then(Value::as_object) {
+                let subject = before.get("subject").map(text);
+                found.push((text(&before["first"]), subject.clone()));
+                found.push((text(&before["then"]), subject));
+            }
+            for member in object.values() {
+                order_reads(member, found);
+            }
+        }
+        Value::Array(members) => {
+            for member in members {
+                order_reads(member, found);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Every `input` leaf of a drawn predicate, as its input and the values it lists.
@@ -592,6 +685,99 @@ fn the_transcription_follows_the_0_9_0_schema() {
         }),
     ] {
         assert!(!broken(edit).is_empty(), "{what} is not a problem");
+    }
+}
+
+/// The transcription accepts the order-form leaves docs-system 0.10.0 adds, `first` and
+/// `before`, each with or without `subject` and under `all`, `any` and `not`, and refuses what
+/// that schema refuses of them: a missing required key, an unknown key, an empty or non-string
+/// value, and a `first` without a result; and, as the renderer `parseProtocolGraph` does, a
+/// `before` whose `first` and `then` are the same kind.
+#[test]
+fn the_transcription_follows_the_0_10_0_order_leaves() {
+    let valid = serde_json::json!({
+        "format": "b10x-protocol-graph/1",
+        "protocol": {"id": "p", "revision": 1},
+        "nodes": [
+            {"id": "claim:a", "kind": "claim", "name": "a",
+             "predicate": {"any": [
+                 {"first": {"kind": "e", "result": "fail", "subject": "x"}},
+                 {"not": {"first": {"kind": "e", "result": "ok"}}},
+             ]}},
+            {"id": "claim:b", "kind": "claim", "name": "b",
+             "predicate": {"all": [
+                 {"before": {"first": "e", "then": "f", "subject": "x"}},
+                 {"not": {"before": {"first": "f", "then": "e"}}},
+             ]}},
+        ],
+        "edges": [],
+    });
+    assert_eq!(schema_problems(&valid), Vec::<String>::new());
+
+    let broken = |predicate: Value| {
+        let mut graph = valid.clone();
+        graph["nodes"][0]["predicate"] = predicate;
+        schema_problems(&graph)
+    };
+    for (what, predicate) in [
+        (
+            "a first without kind",
+            serde_json::json!({"first": {"result": "fail"}}),
+        ),
+        (
+            "a first without result",
+            serde_json::json!({"first": {"kind": "e"}}),
+        ),
+        (
+            "a first with a null result",
+            serde_json::json!({"first": {"kind": "e", "result": null}}),
+        ),
+        (
+            "a first with an empty kind",
+            serde_json::json!({"first": {"kind": "", "result": "fail"}}),
+        ),
+        (
+            "a first with an empty subject",
+            serde_json::json!({"first": {"kind": "e", "result": "fail", "subject": ""}}),
+        ),
+        (
+            "a first with an unknown key",
+            serde_json::json!({"first": {"kind": "e", "result": "fail", "is": "true"}}),
+        ),
+        (
+            "a first that is not an object",
+            serde_json::json!({"first": "e"}),
+        ),
+        (
+            "a before without then",
+            serde_json::json!({"before": {"first": "e"}}),
+        ),
+        (
+            "a before without first",
+            serde_json::json!({"before": {"then": "f"}}),
+        ),
+        (
+            "a before with an empty then",
+            serde_json::json!({"before": {"first": "e", "then": ""}}),
+        ),
+        (
+            "a before with a null subject",
+            serde_json::json!({"before": {"first": "e", "then": "f", "subject": null}}),
+        ),
+        (
+            "a before with an unknown key",
+            serde_json::json!({"before": {"first": "e", "then": "f", "kind": "e"}}),
+        ),
+        (
+            "a before of a kind before itself",
+            serde_json::json!({"before": {"first": "e", "then": "e"}}),
+        ),
+        (
+            "a before written as a canon source list",
+            serde_json::json!({"before": ["e", "f"]}),
+        ),
+    ] {
+        assert!(!broken(predicate).is_empty(), "{what} is not a problem");
     }
 }
 

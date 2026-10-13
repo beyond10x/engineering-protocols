@@ -106,14 +106,14 @@
 //! passes none.
 //!
 //! The evaluation instant is an input of the fixture, never read from a clock. The harness does
-//! not pass the instant or an observation time to Canon yet, so nothing expires; observation
-//! times reach Canon with story:stale-evidence-fixtures. It refuses, when loading, a fixture
-//! holding evidence observed after its instant, instead of evaluating evidence the instant
-//! excludes. A record may also write its own `observed_at`, which `canon-evidence/1` reads: it
-//! must be an instant, not after the fixture's, and the same as its entry's `observed_at`, or the
-//! fixture is refused; the harness then drops it from the record, so the evidence it passes to
-//! Canon carries no observation time. Instants are written in the one form above and name a day
-//! that exists in its month (leap years counted), so they compare as text.
+//! not pass the instant to Canon yet, so nothing expires; the instant reaches Canon with
+//! story:stale-evidence-fixtures. It refuses, when loading, a fixture holding evidence observed
+//! after its instant, instead of evaluating evidence the instant excludes. Each record reaches
+//! Canon with its entry's `observed_at` as the record's own (`canon-evidence/1` reads one), which
+//! is what Canon's order forms, `first` and `before`, order the evidence history by. A record may
+//! also write its own `observed_at`: it must be an instant, not after the fixture's, and the same
+//! as its entry's `observed_at`, or the fixture is refused. Instants are written in the one form
+//! above and name a day that exists in its month (leap years counted), so they compare as text.
 //!
 //! Independence decisions are not part of the format yet: Canon does not evaluate them, and a
 //! fixture that gives them (`independence:`) is refused as having an unknown key. They join the
@@ -128,7 +128,7 @@ use std::path::{Path, PathBuf};
 
 use b10x_canon::eval::{self, Refusal};
 use b10x_canon::ir::Ir;
-use b10x_canon::model::{Case, Decision, EvidenceRecord, ParseError, Truth};
+use b10x_canon::model::{Case, Decision, EvidenceRecord, Instant, ParseError, Truth};
 use b10x_canon::validate::Problem;
 use serde::de::{Error as _, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -609,8 +609,7 @@ impl Fixture {
                     ));
                 }
                 // A record may write its own `observed_at` (`canon-evidence/1` reads one). It is
-                // held to the same rules as the entry's and must agree with it; then it is dropped,
-                // so no observation time reaches Canon (story:stale-evidence-fixtures).
+                // held to the same rules as the entry's and must agree with it.
                 if let Some(own) = record.observed_at.take() {
                     let own = own.as_str();
                     if !is_instant(own) {
@@ -635,6 +634,9 @@ impl Fixture {
                         ));
                     }
                 }
+                // The record reaches Canon observed at its entry's instant, which the order forms
+                // read; without the evaluation instant nothing expires.
+                record.observed_at = Some(Instant::new(observation.observed_at.as_str()));
                 add_evidence.push(record);
             }
             states.push(State {

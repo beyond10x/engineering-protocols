@@ -62,11 +62,13 @@ fn a_record_observed_after_the_instant_is_refused() {
     }
 }
 
-/// `support/mod.rs` module docs: "The harness does not pass the instant or an observation time to
-/// Canon yet". A record that writes its own `observed_at` (here the same instant as the state
-/// entry, so the fixture loads) reaches Canon with it.
+/// `support/mod.rs` module docs: "Each record reaches Canon with its entry's `observed_at` as the
+/// record's own", which Canon's order forms read. Until `story:evidence-order-red-first` the
+/// harness passed no observation time at all; this case pinned that and now pins its reverse.
+/// Every record carries its entry's instant, the one that writes its own (here the same instant as
+/// the state entry, so the fixture loads) as well as those that do not.
 #[test]
-fn the_harness_passes_no_observation_time_to_canon() {
+fn the_harness_passes_each_entrys_observation_time_to_canon() {
     let text = inc_492_with(
         "          id: health-2\n",
         "          id: health-2\n          observed_at: \"2026-10-04T11:40:00Z\"\n",
@@ -82,9 +84,18 @@ fn the_harness_passes_no_observation_time_to_canon() {
                 .map(|at| format!("{} observed_at {}", record.id.as_str(), at.as_str()))
         })
         .collect();
-    assert!(
-        carried.is_empty(),
-        "the evidence the harness passes to Canon carries observation times: {carried:?}"
+    assert_eq!(
+        carried,
+        [
+            "health-1 observed_at 2026-10-04T11:00:00Z",
+            "impact-1 observed_at 2026-10-04T11:05:00Z",
+            "cause-1 observed_at 2026-10-04T11:20:00Z",
+            "release-health-1 observed_at 2026-10-04T11:35:00Z",
+            "release-impact-1 observed_at 2026-10-04T11:36:00Z",
+            "health-2 observed_at 2026-10-04T11:40:00Z",
+            "impact-2 observed_at 2026-10-04T11:45:00Z",
+        ],
+        "the evidence the harness passes to Canon is not observed at its entries' instants"
     );
 }
 
