@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-13
+
 ### Added
 
 - `software.change/1` gains an independent security-review rule, on Canon 0.4.0's independence
@@ -57,11 +59,27 @@ releases at bare-version tags.
   instant, or for a record without `observed_at`, nothing expires. Fixtures `chg-1842`, `inc-492`,
   `rollback-verification` and `rollback-verification-independent` moved their observation times
   into the 30 minutes before their instant and keep every expectation.
-
 - Every `software.change/1` case must now give `affects_security_boundary`: Canon refuses a case
   that leaves out a declared input (`missing-input`). Every fixture under
   `fixtures/software-change/` gives `affects_security_boundary: false` and keeps its
   expectations.
+- Canon moves from 0.3.0 to 0.4.0 (`b10x-canon`, `b10x-canon-expr`); protocols that demand no
+  independence evaluate as before.
+- Fixtures `security-boundary-rejected`, `security-boundary-other-subject`,
+  `rollback-verification-partial` and `rollback-verification-other-subject` hold a record that
+  contradicts each condition of `security.reviewed` and `rollback.verified` (result, subject,
+  independence), so dropping any one of them fails a fixture.
+
+### Known limits
+
+- `rollback.verified` is a claim only: no obligation, action or outcome of `incident.response/1`
+  reads it yet. `software.change/1`'s `rolled_back` outcome still accepts a complete
+  `rollback_result` from any producer.
+- Who is independent of whom is the case writer's word: the protocols declare the demand, and
+  the trusted context that writes the case's `independence` map resolves identities. A case
+  writer can also change `affects_security_boundary` between snapshots, as it can `risk`.
+- The rules are held by this repository's fixtures, not by an entry in Canon's requirements
+  catalogue, which Canon has not yet released.
 
 ## [0.6.0] - 2026-10-13
 
