@@ -107,7 +107,7 @@ fn gate_spec_compiles_synthesizes_and_generated_contract_has_no_drift() {
         }
         let result = command
             .output()
-            .expect("ESS 0.55.0 is required for the repository gate");
+            .expect("ESS 0.59.0 is required for the repository gate");
         assert!(
             result.status.success(),
             "{name}: {}\n{}",
