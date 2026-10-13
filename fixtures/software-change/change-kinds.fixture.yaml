@@ -1,0 +1,123 @@
+format: els-fixture/1
+id: change-kinds
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# One change at standard risk and implementation revision R1, with no authority decision. A bugfix
+# with no evidence may write tests but not edit the implementation; a refactor or a feature may do
+# both; a failing test about R1 makes the bugfix's edit of R1 admissible, and once the edit
+# produces R2 that test no longer counts, so the edit waits for red recorded on R2.
+# States are cumulative, so the change kinds that need no evidence come before the failing test.
+case:
+  format: canon-case/1
+  id: CHG-3002
+  protocol: software.change
+  inputs:
+    risk: standard
+    change_kind: bugfix
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: bugfix
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  - id: refactor
+    set_inputs:
+      change_kind: refactor
+    add_evidence: []
+    expect:
+      claims: &unproven
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+      actions: &editable
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  - id: feature
+    set_inputs:
+      change_kind: feature
+    add_evidence: []
+    expect:
+      claims: *unproven
+      actions: *editable
+
+  - id: bugfix-red
+    set_inputs:
+      change_kind: bugfix
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: tests-r1-fail
+          kind: test_result
+          result: fail
+          subject: implementation
+          subject_revision: R1
+    expect:
+      claims:
+        tests.pass: false
+        implementation.reviewed: unknown
+        implementation.verified: false
+        release.proven: false
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: true
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  - id: bugfix-red-r2
+    set_revisions:
+      implementation: R2
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required

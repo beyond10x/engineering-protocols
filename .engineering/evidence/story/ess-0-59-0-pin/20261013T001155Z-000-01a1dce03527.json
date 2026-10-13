@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T00:11:55Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-59-0-pin",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "package gates exit 0 at f366f4c under ess 0.59.0; ess_contract both cases pass (red at 8eda583 on generated Cargo.toml drift)"
+  }
+}

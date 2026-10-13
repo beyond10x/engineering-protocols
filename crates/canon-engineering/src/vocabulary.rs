@@ -9,11 +9,13 @@
 //! This module holds names and what they mean, nothing more: what a claim, a piece of evidence or
 //! an obligation *is*, and how one is decided, is Canon's.
 //!
-//! Spelling: claim and action ids are dotted, `<subject>.<predicate>`; artifact, evidence,
-//! obligation and outcome ids, and the names of the explicit decisions an outcome may require
-//! (`decision_name`), are single snake_case tokens of lowercase ASCII letters and underscores.
-//! Every term has a meaning. [`Vocabulary::from_yaml`] refuses a document that breaks
-//! either rule, the released one included.
+//! Spelling: claim and action ids are dotted, `<subject>.<predicate>`; artifact, evidence and
+//! outcome ids, the names of the explicit decisions an outcome may require (`decision_name`), the
+//! case inputs a protocol declares (`case_input`) and the values they take (`input_value`) are
+//! single snake_case tokens of lowercase ASCII letters and underscores. An obligation id is either:
+//! one token (`restore_service`) or dotted (`tests.required`). Every term has a meaning.
+//! [`Vocabulary::from_yaml`] refuses a document that breaks either rule, the released one
+//! included.
 
 use std::collections::BTreeSet;
 use std::fmt;
@@ -42,11 +44,15 @@ pub enum Category {
     ObligationId,
     OutcomeId,
     DecisionName,
+    /// A case input: configuration a case fixes when it opens (Canon's `case: inputs:`).
+    CaseInput,
+    /// A value a case input may take.
+    InputValue,
 }
 
 impl Category {
     /// Every category, in declaration order.
-    pub const ALL: [Category; 7] = [
+    pub const ALL: [Category; 9] = [
         Category::ArtifactKind,
         Category::EvidenceKind,
         Category::ClaimId,
@@ -54,6 +60,8 @@ impl Category {
         Category::ObligationId,
         Category::OutcomeId,
         Category::DecisionName,
+        Category::CaseInput,
+        Category::InputValue,
     ];
 
     /// The category as a vocabulary document spells it.
@@ -66,6 +74,8 @@ impl Category {
             Category::ObligationId => "obligation_id",
             Category::OutcomeId => "outcome_id",
             Category::DecisionName => "decision_name",
+            Category::CaseInput => "case_input",
+            Category::InputValue => "input_value",
         }
     }
 }
@@ -166,10 +176,12 @@ impl fmt::Display for VocabularyError {
             }
             VocabularyError::DuplicateTerm(id) => write!(f, "`{id}` is declared more than once"),
             VocabularyError::Spelling { id, category } => {
-                let rule = if is_dotted_category(*category) {
-                    "`<subject>.<predicate>` of two snake_case tokens"
-                } else {
-                    "one snake_case token"
+                let rule = match spelling(*category) {
+                    Spelling::Dotted => "`<subject>.<predicate>` of two snake_case tokens",
+                    Spelling::Token => "one snake_case token",
+                    Spelling::Either => {
+                        "one snake_case token or `<subject>.<predicate>` of two snake_case tokens"
+                    }
                 };
                 write!(f, "`{id}` is a {category}, which is spelled as {rule}")
             }
@@ -291,10 +303,10 @@ impl Entry {
 fn check(entries: &[Entry]) -> Result<(), VocabularyError> {
     let mut seen = BTreeSet::new();
     for entry in entries {
-        let spelled = if is_dotted_category(entry.category) {
-            is_dotted(&entry.id)
-        } else {
-            is_token(&entry.id)
+        let spelled = match spelling(entry.category) {
+            Spelling::Dotted => is_dotted(&entry.id),
+            Spelling::Token => is_token(&entry.id),
+            Spelling::Either => is_token(&entry.id) || is_dotted(&entry.id),
         };
         if !spelled {
             return Err(VocabularyError::Spelling {
@@ -312,8 +324,28 @@ fn check(entries: &[Entry]) -> Result<(), VocabularyError> {
     Ok(())
 }
 
-fn is_dotted_category(category: Category) -> bool {
-    matches!(category, Category::ClaimId | Category::ActionId)
+/// How a category's ids are spelled.
+enum Spelling {
+    /// One snake_case token.
+    Token,
+    /// `<subject>.<predicate>`.
+    Dotted,
+    /// Either of the two: an obligation id, which `incident.response/1` spells as one token
+    /// (`restore_service`) and `software.change/1` dotted (`tests.required`).
+    Either,
+}
+
+fn spelling(category: Category) -> Spelling {
+    match category {
+        Category::ClaimId | Category::ActionId => Spelling::Dotted,
+        Category::ObligationId => Spelling::Either,
+        Category::ArtifactKind
+        | Category::EvidenceKind
+        | Category::OutcomeId
+        | Category::DecisionName
+        | Category::CaseInput
+        | Category::InputValue => Spelling::Token,
+    }
 }
 
 /// One snake_case token: lowercase ASCII letters and inner underscores.
@@ -408,6 +440,65 @@ terms:
                     category: Category::DecisionName
                 }),
                 "`{id}`"
+            );
+        }
+    }
+
+    /// A case input and an input value are one snake_case token each: dotted or otherwise
+    /// misspelled, they are refused naming the category.
+    #[test]
+    fn a_case_input_and_an_input_value_are_one_token() {
+        for category in [Category::CaseInput, Category::InputValue] {
+            let document = ONE.replace("evidence_kind", category.as_str());
+            let read = Vocabulary::from_yaml(&document).unwrap();
+            assert_eq!(read.lookup("alpha").map(|t| t.category), Ok(category));
+            for id in ["change.kind", "Risk", "_risk", "risk2", "change-kind"] {
+                assert_eq!(
+                    Vocabulary::from_yaml(&document.replace("id: alpha", &format!("id: {id}"))),
+                    Err(VocabularyError::Spelling {
+                        id: id.to_owned(),
+                        category
+                    }),
+                    "`{id}` as {category}"
+                );
+            }
+        }
+    }
+
+    /// An obligation id is one token or dotted, and nothing else; its refusal names both forms.
+    #[test]
+    fn an_obligation_id_is_one_token_or_dotted() {
+        let document = ONE.replace("evidence_kind", "obligation_id");
+        for id in ["settle_case", "case.settled"] {
+            let read = Vocabulary::from_yaml(&document.replace("id: alpha", &format!("id: {id}")))
+                .unwrap_or_else(|error| panic!("`{id}`: {error}"));
+            assert_eq!(
+                read.lookup(id).map(|t| t.category),
+                Ok(Category::ObligationId)
+            );
+        }
+        for id in [
+            "case.settled.now",
+            "case.",
+            ".settled",
+            "Case.settled",
+            "case._settled",
+            "settle-case",
+        ] {
+            let refused =
+                Vocabulary::from_yaml(&document.replace("id: alpha", &format!("id: {id}")));
+            assert_eq!(
+                refused,
+                Err(VocabularyError::Spelling {
+                    id: id.to_owned(),
+                    category: Category::ObligationId
+                }),
+                "`{id}`"
+            );
+            let message = refused.unwrap_err().to_string();
+            assert!(
+                message.contains("one snake_case token or `<subject>.<predicate>`"),
+                "{message}"
             );
         }
     }

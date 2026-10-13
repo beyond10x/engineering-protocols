@@ -2,11 +2,13 @@
 format: aep.planning-md/3
 id: blocker:graph-schema-case-inputs
 kind: blocker
-status: open
+status: cleared
 title: The protocol graph schema has no case-input predicate and no obligation applicability
 relations:
 - blocks: story:software-change-profiles
-revision: 1
+revision: 3
+transitions:
+- {from: "open", to: "cleared", at: "2026-10-12T23:31:32Z", actor: "human:timo", revision: 3}
 ---
 ## What is missing
 
@@ -19,3 +21,13 @@ The dependency graph on every protocol page is a `b10x-protocol-graph/1` documen
 ## Clears when
 
 A docs-system commit extends `b10x-protocol-graph/1` (or a successor format) with an `input` predicate leaf and an obligation's applicability, and its `ProtocolGraph` component renders them, and `website/package.json` here pins that commit.
+
+## Cleared
+
+Cleared 2026-10-13 by docs-system 0.9.0, commit `de3e7d84b463d1b6b26e30c28efc07426e8cf012` (https://github.com/beyond10x/docs-system/releases/tag/0.9.0). Its `schema/b10x.protocol-graph.v1.schema.json` adds:
+
+- the predicate leaf `{"input": {"id": <id>, "in": [<values>]}}`;
+- a top-level `case` object, `{"inputs": {<id>: {"description": <text or null>, "values": [<values>]}}}`;
+- `applicable_when` on nodes of kind `obligation` only.
+
+`website/package.json` pins that commit from `build: pin docs-system 0.9.0` on, which is this blocker's clearing condition. Rendering the shapes in the generated graph is `story:software-change-profiles`.

@@ -121,10 +121,6 @@ terms:
     category: action_id
     marking: software.change
     meaning: read the repository
-  - id: repository.edit
-    category: action_id
-    marking: software.change
-    meaning: change the repository's working revision
   - id: repository.merge
     category: action_id
     marking: software.change
@@ -261,3 +257,67 @@ terms:
     category: decision_name
     marking: core
     meaning: a recorded decision that the case's evidence settles nothing
+  - id: tests.write
+    category: action_id
+    marking: software.change
+    meaning: change the tests in the repository's working revision
+  - id: implementation.edit
+    category: action_id
+    marking: software.change
+    meaning: change the implementation in the repository's working revision
+  - id: regression.reproduced
+    category: claim_id
+    marking: software.change
+    meaning: a failing test has reproduced the regression a bugfix repairs
+  - id: tests.required
+    category: obligation_id
+    marking: software.change
+    meaning: the tests must pass for the current implementation revision
+  - id: review.required
+    category: obligation_id
+    marking: software.change
+    meaning: the current implementation revision must be reviewed
+  - id: provenance.required
+    category: obligation_id
+    marking: software.change
+    meaning: the release must be proven, its build provenance recorded
+  - id: health.required
+    category: obligation_id
+    marking: core
+    meaning: the deployment must be observed healthy
+  - id: risk
+    category: case_input
+    marking: core
+    meaning: how much proof a case must carry, fixed when it opens; it selects the obligations that apply
+  - id: trivial
+    category: input_value
+    marking: core
+    meaning: the lowest risk; a change whose tests must pass and nothing more
+  - id: standard
+    category: input_value
+    marking: core
+    meaning: the usual risk; everything trivial requires, and review
+  - id: elevated
+    category: input_value
+    marking: core
+    meaning: a raised risk; everything standard requires, and a proven release
+  - id: critical
+    category: input_value
+    marking: core
+    meaning: the highest risk; everything elevated requires, and a healthy deployment
+  - id: change_kind
+    category: case_input
+    marking: software.change
+    meaning: what a change to software is, fixed when its case opens; it selects whether a regression must be reproduced first
+  - id: feature
+    category: input_value
+    marking: software.change
+    meaning: a change that adds or alters behaviour
+  - id: bugfix
+    category: input_value
+    marking: software.change
+    meaning: a change that repairs a regression, which a failing test must reproduce before the implementation is edited
+  - id: refactor
+    category: input_value
+    marking: software.change
+    meaning: a change to the implementation that keeps its behaviour

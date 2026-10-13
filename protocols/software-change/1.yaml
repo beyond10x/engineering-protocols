@@ -7,7 +7,22 @@ protocol:
     Deliver a change to a software system: implement it, verify the current implementation
     revision, merge it under authority, release and deploy it, and accept it once its objective is
     realized; or close it declined, superseded or abandoned on an explicit decision, or rolled
-    back on a complete rollback result.
+    back on a complete rollback result. A case fixes its risk, which selects the obligations that
+    apply, and its change kind, which selects whether a regression must be reproduced before the
+    implementation is edited.
+
+case:
+  inputs:
+    risk:
+      description: >-
+        how much proof the change must carry; each level applies every obligation of the level
+        below it and one more
+      values: [trivial, standard, elevated, critical]
+    change_kind:
+      description: >-
+        what the change is; a bugfix must reproduce its regression with a failing test before the
+        implementation is edited
+      values: [feature, bugfix, refactor]
 
 artifacts:
   intent:
@@ -88,14 +103,64 @@ claims:
         kind: objective_observation
         result: satisfied
         subject: intent
+  regression.reproduced:
+    description: >-
+      a test has failed on the current implementation revision, reproducing the regression a
+      bugfix repairs
+    true_when:
+      evidence:
+        kind: test_result
+        result: fail
+        subject: implementation
+
+obligations:
+  tests.required:
+    description: the tests pass for the current implementation revision; applies at every risk
+    applicable_when:
+      input: risk
+      in: [trivial, standard, elevated, critical]
+    discharged_when:
+      claim: tests.pass
+  review.required:
+    description: >-
+      the current implementation revision is reviewed; applies at standard risk and above
+    applicable_when:
+      input: risk
+      in: [standard, elevated, critical]
+    discharged_when:
+      claim: implementation.reviewed
+  provenance.required:
+    description: the release is proven; applies at elevated risk and above
+    applicable_when:
+      input: risk
+      in: [elevated, critical]
+    discharged_when:
+      claim: release.proven
+  health.required:
+    description: the deployment is healthy; applies at critical risk
+    applicable_when:
+      input: risk
+      in: [critical]
+    discharged_when:
+      claim: deployment.healthy
 
 actions:
   repository.inspect:
     description: read the repository
     effect: read
-  repository.edit:
-    description: change the repository's working revision
+  tests.write:
+    description: change the tests in the repository's working revision
     effect: write
+  implementation.edit:
+    description: >-
+      change the implementation in the repository's working revision; a bugfix needs its
+      regression reproduced first
+    effect: write
+    precondition:
+      any:
+        - input: change_kind
+          in: [feature, refactor]
+        - claim: regression.reproduced
   tests.run:
     description: run the tests against an implementation revision
     effect: read

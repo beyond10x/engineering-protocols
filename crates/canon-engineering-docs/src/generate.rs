@@ -124,6 +124,8 @@ fn category_title(category: Category) -> &'static str {
         Category::ObligationId => "Obligations",
         Category::OutcomeId => "Outcomes",
         Category::DecisionName => "Decisions",
+        Category::CaseInput => "Case inputs",
+        Category::InputValue => "Input values",
     }
 }
 
@@ -230,7 +232,7 @@ pub fn render(inputs: &Inputs) -> Result<BTreeMap<String, String>> {
             format!("docs/{}", source.file()),
             protocol::page(&ir, source),
         );
-        let graph = graph::document(&ir, &source.path)?;
+        let graph = graph::document(&ir, &source.path);
         files.insert(
             source.graph_file(),
             serde_json::to_string_pretty(&graph)? + "\n",
@@ -274,7 +276,7 @@ pub fn render(inputs: &Inputs) -> Result<BTreeMap<String, String>> {
         vocabulary_page(&vocabulary),
     );
     for example in &inputs.examples {
-        let graph = graph::document(&compiled(example)?, &example.path)?;
+        let graph = graph::document(&compiled(example)?, &example.path);
         files.insert(
             format!("{EXAMPLE_GRAPHS}/{}-{}.json", example.name, example.major),
             serde_json::to_string_pretty(&graph)? + "\n",
@@ -562,7 +564,7 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 65);
+        assert_eq!(vocabulary.terms().len(), 80);
         for term in vocabulary.terms() {
             assert!(
                 page.contains(&format!("\n| `{}` |", term.id)),

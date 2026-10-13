@@ -109,8 +109,10 @@ fn outcome_reasons(decision: &Decision, id: &str) -> Vec<String> {
         .collect()
 }
 
-/// The actions that need neither a claim nor authority.
-const OPEN_ACTIONS: [&str; 3] = ["repository.inspect", "repository.edit", "tests.run"];
+/// The actions that need neither a claim nor authority. `implementation.edit` needs no authority
+/// either, and its precondition holds for CHG-1842, a refactor (`software_change_profiles.rs`
+/// decides it for every change kind).
+const OPEN_ACTIONS: [&str; 3] = ["repository.inspect", "tests.write", "tests.run"];
 
 #[test]
 fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
@@ -161,6 +163,21 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             .map(|name| name.as_str())
             .collect(),
     );
+    declared(
+        Category::ObligationId,
+        ir.obligations.keys().map(|id| id.as_str()).collect(),
+    );
+    declared(
+        Category::CaseInput,
+        ir.inputs.keys().map(|id| id.as_str()).collect(),
+    );
+    declared(
+        Category::InputValue,
+        ir.inputs
+            .values()
+            .flat_map(|input| input.values.iter().map(|value| value.as_str()))
+            .collect(),
+    );
     let names = |ids: Vec<&str>| ids.into_iter().map(str::to_owned).collect::<Vec<_>>();
     assert_eq!(
         names(ir.artifacts.keys().map(|id| id.as_str()).collect()),
@@ -191,19 +208,33 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "implementation.reviewed",
             "implementation.verified",
             "objective.realized",
+            "regression.reproduced",
             "release.proven",
             "tests.pass",
         ]
     );
-    assert!(ir.obligations.is_empty());
+    assert_eq!(
+        names(ir.obligations.keys().map(|id| id.as_str()).collect()),
+        [
+            "health.required",
+            "provenance.required",
+            "review.required",
+            "tests.required",
+        ]
+    );
+    assert_eq!(
+        names(ir.inputs.keys().map(|id| id.as_str()).collect()),
+        ["change_kind", "risk"]
+    );
     assert_eq!(
         names(ir.actions.keys().map(|id| id.as_str()).collect()),
         [
+            "implementation.edit",
             "release.rollback",
-            "repository.edit",
             "repository.inspect",
             "repository.merge",
             "tests.run",
+            "tests.write",
         ]
     );
     assert_eq!(
@@ -268,7 +299,12 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     for read in ["repository.inspect", "tests.run"] {
         assert_eq!(effect(read).as_deref(), Some("read"), "{read}");
     }
-    for write in ["repository.edit", "repository.merge", "release.rollback"] {
+    for write in [
+        "tests.write",
+        "implementation.edit",
+        "repository.merge",
+        "release.rollback",
+    ] {
         assert_eq!(effect(write).as_deref(), Some("write"), "{write}");
     }
 
@@ -362,6 +398,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
     for open in OPEN_ACTIONS {
         assert_eq!(action(&initial, open), "admissible", "{open}");
     }
+    assert_eq!(action(&initial, "implementation.edit"), "admissible");
     assert_eq!(action(&initial, "repository.merge"), "blocked");
     assert_eq!(claim(&initial, "deployment.healthy"), Truth::True);
     assert_eq!(claim(&initial, "objective.realized"), Truth::Unknown);

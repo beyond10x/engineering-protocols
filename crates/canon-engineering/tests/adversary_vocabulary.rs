@@ -5,7 +5,8 @@ use std::path::Path;
 
 use canon_engineering::vocabulary::{self, Category, Marking};
 
-/// The story's *Term set declared here* table, written independently of the unit's own copy.
+/// The story's *Term set declared here* table, written independently of the unit's own copy,
+/// without `repository.edit`, which `story:software-change-profiles` split.
 const STORY_TABLE: &[(&str, Category, Marking)] = &[
     ("intent", Category::ArtifactKind, Marking::Core),
     (
@@ -78,11 +79,6 @@ const STORY_TABLE: &[(&str, Category, Marking)] = &[
         Marking::SoftwareChange,
     ),
     (
-        "repository.edit",
-        Category::ActionId,
-        Marking::SoftwareChange,
-    ),
-    (
         "repository.merge",
         Category::ActionId,
         Marking::SoftwareChange,
@@ -97,15 +93,15 @@ const STORY_TABLE: &[(&str, Category, Marking)] = &[
 #[test]
 fn adversary_vocabulary_is_exactly_the_story_table() {
     let terms = vocabulary::terms();
-    assert!(terms.len() >= 35, "{} terms", terms.len());
-    let first = &terms[..35];
+    assert!(terms.len() >= 34, "{} terms", terms.len());
+    let first = &terms[..34];
     assert_eq!(
         first
             .iter()
             .map(|t| (t.id, t.category, t.marking))
             .collect::<Vec<_>>(),
         STORY_TABLE.to_vec(),
-        "the first 35 terms are not the story table in its order"
+        "the first 34 terms are not the story table in its order"
     );
     let declared: BTreeSet<(&str, String, String)> = first
         .iter()

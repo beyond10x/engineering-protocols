@@ -10,8 +10,9 @@ ADRs 0066–0075 and Atlas `docs/design/governed-autonomy/`.
 - **O2 — decisions as data, with evidence.** Engineering rules are Canon protocols declared as
   data and evaluated against cited, revision-bound evidence, with `UNKNOWN` kept apart from `FALSE`.
 - **O1 — governed reach.** Every write action a protocol declares names the capability that
-  authorises it, except `software.change/1`'s `repository.edit`, and Loom's `loom-governor`
-  consumes these protocols.
+  authorises it, except `software.change/1`'s `tests.write` and `implementation.edit` (telling
+  them apart needs a path scope on capabilities, which Canon does not have), and Loom's
+  `loom-governor` consumes these protocols.
 
 ## Boundary
 
@@ -41,6 +42,7 @@ protocols.
 | Every `protocols/<name>/<major>.yaml` is embedded by `crates/canon-engineering/build.rs` with no Rust edit, and each one parses and validates in Canon | `tests/protocol_registry.rs::registry_lists_fetches_and_validates_every_builtin` |
 | A malformed protocol path under `protocols/` fails the build rather than being skipped | `build.rs`, rule in `src/builtin_name.rs` |
 | `UNKNOWN` is not `FALSE`: tests on a stale revision leave `tests.pass` `UNKNOWN` and merge blocked | `tests/software_change_protocol.rs::chg_1842_merge_waits_for_current_revision_tests_and_authority` |
+| A profile is a case input, not a protocol: one compiled `software.change/1` serves every risk, and each risk's open obligations strictly contain those of the risk below | `tests/software_change_profiles.rs::profiles_nest_open_obligations` |
 | An incident leaves emergency mode while its cause is still `UNKNOWN` | `tests/incident_response_protocol.rs::inc_492_leaves_emergency_while_cause_unknown` |
 | A hypothesis is refuted only by a comparison that is `FALSE`: a missing comparison, or one about another candidate revision, leaves `refuted` blocked | `tests/ml_experiment_protocol.rs::ml_experiment_outcomes_are_earned` |
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |
@@ -122,7 +124,7 @@ engineering protocols may admit (`story:ess-conformance-evidence`, draft); that 
 output, not a specification of this repository.
 
 Assertion collection and its CLI are not part of that opt-out. Their wire model lives in `ess/`;
-provider envelopes live in `ess/providers/`, both pinned to ESS 0.55.0. The gate document is a
+provider envelopes live in `ess/providers/`, both pinned to ESS 0.59.0. The gate document is a
 generated Rust data library. The Canon expression schema is vendored by `canon-engineering-docs`
 from the pinned core's `MODEL_SPEC`, with only the namespace remapped. Do not edit generated
 contracts or `.ess-output` ownership state. `crates/canon-engineering-assertions/tests/ess_contract.rs`
