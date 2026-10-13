@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:software-change-profiles
 kind: story
-status: active
+status: implemented
 title: Define risk profiles and bugfix/refactor change-kind profiles for software.change/1
 summary: Risk profiles change which obligations apply; the bugfix profile adds the red-first rule, refactor and feature omit it; repository.edit splits into tests.write and implementation.edit.
 refs:
@@ -84,10 +84,11 @@ scope:
   path: website/package-lock.json
 - confidence: cited
   path: website/package.json
-revision: 40
+revision: 41
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 32, decided_on: {"recorded":{"review_outcome":4}}}
 - {from: "proposed", to: "active", at: "2026-10-12T23:31:32Z", actor: "human:timo", revision: 37, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "active", to: "implemented", at: "2026-10-13T00:11:57Z", actor: "human:timo", revision: 41, decided_on: {"recorded":{"test_result":1,"review_outcome":4}}}
 ---
 ## Outcome
 
