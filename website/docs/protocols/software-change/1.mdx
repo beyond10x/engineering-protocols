@@ -3,7 +3,7 @@
 id: "1"
 title: "software.change/1"
 sidebar_label: "software.change/1"
-description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review."
+description: "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review. A deployment is healthy only on an observation at most 30 minutes old."
 slug: /protocols/software-change/1
 hide_table_of_contents: true
 custom_edit_url: null
@@ -11,7 +11,7 @@ custom_edit_url: null
 
 import graph from '@site/data/protocol-graphs/software-change-1.json';
 
-Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review.
+Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review. A deployment is healthy only on an observation at most 30 minutes old.
 
 - **Id:** `software.change`
 - **Revision:** 1
@@ -46,7 +46,7 @@ The kinds of evidence this protocol admits.
 | `code_review` | a review of an implementation revision; its result is approved or rejected | *no action* | `implementation.reviewed` |
 | `implementation_change` | the record that the implementation was changed, moving it to a new revision | `implementation.edit` | *no claim* |
 | `objective_observation` | an observation of whether the intent's objective is met; its result is satisfied or unsatisfied | *no action* | `objective.realized` |
-| `operational_observation` | an observation of the running system; its result is healthy or unhealthy | *no action* | `deployment.healthy` |
+| `operational_observation` | an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything | *no action* | `deployment.healthy` |
 | `regression_test_result` | the result of running a bugfix's regression test against an implementation revision; its result is pass or fail | `tests.run` | *no claim* |
 | `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | `release.rollback` | *no claim* |
 | `security_review` | a review of an implementation revision's effect on a security boundary; its result is approved or rejected | *no action* | `security.reviewed` |

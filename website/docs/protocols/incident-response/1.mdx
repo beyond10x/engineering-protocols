@@ -3,7 +3,7 @@
 id: "1"
 title: "incident.response/1"
 sidebar_label: "incident.response/1"
-description: "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back."
+description: "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back. The service is healthy only on an observation at most 30 minutes old."
 slug: /protocols/incident-response/1
 hide_table_of_contents: true
 custom_edit_url: null
@@ -11,7 +11,7 @@ custom_edit_url: null
 
 import graph from '@site/data/protocol-graphs/incident-response-1.json';
 
-Respond to an incident through two obligations that progress independently: restore\_service, on which emergency mode is left, and investigate\_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back.
+Respond to an incident through two obligations that progress independently: restore\_service, on which emergency mode is left, and investigate\_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back. The service is healthy only on an observation at most 30 minutes old.
 
 - **Id:** `incident.response`
 - **Revision:** 1
@@ -44,7 +44,7 @@ The kinds of evidence this protocol admits.
 |---|---|---|---|
 | `cause_analysis` | an analysis of why an incident happened | `logs.search`, `release.inspect` | `cause.identified` |
 | `impact_assessment` | an assessment of who and what an incident affects | `metrics.inspect` | `impact.bounded` |
-| `operational_observation` | an observation of the running system; its result is healthy or unhealthy | `metrics.inspect` | `service.healthy` |
+| `operational_observation` | an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything | `metrics.inspect` | `service.healthy` |
 | `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | `release.rollback` | `rollback.verified` |
 
 ## Claims
