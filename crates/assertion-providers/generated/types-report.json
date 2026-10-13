@@ -8,7 +8,7 @@
     "contract_digest": "slice-sha256/2:8e1786aff641266d93dd09d02d6769ebc995544596f9a0b498e0b8ef0b76ec8a",
     "projection_digest": "f6a890728e12a73e2d6ff361c91d9ad7047fd47fd61d63f6abb1b51d82c3a197"
   },
-  "generator_version": "0.55.0",
+  "generator_version": "0.59.0",
   "target": "rust",
   "configuration": {
     "language": "rust",
@@ -109,22 +109,42 @@
     {
       "pointer": "/$defs/engineering.assertion.provider.ProcessResult/properties/exit_code",
       "rule": "integer",
-      "detail": "serde_json::Number retains exact JSON numbers but does not enforce integrality; validate the source constraint"
+      "detail": "serde_json::Number holds exact JSON numbers with the default `exact-numbers` feature and binary64 without it, and does not enforce integrality; validate the source constraint"
+    },
+    {
+      "pointer": "/$defs/engineering.assertion.provider.ProcessResult/properties/exit_code",
+      "rule": "rust_exact_numbers",
+      "detail": "this value holds JSON numbers in serde_json; the generated crate's default-on `exact-numbers` feature enables serde_json/arbitrary_precision, and a consumer that turns default features off gets these numbers as binary64"
     },
     {
       "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/failed",
       "rule": "integer",
-      "detail": "serde_json::Number retains exact JSON numbers but does not enforce integrality; validate the source constraint"
+      "detail": "serde_json::Number holds exact JSON numbers with the default `exact-numbers` feature and binary64 without it, and does not enforce integrality; validate the source constraint"
+    },
+    {
+      "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/failed",
+      "rule": "rust_exact_numbers",
+      "detail": "this value holds JSON numbers in serde_json; the generated crate's default-on `exact-numbers` feature enables serde_json/arbitrary_precision, and a consumer that turns default features off gets these numbers as binary64"
     },
     {
       "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/passed",
       "rule": "integer",
-      "detail": "serde_json::Number retains exact JSON numbers but does not enforce integrality; validate the source constraint"
+      "detail": "serde_json::Number holds exact JSON numbers with the default `exact-numbers` feature and binary64 without it, and does not enforce integrality; validate the source constraint"
+    },
+    {
+      "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/passed",
+      "rule": "rust_exact_numbers",
+      "detail": "this value holds JSON numbers in serde_json; the generated crate's default-on `exact-numbers` feature enables serde_json/arbitrary_precision, and a consumer that turns default features off gets these numbers as binary64"
     },
     {
       "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/skipped",
       "rule": "integer",
-      "detail": "serde_json::Number retains exact JSON numbers but does not enforce integrality; validate the source constraint"
+      "detail": "serde_json::Number holds exact JSON numbers with the default `exact-numbers` feature and binary64 without it, and does not enforce integrality; validate the source constraint"
+    },
+    {
+      "pointer": "/$defs/engineering.assertion.provider.TestReport/properties/skipped",
+      "rule": "rust_exact_numbers",
+      "detail": "this value holds JSON numbers in serde_json; the generated crate's default-on `exact-numbers` feature enables serde_json/arbitrary_precision, and a consumer that turns default features off gets these numbers as binary64"
     }
   ]
 }
