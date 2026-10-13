@@ -23,22 +23,21 @@ releases at bare-version tags.
   and the rule sees only recorded `implementation_change` evidence, which `implementation.edit`
   may but need not produce, so a change made without that record is not seen.
 - A protocol page writes the order forms in words.
+- Protocol graphs draw the order forms as docs-system 0.10.0's `b10x-protocol-graph/1` predicate
+  leaves `{"first": {"kind", "result", "subject"?}}` and `{"before": {"first", "then",
+  "subject"?}}`, with `subject` only when the form names one. In a claim's `true_when` each draws
+  an `establishes` edge from every kind it reads, qualified `first <result>`, `before <then>` or
+  `after <first>`, then `about <subject>` when bound and prefixed `not` under negation.
 
 ### Changed
 
 - Canon is pinned at tag 0.3.0.
+- `website/package.json` pins docs-system 0.10.0 (`48afe6a`).
 - The fixture harness passes each record to Canon observed at its entry's `observed_at`, which the
   order forms read; it still passes no evaluation instant, so nothing expires.
 - `regression.reproduced` is unknown, not false, for a change whose tests pass and whose
   regression test never ran: the fixtures `chg-1842`, `superseded` and `profiles-discharged` say
   so.
-
-### Known issues
-
-- The protocol graph generator refuses a protocol that holds an order form, naming each one: the
-  pinned docs-system `b10x-protocol-graph/1` schema has no leaf for `first` or `before`. Until it
-  does, `canon-engineering-docs generate` fails on `software.change/1`, and the committed graph,
-  protocol page and vocabulary page are those of 0.5.0.
 
 ## [0.5.0] - 2026-10-13
 

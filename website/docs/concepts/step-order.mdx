@@ -64,8 +64,9 @@ actions:
 
 Neither action names a capability yet: telling a test edit from an implementation edit needs a path
 scope on capabilities, which Canon does not have. Hover `implementation.edit` in the graph to see the
-precondition that gates it. The graph does not draw the order forms yet: the protocol graph format
-has no leaf for `first` or `before`.
+precondition that gates it. The graph draws the order forms too: hover `regression.shown_first` to
+see its `first` and `before`, and its edges from `regression_test_result` and
+`implementation_change`.
 
 <ProtocolGraph data={softwareChange} />
 
