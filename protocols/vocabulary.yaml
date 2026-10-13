@@ -369,3 +369,7 @@ terms:
     category: independence_dimension
     marking: core
     meaning: the producer of a record is another agent run than the one that did the case's work
+  - id: rollback.verified
+    category: claim_id
+    marking: core
+    meaning: the release's rollback is complete, by a rollback result from another principal than the one who rolled it back

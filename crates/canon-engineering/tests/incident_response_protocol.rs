@@ -148,7 +148,12 @@ fn inc_492_leaves_emergency_while_cause_unknown() {
     );
     assert_eq!(
         names(ir.claims.keys().map(|id| id.as_str()).collect()),
-        ["cause.identified", "impact.bounded", "service.healthy"]
+        [
+            "cause.identified",
+            "impact.bounded",
+            "rollback.verified",
+            "service.healthy"
+        ]
     );
     assert_eq!(
         names(ir.obligations.keys().map(|id| id.as_str()).collect()),
@@ -305,7 +310,8 @@ fn inc_492_leaves_emergency_while_cause_unknown() {
 
     // 5. Every evidence match names the artifact its kind is about: an impact assessment and an
     //    operational observation are about the service. A cause analysis names no subject: the
-    //    design gives the kind none, and `release.inspect` produces one from a release.
+    //    design gives the kind none, and `release.inspect` produces one from a release. A rollback
+    //    result is about the release it rolled back.
     let mut bindings = BTreeSet::new();
     let mut collect = |predicate: &Predicate| {
         predicate.visit(&mut |node| {
@@ -337,6 +343,7 @@ fn inc_492_leaves_emergency_while_cause_unknown() {
             ("cause_analysis".to_owned(), None),
             ("impact_assessment".to_owned(), service.clone()),
             ("operational_observation".to_owned(), service),
+            ("rollback_result".to_owned(), Some("release".to_owned())),
         ]
     );
 

@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 92 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 93 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -77,6 +77,7 @@ Category `claim_id`.
 | `regression.reproduced` | `software.change` | a failing test has reproduced the regression a bugfix repairs |
 | `regression.shown_first` | `software.change` | a bugfix's regression test failed on its first run, before the implementation was first changed |
 | `security.reviewed` | `software.change` | the current implementation revision's security review is approved by another principal than the implementer |
+| `rollback.verified` | `core` | the release's rollback is complete, by a rollback result from another principal than the one who rolled it back |
 
 ## Actions
 
