@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T02:57:21Z",
+  "actor": "human:timo",
+  "artifact": "story:evidence-order-red-first",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --locked -p b10x-canon-engineering --no-fail-fast --test software_change_red_first --test adversary_software_change_profiles on 6b184e2: exit 101 (red, protocol first)"
+  }
+}

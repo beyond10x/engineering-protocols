@@ -19,13 +19,19 @@ scope:
 - confidence: cited
   path: crates/canon-engineering-docs/Cargo.toml
 - confidence: cited
+  path: crates/canon-engineering-docs/src/generate.rs
+- confidence: cited
   path: crates/canon-engineering-docs/src/graph.rs
 - confidence: cited
   path: crates/canon-engineering-docs/src/protocol.rs
 - confidence: cited
+  path: crates/canon-engineering-docs/tests/adversary_graph_case_inputs.rs
+- confidence: cited
   path: crates/canon-engineering-docs/tests/review_graph_schema.rs
 - confidence: cited
   path: crates/canon-engineering/Cargo.toml
+- confidence: cited
+  path: crates/canon-engineering/tests/adversary2_incident_harness.rs
 - confidence: cited
   path: crates/canon-engineering/tests/adversary_software_change_profiles.rs
 - confidence: cited
@@ -36,6 +42,10 @@ scope:
   path: crates/canon-engineering/tests/software_change_profiles.rs
 - confidence: cited
   path: crates/canon-engineering/tests/software_change_protocol.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/software_change_red_first.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/support/mod.rs
 - confidence: cited
   path: crates/canon-engineering/tests/support_triage_protocol.rs
 - confidence: inferred
@@ -54,7 +64,7 @@ scope:
   path: website/docs/vocabulary.md
 - confidence: inferred
   path: website/package.json
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T02:45:31Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-13T02:45:31Z", actor: "human:timo", revision: 5}
