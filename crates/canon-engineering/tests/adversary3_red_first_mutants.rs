@@ -54,8 +54,8 @@ fn killed_by(name: &str, from: &str, to: &str) -> Vec<String> {
 fn control_a_flipped_first_result_is_killed() {
     let killed = killed_by(
         "first-result-pass",
-        "        - first:\n            kind: regression_test_result\n            result: fail\n",
-        "        - first:\n            kind: regression_test_result\n            result: pass\n",
+        "            subject: implementation\n        - first:\n            kind: regression_test_result\n            result: fail\n",
+        "            subject: implementation\n        - first:\n            kind: regression_test_result\n            result: pass\n",
     );
     assert!(
         !killed.is_empty(),
@@ -85,12 +85,59 @@ fn a_first_without_its_subject_is_killed_by_a_fixture() {
 fn a_before_without_its_subject_is_killed_by_a_fixture() {
     let killed = killed_by(
         "before-without-subject",
-        "        then: implementation_change\n        subject: implementation\n",
-        "        then: implementation_change\n",
+        "            then: implementation_change\n            subject: implementation\n",
+        "            then: implementation_change\n",
     );
     assert!(
         !killed.is_empty(),
         "dropping `subject: implementation` from regression.shown_first's `before` survives \
          every software-change fixture"
+    );
+}
+
+/// Control: the protocol as it ships is killed by no fixture, so every kill above is the
+/// mutation's, and every fixture under `fixtures/software-change/` holds, listed or not.
+#[test]
+fn control_the_shipped_protocol_is_killed_by_no_fixture() {
+    let killed = killed_by(
+        "shipped",
+        "  regression.shown_first:\n",
+        "  regression.shown_first:\n",
+    );
+    assert_eq!(
+        killed,
+        Vec::<String>::new(),
+        "fixtures that fail as shipped"
+    );
+}
+
+/// `regression.shown_first` without `subject: implementation` on its `first` arm: a regression
+/// test result about the release then decides whether the first result failed.
+#[test]
+fn a_shown_first_first_without_its_subject_is_killed_by_a_fixture() {
+    let killed = killed_by(
+        "shown-first-first-without-subject",
+        "      all:\n        - first:\n            kind: regression_test_result\n            result: fail\n            subject: implementation\n",
+        "      all:\n        - first:\n            kind: regression_test_result\n            result: fail\n",
+    );
+    assert!(
+        !killed.is_empty(),
+        "dropping `subject: implementation` from regression.shown_first's `first` survives every \
+         software-change fixture"
+    );
+}
+
+/// `regression.shown_first` without its `first` arm (pass 1, F1): a regression test whose first
+/// result passed then discharges `red_first.required`.
+#[test]
+fn a_shown_first_without_its_first_arm_is_killed_by_a_fixture() {
+    let killed = killed_by(
+        "shown-first-without-first",
+        "      all:\n        - first:\n            kind: regression_test_result\n            result: fail\n            subject: implementation\n        - before:\n",
+        "      all:\n        - before:\n",
+    );
+    assert!(
+        !killed.is_empty(),
+        "dropping the `first` arm of regression.shown_first survives every software-change fixture"
     );
 }

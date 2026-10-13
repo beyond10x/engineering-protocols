@@ -12,13 +12,16 @@ releases at bare-version tags.
   `first` and `before`. Evidence kinds `regression_test_result` (`tests.run` may produce it) and
   `implementation_change` (`implementation.edit` may produce it); `regression.reproduced` also
   holds when the first `regression_test_result` about the implementation failed, on any revision;
-  claim `regression.shown_first` holds when that first result came before the first
-  `implementation_change`; obligation `red_first.required` applies to every bugfix, at every risk,
-  and is discharged by it. A bugfix that runs the suite green and its regression test red on R1
+  claim `regression.shown_first` holds when that first result failed and came before the first
+  `implementation_change` about the implementation; obligation `red_first.required` applies to
+  every bugfix, at every risk, and is discharged by it, so a regression test whose first result
+  passed never discharges it. A bugfix that runs the suite green and its regression test red on R1
   may edit, and its red run keeps counting once the edit moves the implementation to R2: the
-  limitation 0.5.0 stated is lifted. Fixtures `red-first`, `red-first-edit-first` and
-  `red-first-green-first` show it. Known limit, from Canon: a red record about any earlier
-  revision counts, whether or not the current revision descends from it.
+  limitation 0.5.0 stated is lifted. Fixtures `red-first`, `red-first-edit-first`,
+  `red-first-green-first` and `red-first-other-subject` show it. Known limits: from Canon, a red
+  record about any earlier revision counts, whether or not the current revision descends from it;
+  and the rule sees only recorded `implementation_change` evidence, which `implementation.edit`
+  may but need not produce, so a change made without that record is not seen.
 - A protocol page writes the order forms in words.
 
 ### Changed

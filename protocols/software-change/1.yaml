@@ -9,8 +9,8 @@ protocol:
     realized; or close it declined, superseded or abandoned on an explicit decision, or rolled
     back on a complete rollback result. A case fixes its risk, which selects the obligations that
     apply, and its change kind, which selects whether a regression must be reproduced before the
-    implementation is edited, and whether its regression test must run before the implementation
-    is first changed.
+    implementation is edited, and whether its regression test must fail on its first run, before
+    the implementation is first changed.
 
 case:
   inputs:
@@ -22,8 +22,8 @@ case:
     change_kind:
       description: >-
         what the change is; a bugfix must reproduce its regression with a failing test before the
-        implementation is edited, and run its regression test before the implementation is first
-        changed
+        implementation is edited, and its regression test must fail on its first run, before the
+        implementation is first changed
       values: [feature, bugfix, refactor]
 
 artifacts:
@@ -129,13 +129,19 @@ claims:
             subject: implementation
   regression.shown_first:
     description: >-
-      the regression test ran before the implementation was first changed: the first regression
-      test result about the implementation was observed before its first change
+      the regression test failed first, before the implementation was first changed: the first
+      regression test result about the implementation failed, and it was observed before the
+      implementation's first change
     true_when:
-      before:
-        first: regression_test_result
-        then: implementation_change
-        subject: implementation
+      all:
+        - first:
+            kind: regression_test_result
+            result: fail
+            subject: implementation
+        - before:
+            first: regression_test_result
+            then: implementation_change
+            subject: implementation
 
 obligations:
   tests.required:
@@ -169,8 +175,8 @@ obligations:
       claim: deployment.healthy
   red_first.required:
     description: >-
-      the regression test ran before the implementation was first changed; applies to a bugfix,
-      at every risk
+      the regression test failed on its first run, before the implementation was first changed;
+      applies to a bugfix, at every risk
     applicable_when:
       input: change_kind
       in: [bugfix]

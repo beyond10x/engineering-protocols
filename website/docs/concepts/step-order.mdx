@@ -16,7 +16,7 @@ protocols say so, in three steps.
   {label: 'Ordering by action precondition', status: 'shipped', detail: 'Canon evaluation reports an action blocked while its precondition is not TRUE.'},
   {label: 'Red first for a bugfix', status: 'shipped', detail: 'software.change/1: implementation.edit needs regression.reproduced when the case\'s change_kind is bugfix.'},
   {label: 'Evidence bound to the current revision', status: 'shipped', detail: 'Canon excludes evidence recorded for another revision of its subject.'},
-  {label: 'Evidence-order predicate', status: 'shipped', detail: 'Canon 0.3.0: first and before. software.change/1 reads red first from the first regression test result and the first implementation change.'},
+  {label: 'Evidence-order predicate', status: 'shipped', detail: 'Canon 0.3.0: first and before. software.change/1 reads red first as a first regression test result that failed, before the first recorded implementation change.'},
   {label: 'Revision-order relation', status: 'decided', detail: 'Red on R1, green on R2 descended from R1, same test. Later; needs a revision-relation construct.'},
   {label: 'Path scope on capabilities', status: 'decided', detail: 'Tells test edits from code edits. The scope field of decision record 0083; not in Canon yet.'},
 ]} />
@@ -44,7 +44,9 @@ claims:
         - first: {kind: regression_test_result, result: fail, subject: implementation}
   regression.shown_first:
     true_when:
-      before: {first: regression_test_result, then: implementation_change, subject: implementation}
+      all:
+        - first: {kind: regression_test_result, result: fail, subject: implementation}
+        - before: {first: regression_test_result, then: implementation_change, subject: implementation}
 obligations:
   red_first.required:
     applicable_when: {input: change_kind, in: [bugfix]}
@@ -82,9 +84,10 @@ R2, and the red run, about R1, still counts: it is the first regression test res
 needs a second edit makes it without running red again.
 
 The obligation `red_first.required` applies to every bugfix and is discharged once
-`regression.shown_first` holds: the first regression test result was observed before the first
-implementation change. An edit made before any regression test ran leaves it open for good, and so
-does a regression test that passed first.
+`regression.shown_first` holds: the first regression test result about the implementation failed,
+and it was observed before the implementation's first change. An edit made before any regression
+test ran leaves it open for good, and so does a regression test whose first result passed, even
+when it ran before the edit and a failing suite run admitted the edit.
 
 ## What the protocol still cannot say
 
@@ -92,13 +95,18 @@ Canon does not know how revisions descend. A red record about any earlier revisi
 or not the current revision descends from it. Records without an observation time have no place in
 the order, and leave both forms unknown.
 
+The rule sees a change to the implementation only through its record: `implementation.edit` may
+produce an `implementation_change`, but need not, and `before` reads only the records there are. A
+change made without that record is not seen, so a revision moved that way before the first red run
+does not count as the first change, and the obligation can still be discharged.
+
 The suite's own path is unchanged: a failing `test_result` about the current revision reproduces
 the regression, a pass and a fail of one kind on one revision contradict each other, and a failure
 on an unrelated flake satisfies it. Nothing yet says that the failing test is a test of the change.
 
 | Gap | Closed by | Status |
 |---|---|---|
-| The failing result must come before the fix | the evidence-order forms: the first `regression_test_result` is `fail`, and it precedes the first `implementation_change` | shipped |
+| The failing result must come before the fix | the evidence-order forms: the first `regression_test_result` is `fail`, and it precedes the first recorded `implementation_change` | shipped |
 | Red and green must be about the same test, across the fix | revision order: red on revision R1 (test added, fix absent), green on R2 descended from R1, same test id | decided, later |
 | A test edit must not touch the implementation | a path scope on capabilities that `tests.write` and `implementation.edit` would require | decided, not built |
 | The red result must come from the test runner, not the agent | evidence independence, declared on the evidence kind or the requirement | decided, syntax open |
