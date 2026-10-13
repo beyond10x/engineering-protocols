@@ -54,8 +54,8 @@ fn killed_by(name: &str, from: &str, to: &str) -> Vec<String> {
 fn control_a_flipped_first_result_is_killed() {
     let killed = killed_by(
         "first-result-pass",
-        "        - first:\n            kind: regression_test_result\n            result: fail\n",
-        "        - first:\n            kind: regression_test_result\n            result: pass\n",
+        "            subject: implementation\n        - first:\n            kind: regression_test_result\n            result: fail\n",
+        "            subject: implementation\n        - first:\n            kind: regression_test_result\n            result: pass\n",
     );
     assert!(
         !killed.is_empty(),
@@ -85,8 +85,8 @@ fn a_first_without_its_subject_is_killed_by_a_fixture() {
 fn a_before_without_its_subject_is_killed_by_a_fixture() {
     let killed = killed_by(
         "before-without-subject",
-        "        then: implementation_change\n        subject: implementation\n",
-        "        then: implementation_change\n",
+        "            then: implementation_change\n            subject: implementation\n",
+        "            then: implementation_change\n",
     );
     assert!(
         !killed.is_empty(),

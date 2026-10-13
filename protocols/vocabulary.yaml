@@ -332,8 +332,8 @@ terms:
   - id: regression.shown_first
     category: claim_id
     marking: software.change
-    meaning: a bugfix's regression test ran before the implementation was first changed
+    meaning: a bugfix's regression test failed on its first run, before the implementation was first changed
   - id: red_first.required
     category: obligation_id
     marking: software.change
-    meaning: a bugfix's regression test must run before the implementation is first changed
+    meaning: a bugfix's regression test must fail on its first run, before the implementation is first changed

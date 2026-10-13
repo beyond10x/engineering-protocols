@@ -2,8 +2,8 @@
 //! red-first rule from evidence order, on Canon 0.3.0's order forms. A bugfix whose suite ran green
 //! on R1 and whose regression test then ran red on R1 may edit the implementation, and the red run
 //! keeps counting once the edit moves the implementation to R2; `red_first.required` is discharged
-//! when the first regression test result came before the first implementation change, and applies
-//! to a bugfix only.
+//! when the first regression test result failed and came before the first implementation change,
+//! and applies to a bugfix only.
 //!
 //! The fixtures `red-first`, `red-first-edit-first` and `red-first-green-first`
 //! (`fixtures/software-change/`) hold the five cases: one fixture's states are cumulative, and a
@@ -346,6 +346,23 @@ fn a_bugfix_reads_red_first_from_evidence_order() {
             seen.action("implementation.edit"),
             "admissible",
             "implementation.edit once a test result fails about R1",
+        );
+    }
+    // The regression test ran before the edit but passed first: not shown first, and the
+    // obligation stays open once the edit is recorded (ADR 0084: the first result failed and came
+    // before the first change).
+    if let Some(seen) = decide(&mut failures, 4, green_first, &compiled, "edited") {
+        failures.equal(
+            4,
+            seen.claim("regression.shown_first"),
+            "false",
+            "regression.shown_first after the edit",
+        );
+        failures.equal(
+            4,
+            seen.obligation("red_first.required"),
+            "open",
+            "red_first.required after the edit",
         );
     }
 

@@ -7,7 +7,10 @@ at: "2026-10-13T12:00:00Z"
 # at 09:00 (acceptance 4 of the red-first rule). The first regression test result is not a fail,
 # so `first` is FALSE and stays FALSE when the test fails later, at 10:00: the regression test
 # reproduced nothing, and the edit is blocked. A suite run that fails on R1 at 11:00 reproduces the
-# regression on the current revision, which admits the edit.
+# regression on the current revision, which admits the edit. The regression test was never red
+# first, so `regression.shown_first` is FALSE from its first run on, and stays FALSE when the edit
+# at 11:30 moves the implementation to R2 although the regression test ran before that change:
+# `red_first.required` is open in every state.
 case:
   format: canon-case/1
   id: CHG-3005
@@ -43,7 +46,7 @@ states:
         deployment.healthy: unknown
         objective.realized: unknown
         regression.reproduced: unknown
-        regression.shown_first: unknown
+        regression.shown_first: false
       obligations: &open
         tests.required: open
         review.required: open
@@ -98,12 +101,36 @@ states:
         deployment.healthy: unknown
         objective.realized: unknown
         regression.reproduced: true
-        regression.shown_first: unknown
+        regression.shown_first: false
       obligations: *open
       actions:
         repository.inspect: admissible
         tests.write: admissible
         implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+
+  # The edit moves the implementation to R2. The regression test ran before it, but never red
+  # first, so the obligation stays open; the suite's red run is about R1 and no longer counts.
+  - id: edited
+    set_revisions:
+      implementation: R2
+    add_evidence:
+      - observed_at: "2026-10-13T11:30:00Z"
+        record:
+          format: canon-evidence/1
+          id: change-r2
+          kind: implementation_change
+          subject: implementation
+          subject_revision: R2
+    expect:
+      claims: *unreproduced
+      obligations: *open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
         tests.run: admissible
         repository.merge: blocked
         release.rollback: approval-required
