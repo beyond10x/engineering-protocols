@@ -20,6 +20,17 @@ releases at bare-version tags.
   unknown, never false. The trusted context that writes the case resolves who is independent;
   the protocol only declares what it demands. Fixtures `security-boundary` and
   `security-boundary-independent` show it.
+- `incident.response/1` gains an independent rollback-verification rule. Independence dimension
+  `different_principal`; evidence kind `rollback_result` (`complete`, `partial`), which
+  `release.rollback` may produce; claim `rollback.verified`, a complete `rollback_result` about the
+  release whose `producer` the case's `independence` map lists on `different_principal`. A result
+  from a producer not listed as independent, such as the actor who rolled back, is excluded as
+  `not_independent` and leaves the claim unknown, never false. No case input and no obligation
+  are added, so existing incident cases stay valid; a case with no `independence` map leaves
+  `rollback.verified` unknown. Fixtures `rollback-verification` and
+  `rollback-verification-independent` show it; `inc-492` expects `rollback.verified` unknown in
+  every state.
+- Vocabulary term `rollback.verified` (claim, marked `core`).
 - Vocabulary category `independence_dimension`, and the terms `affects_security_boundary`,
   `true`, `false`, `security_review`, `security.reviewed`, `security_review.required`,
   `different_principal` and `different_agent_run`.
