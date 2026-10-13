@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T14:06:51Z",
+  "actor": "human:timo",
+  "artifact": "story:security-independence-rules",
+  "kind": "story",
+  "revision": 20,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --locked -p b10x-canon-engineering --test security_independence_rules on 2aa3890: exit 101 (red, protocol first; fails at item 5 only)"
+  }
+}
