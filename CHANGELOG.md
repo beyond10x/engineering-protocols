@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-13
+
 ### Added
 
 - `software.change/1` case inputs `risk` (`trivial`, `standard`, `elevated`, `critical`) and
