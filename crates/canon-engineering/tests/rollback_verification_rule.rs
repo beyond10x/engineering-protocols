@@ -25,8 +25,16 @@ use support::{Compiled, Fixture};
 /// The evaluation instant every fixture of this story gives.
 const AT: &str = "2026-10-13T12:00:00Z";
 
-/// The fixtures of this story.
-const FIXTURES: [&str; 2] = ["rollback-verification", "rollback-verification-independent"];
+/// The fixtures of this story. `rollback-verification-partial` holds an independent partial
+/// result and `rollback-verification-other-subject` an independent complete result about the
+/// service, so that a rule without `result: complete` or `subject: release` differs from the
+/// protocol on some fixture.
+const FIXTURES: [&str; 4] = [
+    "rollback-verification",
+    "rollback-verification-independent",
+    "rollback-verification-partial",
+    "rollback-verification-other-subject",
+];
 
 /// The terms the rule names, each with the category it is declared in: the claim this story adds,
 /// and the evidence kind and independence dimension it declares in the incident document.
@@ -261,8 +269,8 @@ fn rollback_verified_needs_an_independent_verifier() {
             });
         }
     }
-    let [rollback, independent] = &loaded[..] else {
-        unreachable!("two fixtures")
+    let [rollback, independent, ..] = &loaded[..] else {
+        unreachable!("four fixtures")
     };
 
     // 1. The INC-492 case with `release.rollback` approved and no `rollback_result`: nothing

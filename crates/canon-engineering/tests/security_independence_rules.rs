@@ -26,8 +26,16 @@ use support::{Compiled, Fixture};
 /// The evaluation instant every fixture of this story gives.
 const AT: &str = "2026-10-13T12:00:00Z";
 
-/// The fixtures of this story.
-const FIXTURES: [&str; 2] = ["security-boundary", "security-boundary-independent"];
+/// The fixtures of this story. `security-boundary-rejected` holds an independent rejection and
+/// `security-boundary-other-subject` an independent approval about the plan, so that a rule
+/// without `result: approved` or `subject: implementation` differs from the protocol on some
+/// fixture.
+const FIXTURES: [&str; 4] = [
+    "security-boundary",
+    "security-boundary-independent",
+    "security-boundary-rejected",
+    "security-boundary-other-subject",
+];
 
 /// The terms this story adds, each with the category it is declared in.
 const TERMS: [(&str, &str); 5] = [
@@ -256,8 +264,8 @@ fn independent_security_review_gates_implementation_verified() {
             });
         }
     }
-    let [boundary, independent] = &loaded[..] else {
-        unreachable!("two fixtures")
+    let [boundary, independent, ..] = &loaded[..] else {
+        unreachable!("four fixtures")
     };
 
     // 1. Implementation revision R1 on a security boundary, a passing test result about R1 by P1,
