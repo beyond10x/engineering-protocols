@@ -19,12 +19,13 @@ use support::{Compiled, Fixture};
 const PROTOCOL: &str = "protocols/software-change/1.yaml";
 
 /// Every fixture of `software.change/1`.
-const FIXTURES: [&str; 8] = [
+const FIXTURES: [&str; 9] = [
     "abandoned",
     "change-kinds",
     "chg-1842",
     "declined",
     "profiles",
+    "profiles-discharged",
     "rolled-back-complete",
     "rolled-back",
     "superseded",
@@ -113,13 +114,14 @@ fn claim(decision: &Decision, id: &str) -> String {
 
 /// The red-first workflow as a bugfix runs it: the suite is run on R1 and passes, the regression
 /// test is written (`tests.write`, which moves no implementation revision), and the suite is run
-/// on R1 again and fails. A failing test about the current implementation revision is recorded,
-/// so by § ADR 0084 addition ("`regression.reproduced` is TRUE on a `test_result` whose result is
-/// `fail`") the bugfix may now edit the implementation. Canon reads a pass and a fail about one
-/// revision as contradicting, `regression.reproduced` is UNKNOWN, and the edit stays blocked on
-/// R1 for good: nothing the protocol offers moves the implementation off R1 but the edit.
+/// on R1 again and fails. Canon 0.2.0 reads a pass and a fail about one revision as
+/// contradicting, so `regression.reproduced` is UNKNOWN and the edit stays blocked on R1: a
+/// bugfix records its red run before any green run on the revision it repairs. This pins that
+/// limitation, which the story's § Amendment and the step-order page state; reading the latest
+/// result instead needs Canon's evidence-order predicate, and when it lands this test changes
+/// with the protocol.
 #[test]
-fn a_bugfix_reproduced_after_a_green_run_on_the_same_revision_may_edit_the_implementation() {
+fn a_bugfix_green_then_red_on_one_revision_stays_blocked_until_evidence_is_ordered() {
     let compiled = compiled();
     let evidence = [
         record(
@@ -148,8 +150,8 @@ fn a_bugfix_reproduced_after_a_green_run_on_the_same_revision_may_edit_the_imple
             claim(&decision, "regression.reproduced"),
             action(&decision, "implementation.edit")["status"].clone()
         ),
-        ("true".to_owned(), Json::from("admissible")),
-        "a failing test about R1 is recorded, yet implementation.edit is {}",
+        ("unknown".to_owned(), Json::from("blocked")),
+        "a pass and a fail about R1 no longer contradict: implementation.edit is {}",
         action(&decision, "implementation.edit")
     );
 }
@@ -285,6 +287,17 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
             })
             .collect();
         assert_eq!(obligations(&decision), expected, "risk `{risk}`");
+    }
+}
+
+/// `profiles-discharged` holds against the protocol as it ships: each obligation is discharged by
+/// its own claim, and `not_applicable` wins over a discharge outside the risk.
+#[test]
+fn profiles_discharged_holds() {
+    let path = "fixtures/software-change/profiles-discharged.fixture.yaml";
+    let fixture = Fixture::load(path).unwrap_or_else(|error| panic!("{path}: {error}"));
+    if let Err(differences) = fixture.check(&compiled()) {
+        panic!("{path} differs:\n{}", differences.join("\n"));
     }
 }
 

@@ -5,7 +5,8 @@ at: "2026-10-13T12:00:00Z"
 
 # One change at standard risk and implementation revision R1, with no authority decision. A bugfix
 # with no evidence may write tests but not edit the implementation; a refactor or a feature may do
-# both; a failing test makes the bugfix's edit admissible, and the edit producing R2 keeps it so.
+# both; a failing test about R1 makes the bugfix's edit of R1 admissible, and once the edit
+# produces R2 that test no longer counts, so the edit waits for red recorded on R2.
 # States are cumulative, so the change kinds that need no evidence come before the failing test.
 case:
   format: canon-case/1

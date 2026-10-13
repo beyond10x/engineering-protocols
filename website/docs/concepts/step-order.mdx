@@ -64,8 +64,11 @@ failure on an unrelated flake satisfies it.
 
 Canon also binds every evidence record to the current revision of its subject. A failing result
 recorded on implementation revision R1 stops counting once an edit produces R2, so a bugfix needs
-red recorded again before it edits R2. Keeping red from R1 across the fix needs the evidence-order
-or revision-order constructs below.
+red recorded again before it edits R2. Within one revision, a pass and a fail contradict each
+other: a bugfix that runs the suite green on R1, adds its regression test and runs it red on R1
+leaves `regression.reproduced` unknown and the edit blocked, so it records its red run before any
+green run on that revision. Keeping red from R1 across the fix, and reading the latest result on a
+revision, need the evidence-order or revision-order constructs below.
 
 | Gap | Closed by | Status |
 |---|---|---|

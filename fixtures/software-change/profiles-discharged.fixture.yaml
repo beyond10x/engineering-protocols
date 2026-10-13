@@ -1,0 +1,90 @@
+format: els-fixture/1
+id: profiles-discharged
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# One refactor at implementation revision R1 whose tests pass and whose release carries build
+# provenance, with no review, no health observation and no authority decision. Each obligation is
+# discharged by its own claim and no other, and an obligation its risk does not apply stays
+# not_applicable although its claim holds.
+case:
+  format: canon-case/1
+  id: CHG-3003
+  protocol: software.change
+  inputs:
+    risk: critical
+    change_kind: refactor
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  # Tests pass on R1 and the release carries build provenance, so tests.required and
+  # provenance.required are discharged at critical while review.required and health.required stay
+  # open: each obligation is discharged by its own claim and no other.
+  - id: critical-tested-proven
+    set_inputs:
+      risk: critical
+    add_evidence:
+      - observed_at: "2026-10-13T11:00:00Z"
+        record:
+          format: canon-evidence/1
+          id: tests-r1-pass
+          kind: test_result
+          result: pass
+          subject: implementation
+          subject_revision: R1
+      - observed_at: "2026-10-13T11:10:00Z"
+        record:
+          format: canon-evidence/1
+          id: provenance-v0
+          kind: build_provenance
+          subject: release
+          subject_revision: v0
+    expect:
+      claims: &proven
+        tests.pass: true
+        implementation.reviewed: unknown
+        implementation.verified: true
+        release.proven: true
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: false
+      obligations:
+        tests.required: discharged
+        review.required: open
+        provenance.required: discharged
+        health.required: open
+      actions: &actions
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: approval-required
+        release.rollback: approval-required
+      outcomes: &outcomes
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  # The same evidence at trivial: provenance.required is not applicable although release.proven
+  # holds, so not_applicable wins over a discharge.
+  - id: trivial-tested-proven
+    set_inputs:
+      risk: trivial
+    add_evidence: []
+    expect:
+      claims: *proven
+      obligations:
+        tests.required: discharged
+        review.required: not_applicable
+        provenance.required: not_applicable
+        health.required: not_applicable
+      actions: *actions
+      outcomes: *outcomes
