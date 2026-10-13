@@ -35,6 +35,10 @@ fn drawn(predicate: &Predicate) -> Value {
             "id": test.input.as_str(),
             "in": test.r#in.iter().map(|value| value.as_str()).collect::<Vec<_>>(),
         }}),
+        Predicate::First(_) | Predicate::Before(_) => panic!(
+            "the pinned schema has no leaf for an order form (`first`, `before`), so no committed \
+             graph can draw {predicate:?}"
+        ),
     }
 }
 

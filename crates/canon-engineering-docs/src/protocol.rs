@@ -76,6 +76,25 @@ pub fn predicate(predicate: &Predicate) -> String {
             code(test.input.as_str()),
             values(&test.r#in)
         ),
+        Predicate::First(form) => {
+            let mut line = format!("the first {}", code(form.kind.as_str()));
+            if let Some(subject) = &form.subject {
+                line.push_str(&format!(" about {}", code(subject.as_str())));
+            }
+            line.push_str(&format!(" is {}", code(&form.result)));
+            line
+        }
+        Predicate::Before(form) => {
+            let mut line = format!(
+                "the first {} before the first {}",
+                code(form.first.as_str()),
+                code(form.then.as_str())
+            );
+            if let Some(subject) = &form.subject {
+                line.push_str(&format!(", both about {}", code(subject.as_str())));
+            }
+            line
+        }
         Predicate::All(members) if members.is_empty() => "always true".to_owned(),
         Predicate::Any(members) if members.is_empty() => "never true".to_owned(),
         Predicate::All(members) => format!("all of ({})", list(members)),
@@ -386,6 +405,36 @@ mod tests {
         );
         assert_eq!(claim_predicate("{claim: a}"), "`a` is **TRUE**");
         assert_eq!(claim_predicate("{any: []}"), "never true");
+    }
+
+    #[test]
+    fn order_forms_read_in_words() {
+        assert_eq!(
+            claim_predicate("{first: {kind: e, result: fail, subject: x}}"),
+            "the first `e` about `x` is `fail`"
+        );
+        assert_eq!(
+            claim_predicate("{first: {kind: e, result: fail}}"),
+            "the first `e` is `fail`"
+        );
+        let two_kinds = |yaml: &str| {
+            let source = format!(
+                "format: protocol/1\nprotocol: {{id: p, revision: 1}}\nartifacts: {{x: {{}}}}\nevidence_kinds: {{e: {{}}, f: {{}}}}\nclaims:\n  b:\n    true_when: {yaml}\n"
+            );
+            let protocol = parse(&source).expect("parses");
+            let (_, claim) = protocol.claims.iter().next().expect("claim b");
+            predicate(&claim.true_when)
+        };
+        assert_eq!(
+            two_kinds("{before: {first: e, then: f, subject: x}}"),
+            "the first `e` before the first `f`, both about `x`"
+        );
+        assert_eq!(
+            two_kinds(
+                "{any: [{evidence: {kind: e, result: fail}}, {before: {first: e, then: f}}]}"
+            ),
+            "any of (evidence `e` with result `fail`; the first `e` before the first `f`)"
+        );
     }
 
     #[test]
