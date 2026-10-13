@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T03:29:40Z",
+  "actor": "human:timo",
+  "artifact": "story:evidence-order-red-first",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --workspace --locked on 4ae8e59: 232 passed, 0 failed; generate --check: 18 generated files fresh"
+  }
+}

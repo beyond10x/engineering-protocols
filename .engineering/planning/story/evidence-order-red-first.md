@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:evidence-order-red-first
 kind: story
-status: active
+status: implemented
 title: software.change/1 reads the bugfix red-first rule from evidence order (Canon 0.3.0)
 summary: Pin Canon 0.3.0 and use first and before so a green-then-red bugfix on one revision may edit, and its red run counts after the edit.
 relations:
@@ -64,10 +64,11 @@ scope:
   path: website/docs/vocabulary.md
 - confidence: inferred
   path: website/package.json
-revision: 6
+revision: 7
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T02:45:31Z", actor: "human:timo", revision: 4}
 - {from: "proposed", to: "active", at: "2026-10-13T02:45:31Z", actor: "human:timo", revision: 5}
+- {from: "active", to: "implemented", at: "2026-10-13T03:33:31Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"test_result":2,"review_outcome":1}}}
 ---
 ## Outcome
 
