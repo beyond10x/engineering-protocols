@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-13
+
 ### Added
 
 - `software.change/1` reads a bugfix's red-first rule from evidence order, on Canon 0.3.0's
