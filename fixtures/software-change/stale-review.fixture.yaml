@@ -1,0 +1,92 @@
+format: els-fixture/1
+id: stale-review
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# Implementation revision R2, a passing test result about R2, and one approving code review, of
+# R1: the review is bound to a revision the implementation no longer has. Canon excludes it as
+# revision_mismatch, so the current revision is not reviewed and implementation.reviewed is
+# UNKNOWN, not FALSE (reviewed-r1). An approving review of R2 reviews it (reviewed-r2); the review
+# of R1, still present, is still excluded.
+case:
+  format: canon-case/1
+  id: CHG-4301
+  protocol: software.change
+  inputs:
+    risk: standard
+    change_kind: feature
+    affects_security_boundary: false
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R2}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: reviewed-r1
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record: {format: canon-evidence/1, id: review-r1, kind: code_review, result: approved,
+                 subject: implementation, subject_revision: R1}
+      - observed_at: "2026-10-13T10:30:00Z"
+        record: {format: canon-evidence/1, id: tests-r2, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: R2}
+    expect:
+      claims:
+        tests.pass: true
+        implementation.reviewed: unknown
+        implementation.verified: true
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations:
+        tests.required: discharged
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: not_applicable
+        security_review.required: not_applicable
+      actions: &actions
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: approval-required
+        release.rollback: approval-required
+      outcomes: &outcomes
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: reviewed-r2
+    add_evidence:
+      - observed_at: "2026-10-13T11:00:00Z"
+        record: {format: canon-evidence/1, id: review-r2, kind: code_review, result: approved,
+                 subject: implementation, subject_revision: R2}
+    expect:
+      claims:
+        tests.pass: true
+        implementation.reviewed: true
+        implementation.verified: true
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations:
+        tests.required: discharged
+        review.required: discharged
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: not_applicable
+        security_review.required: not_applicable
+      actions: *actions
+      outcomes: *outcomes

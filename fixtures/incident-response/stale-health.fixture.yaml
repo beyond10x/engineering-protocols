@@ -1,0 +1,67 @@
+format: els-fixture/1
+id: stale-health
+protocol: protocols/incident-response/1.yaml
+at: "2026-10-13T11:29:00Z"
+
+# The INC-492 case with the rollback of release r42 approved. The impact is assessed bounded at
+# 10:00 and the service s1 observed healthy once, at T0 = 11:00. An operational observation applies
+# for 30 minutes after it is observed (max_age: 30m); an impact assessment has no maximum age. At
+# T0 + 29 minutes the service is healthy, restore_service is discharged and emergency mode may be
+# left (fresh). At T0 + 31 minutes, with nothing else changed, Canon excludes the observation as
+# expired: service.healthy is UNKNOWN, not FALSE, restore_service is open again and emergency.leave
+# is blocked, while the impact, assessed 91 minutes earlier, is still bounded (stale).
+case:
+  format: canon-case/1
+  id: INC-492
+  protocol: incident.response
+  artifacts:
+    service: {revision: s1}
+    release: {revision: r42}
+
+states:
+  - id: fresh
+    add_authority:
+      - {capability: release.rollback, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record: {format: canon-evidence/1, id: impact-1, kind: impact_assessment, result: bounded,
+                 subject: service, subject_revision: s1}
+      - observed_at: "2026-10-13T11:00:00Z"
+        record: {format: canon-evidence/1, id: health-1, kind: operational_observation,
+                 result: healthy, subject: service, subject_revision: s1}
+    expect:
+      claims:
+        impact.bounded: true
+        service.healthy: true
+        cause.identified: unknown
+        rollback.verified: unknown
+      obligations:
+        investigate_cause: open
+        restore_service: discharged
+      actions:
+        metrics.inspect: admissible
+        logs.search: admissible
+        release.inspect: admissible
+        traffic.shift: approval-required
+        release.rollback: admissible
+        emergency.leave: admissible
+
+  - id: stale
+    at: "2026-10-13T11:31:00Z"
+    add_evidence: []
+    expect:
+      claims:
+        impact.bounded: true
+        service.healthy: unknown
+        cause.identified: unknown
+        rollback.verified: unknown
+      obligations:
+        investigate_cause: open
+        restore_service: open
+      actions:
+        metrics.inspect: admissible
+        logs.search: admissible
+        release.inspect: admissible
+        traffic.shift: approval-required
+        release.rollback: admissible
+        emergency.leave: blocked

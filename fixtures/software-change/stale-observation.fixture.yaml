@@ -1,0 +1,88 @@
+format: els-fixture/1
+id: stale-observation
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T11:29:00Z"
+
+# A critical change whose deployment d0 is observed healthy once, at T0 = 11:00. An operational
+# observation applies for 30 minutes after it is observed (max_age: 30m). At T0 + 29 minutes the
+# deployment is healthy and health.required is discharged (fresh). Two minutes later, at T0 + 31
+# minutes, with nothing else changed, Canon excludes the observation as expired: deployment.healthy
+# is UNKNOWN, not FALSE, and health.required is open again (stale). Nothing else is observed, so
+# the other obligations critical risk applies stay open throughout.
+case:
+  format: canon-case/1
+  id: CHG-4302
+  protocol: software.change
+  inputs:
+    risk: critical
+    change_kind: feature
+    affects_security_boundary: false
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v1}
+    deployment: {revision: d0}
+
+states:
+  - id: fresh
+    add_evidence:
+      - observed_at: "2026-10-13T11:00:00Z"
+        record: {format: canon-evidence/1, id: health-d0, kind: operational_observation,
+                 result: healthy, subject: deployment, subject_revision: d0}
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: true
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: open
+        health.required: discharged
+        red_first.required: not_applicable
+        security_review.required: not_applicable
+      actions: &actions
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes: &outcomes
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: stale
+    at: "2026-10-13T11:31:00Z"
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: unknown
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations:
+        tests.required: open
+        review.required: open
+        provenance.required: open
+        health.required: open
+        red_first.required: not_applicable
+        security_review.required: not_applicable
+      actions: *actions
+      outcomes: *outcomes
