@@ -42,6 +42,10 @@ releases at bare-version tags.
   false; in the incident, `restore_service` reopens and `emergency.leave` is blocked again.
 - The fixture harness passes each state's evaluation instant to Canon, and a state may give its
   own `at`, not before the instant of the state before it; a state without one inherits it.
+- Protocol pages list a protocol's independence dimensions, say "from a producer independent on
+  `<dimension>`" for an evidence match that demands one, and show an evidence kind's `max_age` in
+  an "Applies for" column; a protocol graph's `establishes` edge appends `, independent on
+  <dimensions>` to its qualifier (`b10x-protocol-graph/1` is unchanged).
 
 ### Changed
 
