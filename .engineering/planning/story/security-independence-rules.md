@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:security-independence-rules
 kind: story
-status: active
+status: implemented
 title: Add the independent security-review rule to software.change/1
 summary: security.reviewed requires an approving security_review from a principal independent of the implementer when the change affects a security boundary.
 refs:
@@ -28,10 +28,11 @@ scope:
   path: protocols/software-change/1.yaml
 - confidence: cited
   path: protocols/vocabulary.yaml
-revision: 20
+revision: 21
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T13:41:46Z", actor: "human:timo", revision: 19, decided_on: {"recorded":{"review_outcome":5}}}
 - {from: "proposed", to: "active", at: "2026-10-13T13:41:47Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"review_outcome":5}}}
+- {from: "active", to: "implemented", at: "2026-10-13T15:42:48Z", actor: "human:timo", revision: 21, decided_on: {"recorded":{"test_result":1,"review_outcome":5}}}
 ---
 ## Outcome
 

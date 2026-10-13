@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:rollback-verification-rule
 kind: story
-status: active
+status: implemented
 title: Add the independent rollback-verification rule to incident.response/1
 summary: rollback.verified requires a complete rollback_result from a verifier independent of the actor who rolled back.
 refs:
@@ -30,10 +30,11 @@ scope:
   path: protocols/incident-response/1.yaml
 - confidence: cited
   path: protocols/vocabulary.yaml
-revision: 11
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T13:41:47Z", actor: "human:timo", revision: 10}
 - {from: "proposed", to: "active", at: "2026-10-13T13:41:48Z", actor: "human:timo", revision: 11}
+- {from: "active", to: "implemented", at: "2026-10-13T15:42:48Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 

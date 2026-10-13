@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:protocol-pages-independence-freshness
 kind: story
-status: active
+status: implemented
 title: Protocol pages show independence demands and evidence horizons
 summary: Generated protocol pages and graph qualifiers render independence_dimensions, independent_on and max_age.
 relations:
@@ -18,10 +18,11 @@ scope:
   path: website/data/protocol-graphs
 - confidence: cited
   path: website/docs/protocols
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T13:41:49Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-13T13:41:50Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-13T15:42:48Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":2}}}
 ---
 ## Outcome
 

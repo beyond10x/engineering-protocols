@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:stale-evidence-fixtures
 kind: story
-status: active
+status: implemented
 title: Add stale-evidence fixtures across both protocols
 summary: Revision-stale reviews and freshness-expired observations evaluate UNKNOWN, never FALSE, in delivery and incident fixtures.
 refs:
@@ -35,10 +35,11 @@ scope:
   path: protocols/incident-response/1.yaml
 - confidence: cited
   path: protocols/software-change/1.yaml
-revision: 15
+revision: 16
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T13:41:49Z", actor: "human:timo", revision: 14, decided_on: {"recorded":{"review_outcome":3}}}
 - {from: "proposed", to: "active", at: "2026-10-13T13:41:49Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-10-13T15:42:48Z", actor: "human:timo", revision: 16, decided_on: {"recorded":{"test_result":1,"review_outcome":3}}}
 ---
 ## Outcome
 

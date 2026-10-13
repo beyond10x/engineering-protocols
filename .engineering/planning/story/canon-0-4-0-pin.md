@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:canon-0-4-0-pin
 kind: story
-status: active
+status: implemented
 title: Pin Canon 0.4.0
 summary: Move every Canon dependency to tag 0.4.0, which adds independence dimensions and independent_on.
 relations:
@@ -17,10 +17,11 @@ scope:
   path: crates/canon-engineering-docs/Cargo.toml
 - confidence: cited
   path: crates/canon-engineering/Cargo.toml
-revision: 4
+revision: 5
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-13T13:41:44Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-13T13:41:45Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-13T15:43:05Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
