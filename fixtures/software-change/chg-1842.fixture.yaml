@@ -10,6 +10,7 @@ case:
   inputs:
     risk: standard
     change_kind: refactor
+    affects_security_boundary: false
   artifacts:
     intent: {revision: i1}
     system_specification: {revision: s1}
@@ -48,6 +49,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -77,6 +79,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -99,6 +102,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -128,6 +132,7 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -157,6 +162,7 @@ states:
         objective.realized: false
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -186,6 +192,7 @@ states:
         objective.realized: false
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -215,6 +222,7 @@ states:
         objective.realized: false
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible

@@ -33,6 +33,10 @@ const OBLIGATIONS: [&str; 4] = [
 /// (`story:evidence-order-red-first`).
 const RED_FIRST: &str = "red_first.required";
 
+/// The obligation a change on a security boundary carries, at every risk
+/// (`story:security-independence-rules`); the fixtures of this story are off a security boundary.
+const SECURITY_REVIEW: &str = "security_review.required";
+
 /// The change kinds, the one that carries [`RED_FIRST`] last.
 const CHANGE_KINDS: [&str; 3] = ["feature", "refactor", "bugfix"];
 
@@ -254,8 +258,8 @@ fn profiles_nest_open_obligations() {
 
     // 2 and 3. The open obligations at each risk are exactly the first one, two, three and four
     //    of OBLIGATIONS, each strictly containing the set below it, and every other obligation is
-    //    reported `not_applicable`: the rest of OBLIGATIONS, and RED_FIRST, since `profiles` is a
-    //    refactor.
+    //    reported `not_applicable`: the rest of OBLIGATIONS, RED_FIRST, since `profiles` is a
+    //    refactor, and SECURITY_REVIEW, since it is off a security boundary.
     if let Err(differences) = profiles.check(&compiled) {
         failures.that(2, false, || {
             format!(
@@ -291,7 +295,7 @@ fn profiles_nest_open_obligations() {
         }
         let rest: BTreeSet<String> = OBLIGATIONS[index + 1..]
             .iter()
-            .chain([&RED_FIRST])
+            .chain([&RED_FIRST, &SECURITY_REVIEW])
             .map(|id| (*id).to_owned())
             .collect();
         failures.equal(
@@ -303,7 +307,7 @@ fn profiles_nest_open_obligations() {
         failures.equal(
             3,
             obligations(&decision).len(),
-            OBLIGATIONS.len() + 1,
+            OBLIGATIONS.len() + 2,
             &format!("the obligations reported at `{risk}`"),
         );
         below = Some(open);

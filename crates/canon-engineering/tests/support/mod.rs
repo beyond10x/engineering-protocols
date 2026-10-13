@@ -115,9 +115,13 @@
 //! as its entry's `observed_at`, or the fixture is refused. Instants are written in the one form
 //! above and name a day that exists in its month (leap years counted), so they compare as text.
 //!
-//! Independence decisions are not part of the format yet: Canon does not evaluate them, and a
-//! fixture that gives them (`independence:`) is refused as having an unknown key. They join the
-//! format with the Canon capability that reads them.
+//! Independence decisions are part of the case: a fixture's `case` may give Canon's `canon-case/1`
+//! `independence` map (`independence: {p1: [], p2: [different_principal]}`), the dimensions on
+//! which each evidence producer is independent of the case's work, as the trusted context that
+//! writes the case resolved them. Canon reads it with the case, refuses a dimension the protocol
+//! does not declare, and excludes a record whose `producer` it does not list on every dimension an
+//! evidence match demands (`independent_on`) as `not_independent`. The harness reads no
+//! independence of its own: `independence:` anywhere but in the case is an unknown key.
 //!
 //! The items only later protocol stories call carry `#[allow(dead_code)]`, each marked as
 //! later-story API; everything else is used by this story's tests.

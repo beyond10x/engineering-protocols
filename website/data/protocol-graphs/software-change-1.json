@@ -1,6 +1,13 @@
 {
   "case": {
     "inputs": {
+      "affects_security_boundary": {
+        "description": "whether the change affects a security boundary; one that does needs an approving security review from a principal other than the implementer before its implementation is verified",
+        "values": [
+          "false",
+          "true"
+        ]
+      },
       "change_kind": {
         "description": "what the change is; a bugfix must reproduce its regression with a failing test before the implementation is edited, and its regression test must fail on its first run, before the implementation is first changed",
         "values": [
@@ -52,6 +59,11 @@
       "kind": "establishes",
       "qualifier": "approved about implementation",
       "to": "claim:implementation.reviewed"
+    },
+    {
+      "from": "claim:security.reviewed",
+      "kind": "supports",
+      "to": "claim:implementation.verified"
     },
     {
       "from": "evidence:test_result",
@@ -107,6 +119,12 @@
       "to": "claim:release.proven"
     },
     {
+      "from": "evidence:security_review",
+      "kind": "establishes",
+      "qualifier": "approved about implementation",
+      "to": "claim:security.reviewed"
+    },
+    {
       "from": "evidence:test_result",
       "kind": "establishes",
       "qualifier": "pass about implementation",
@@ -146,6 +164,11 @@
       "from": "claim:implementation.reviewed",
       "kind": "requires",
       "to": "obligation:review.required"
+    },
+    {
+      "from": "claim:security.reviewed",
+      "kind": "requires",
+      "to": "obligation:security_review.required"
     },
     {
       "from": "claim:tests.pass",
@@ -279,6 +302,12 @@
       "name": "rollback_result"
     },
     {
+      "description": "a review of an implementation revision's effect on a security boundary; its result is approved or rejected",
+      "id": "evidence:security_review",
+      "kind": "evidence",
+      "name": "security_review"
+    },
+    {
       "description": "the result of running tests against an implementation revision; its result is pass or fail",
       "id": "evidence:test_result",
       "kind": "evidence",
@@ -309,12 +338,29 @@
       }
     },
     {
-      "description": "the current implementation revision is verified",
+      "description": "the current implementation revision is verified: its tests pass and, when the change affects a security boundary, it is security reviewed",
       "id": "claim:implementation.verified",
       "kind": "claim",
       "name": "implementation.verified",
       "predicate": {
         "all": [
+          {
+            "any": [
+              {
+                "claim": {
+                  "id": "security.reviewed"
+                }
+              },
+              {
+                "input": {
+                  "id": "affects_security_boundary",
+                  "in": [
+                    "false"
+                  ]
+                }
+              }
+            ]
+          },
           {
             "evidence": {
               "kind": "test_result",
@@ -401,6 +447,18 @@
             }
           }
         ]
+      }
+    },
+    {
+      "description": "the current implementation revision's security review is approved by a producer the case lists as another principal than the implementer",
+      "id": "claim:security.reviewed",
+      "kind": "claim",
+      "name": "security.reviewed",
+      "predicate": {
+        "evidence": {
+          "kind": "security_review",
+          "result": "approved"
+        }
       }
     },
     {
@@ -552,6 +610,25 @@
     {
       "applicable_when": {
         "input": {
+          "id": "affects_security_boundary",
+          "in": [
+            "true"
+          ]
+        }
+      },
+      "description": "the current implementation revision is security reviewed by another principal than the implementer; applies to a change that affects a security boundary, at every risk",
+      "id": "obligation:security_review.required",
+      "kind": "obligation",
+      "name": "security_review.required",
+      "predicate": {
+        "claim": {
+          "id": "security.reviewed"
+        }
+      }
+    },
+    {
+      "applicable_when": {
+        "input": {
           "id": "risk",
           "in": [
             "critical",
@@ -573,7 +650,7 @@
     }
   ],
   "protocol": {
-    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed.",
+    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review.",
     "id": "software.change",
     "revision": 1,
     "source": "protocols/software-change/1.yaml"

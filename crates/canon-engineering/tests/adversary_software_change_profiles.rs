@@ -19,7 +19,7 @@ use support::{Compiled, Fixture};
 const PROTOCOL: &str = "protocols/software-change/1.yaml";
 
 /// Every fixture of `software.change/1`.
-const FIXTURES: [&str; 13] = [
+const FIXTURES: [&str; 15] = [
     "abandoned",
     "change-kinds",
     "chg-1842",
@@ -32,6 +32,8 @@ const FIXTURES: [&str; 13] = [
     "red-first-other-subject",
     "rolled-back-complete",
     "rolled-back",
+    "security-boundary",
+    "security-boundary-independent",
     "superseded",
 ];
 
@@ -40,10 +42,12 @@ fn compiled() -> Compiled {
 }
 
 /// A `software.change` case at implementation `implementation` and release `release`, with
-/// `inputs` written as a YAML flow map's body (`risk: standard, change_kind: bugfix`).
+/// `inputs` written as a YAML flow map's body (`risk: standard, change_kind: bugfix`), and
+/// `affects_security_boundary: false`.
 fn case_value(inputs: &str, implementation: &str, release: &str) -> Value {
     serde_yaml_ng::from_str(&format!(
-        "{{format: canon-case/1, id: CHG-9001, protocol: software.change, inputs: {{{inputs}}}, \
+        "{{format: canon-case/1, id: CHG-9001, protocol: software.change, \
+         inputs: {{{inputs}, affects_security_boundary: false}}, \
          artifacts: {{intent: {{revision: i1}}, system_specification: {{revision: s1}}, \
          plan: {{revision: p1}}, implementation: {{revision: {implementation}}}, \
          release: {{revision: {release}}}, deployment: {{revision: d1}}}}}}"
@@ -325,6 +329,11 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
             .collect();
         // A feature carries no red-first obligation at any risk.
         expected.insert("red_first.required".to_owned(), "not_applicable".to_owned());
+        // Nor, off a security boundary, a security-review obligation.
+        expected.insert(
+            "security_review.required".to_owned(),
+            "not_applicable".to_owned(),
+        );
         assert_eq!(obligations(&decision), expected, "risk `{risk}`");
     }
 }
@@ -381,8 +390,13 @@ fn some_fixture_notices_an_obligation_discharged_by_the_wrong_claim() {
         ),
         (
             "red_first.required",
-            "claim: regression.shown_first\n\nactions",
-            "claim: regression.reproduced\n\nactions",
+            "claim: regression.shown_first\n  security_review",
+            "claim: regression.reproduced\n  security_review",
+        ),
+        (
+            "security_review.required",
+            "claim: security.reviewed\n\nactions",
+            "claim: tests.pass\n\nactions",
         ),
     ] {
         assert_eq!(

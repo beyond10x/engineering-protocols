@@ -205,6 +205,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "operational_observation",
             "regression_test_result",
             "rollback_result",
+            "security_review",
             "test_result",
         ]
     );
@@ -218,6 +219,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "regression.reproduced",
             "regression.shown_first",
             "release.proven",
+            "security.reviewed",
             "tests.pass",
         ]
     );
@@ -228,12 +230,13 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "provenance.required",
             "red_first.required",
             "review.required",
+            "security_review.required",
             "tests.required",
         ]
     );
     assert_eq!(
         names(ir.inputs.keys().map(|id| id.as_str()).collect()),
-        ["change_kind", "risk"]
+        ["affects_security_boundary", "change_kind", "risk"]
     );
     assert_eq!(
         names(ir.actions.keys().map(|id| id.as_str()).collect()),
@@ -257,28 +260,39 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         ]
     );
 
-    // `implementation.verified` is a conjunction whose one conjunct, for now, is a passing test
-    // result; later stories each add one.
+    // `implementation.verified` is a conjunction: a passing test result, and, since
+    // story:security-independence-rules, `security.reviewed` unless the change is off a security
+    // boundary (`security_independence_rules.rs` decides its values); later stories each add one.
     let verified = &ir.claims[&ClaimId::new("implementation.verified")].true_when;
     let Predicate::All(conjuncts) = verified else {
         panic!("implementation.verified is a conjunction: {verified:?}");
     };
-    assert_eq!(conjuncts.len(), 1, "{conjuncts:?}");
-    let Predicate::Evidence(matching) = &conjuncts[0] else {
-        panic!("its conjunct is an evidence match: {conjuncts:?}");
+    assert_eq!(conjuncts.len(), 2, "{conjuncts:?}");
+    let matches: Vec<_> = conjuncts
+        .iter()
+        .filter_map(|conjunct| match conjunct {
+            Predicate::Evidence(matching) => Some(matching),
+            _ => None,
+        })
+        .collect();
+    let [matching] = matches[..] else {
+        panic!("one conjunct is an evidence match: {conjuncts:?}");
     };
     assert_eq!(matching.kind.as_str(), "test_result");
     assert_eq!(matching.result.as_deref(), Some("pass"));
+    let (claims, kinds) = reached(ir, verified);
+    assert_eq!(claims, ["security.reviewed"]);
+    assert_eq!(kinds, ["security_review", "test_result"]);
 
     // Merging needs authority, and it rests on the verified implementation and through it on
-    // test results. Rolling back a release needs authority and nothing else, and may produce a
+    // test results and security reviews. Rolling back a release needs authority and nothing else, and may produce a
     // rollback result. The other actions need nothing.
     let merge = &ir.actions[&ActionId::new("repository.merge")];
     let capabilities: Vec<&str> = merge.requires.iter().map(|id| id.as_str()).collect();
     assert_eq!(capabilities, ["repository.merge"]);
     let (claims, kinds) = reached(ir, &merge.precondition);
-    assert_eq!(claims, ["implementation.verified"]);
-    assert_eq!(kinds, ["test_result"]);
+    assert_eq!(claims, ["implementation.verified", "security.reviewed"]);
+    assert_eq!(kinds, ["security_review", "test_result"]);
     let rollback = &ir.actions[&ActionId::new("release.rollback")];
     let capabilities: Vec<&str> = rollback.requires.iter().map(|id| id.as_str()).collect();
     assert_eq!(capabilities, ["release.rollback"]);
@@ -356,6 +370,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "implementation.verified",
             "objective.realized",
             "release.proven",
+            "security.reviewed",
         ]
     );
     assert_eq!(
@@ -364,6 +379,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "build_provenance",
             "objective_observation",
             "operational_observation",
+            "security_review",
             "test_result",
         ]
     );

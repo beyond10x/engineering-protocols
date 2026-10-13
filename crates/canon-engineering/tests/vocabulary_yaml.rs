@@ -393,6 +393,7 @@ fn rows_in_document(text: &str) -> Vec<Row> {
                 "decision_name" => Category::DecisionName,
                 "case_input" => Category::CaseInput,
                 "input_value" => Category::InputValue,
+                "independence_dimension" => Category::IndependenceDimension,
                 other => panic!("unknown category `{other}`"),
             };
             let marking = match field("marking").as_str() {
