@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:rollback-verification-rule
 kind: story
-status: draft
+status: active
 title: Add the independent rollback-verification rule to incident.response/1
 summary: rollback.verified requires a complete rollback_result from a verifier independent of the actor who rolled back.
 refs:
@@ -20,6 +20,7 @@ relations:
 - serves: vision:O2
 - serves: vision:governed-autonomy
 - depends_on: story:incident-investigation-obligation
+- depends_on: story:canon-0-4-0-pin
 scope:
 - confidence: cited
   path: crates/canon-engineering/tests/rollback_verification_rule.rs
@@ -29,7 +30,10 @@ scope:
   path: protocols/incident-response/1.yaml
 - confidence: cited
   path: protocols/vocabulary.yaml
-revision: 7
+revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-13T13:41:47Z", actor: "human:timo", revision: 10}
+- {from: "proposed", to: "active", at: "2026-10-13T13:41:48Z", actor: "human:timo", revision: 11}
 ---
 ## Outcome
 
@@ -69,7 +73,9 @@ On that commit `rollback_verified_needs_an_independent_verifier` fails at item 4
 
 ## Canon capability
 
-Evidence applicability (C-004) and an independence requirement form. No Canon TASKBOARD item C-001…C-011 names independence; CANON-INDEPENDENCE-001 appears only in the conformance list (C-010). If neither C-004 nor C-010 delivers the form, this story waits on Canon.
+Carried by Canon 0.4.0 (tag peels to 7c2cec13): `independence_dimensions` in `protocol/1`, `independent_on` on an evidence match, `producer` on `canon-evidence/1`, the `canon-case/1` `independence` map, and `not_independent` records leaving the claim `UNKNOWN` (`CANON-INDEPENDENCE-001`). `incident.response/1` declares its own `different_principal` dimension: Canon dimensions are per protocol. C-010's requirements catalogue is not needed.
+
+`incident.response/1` gains no case input, so existing incident cases stay valid; a case that gives no `independence` map leaves `rollback.verified` `UNKNOWN`.
 
 ## Domain relations
 
@@ -77,12 +83,13 @@ Evidence applicability (C-004) and an independence requirement form. No Canon TA
 
 ## Acceptance
 
-The test `rollback_verified_needs_an_independent_verifier` in `crates/canon-engineering/tests/rollback_verification_rule.rs` passes under `task check`. It loads `protocols/incident-response/1.yaml` through Canon by way of the harness. It expects:
+The test `rollback_verified_needs_an_independent_verifier` in `crates/canon-engineering/tests/rollback_verification_rule.rs` passes under `task check`. It loads `protocols/incident-response/1.yaml` through Canon by way of the harness. The fixture `rollback-verification` in `fixtures/incident-response/` gives its case `independence: {actor-a: [], verifier-b: [different_principal]}`; actor A performed `release.rollback`. It expects:
 
-1. Starting from the fixture `rollback-verification` in `fixtures/incident-response/` (the INC-492 case with `release.rollback` approved and performed by actor A, no `rollback_result`), evaluation reports `rollback.verified = UNKNOWN`.
-2. Starting from the state of 1 and adding `rollback_result` evidence with verdict complete from A, with an independence decision marking A not independent, evaluation reports `rollback.verified = UNKNOWN`.
-3. Starting from the state of 1 and adding `rollback_result` evidence with verdict complete from verifier B, with an independence decision marking B independent on `different_principal`, evaluation reports `rollback.verified = TRUE`.
+1. Starting from the fixture `rollback-verification` (the INC-492 case with `release.rollback` approved, no `rollback_result`), evaluation reports `rollback.verified = UNKNOWN`.
+2. Starting from the state of 1 and adding `rollback_result` evidence with result `complete` about the release, `producer: actor-a`, evaluation reports `rollback.verified = UNKNOWN` (not `FALSE`), and Canon's explanation lists the record as `not_independent`.
+3. Starting from the state of 1 and adding `rollback_result` evidence with result `complete` about the release, `producer: verifier-b`, evaluation reports `rollback.verified = TRUE`.
 4. Starting from `protocols/vocabulary.yaml` as this story leaves it, read through `crates/canon-engineering/src/vocabulary.rs`, `rollback.verified` resolves to exactly one vocabulary entry.
+5. The fixture `inc-492` keeps every expectation it had, with `rollback.verified` added to each state's claims.
 
 ## Source
 

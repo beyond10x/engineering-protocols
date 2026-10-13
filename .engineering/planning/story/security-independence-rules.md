@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:security-independence-rules
 kind: story
-status: draft
+status: active
 title: Add the independent security-review rule to software.change/1
 summary: security.reviewed requires an approving security_review from a principal independent of the implementer when the change affects a security boundary.
 refs:
@@ -16,7 +16,7 @@ relations:
 - decomposes: epic:els-first-domain
 - serves: vision:O2
 - serves: vision:governed-autonomy
-- depends_on: story:ess-conformance-evidence
+- depends_on: story:canon-0-4-0-pin
 scope:
 - confidence: inferred
   path: crates/canon-engineering/src/vocabulary.rs
@@ -28,7 +28,10 @@ scope:
   path: protocols/software-change/1.yaml
 - confidence: cited
   path: protocols/vocabulary.yaml
-revision: 15
+revision: 20
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-13T13:41:46Z", actor: "human:timo", revision: 19, decided_on: {"recorded":{"review_outcome":5}}}
+- {from: "proposed", to: "active", at: "2026-10-13T13:41:47Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"review_outcome":5}}}
 ---
 ## Outcome
 
@@ -55,9 +58,9 @@ What stays out: the rollback-verification rule in `incident.response/1`. `story:
 
 ## Shared surface
 
-`protocols/software-change/1.yaml`, `fixtures/software-change/` and `protocols/vocabulary.yaml` are edited by every story on the `software.change/1` chain, and this story is its fifth link: `story:software-change-protocol` → `story:software-change-negative-outcomes` → `story:software-change-profiles` → `story:ess-conformance-evidence` → `story:security-independence-rules` → `story:stale-evidence-fixtures`. It depends on `story:ess-conformance-evidence`, which edits the same `implementation.verified` definition before it. It edits neither `protocols/incident-response/1.yaml` nor `fixtures/incident-response/`.
+`protocols/software-change/1.yaml`, `fixtures/software-change/` and `protocols/vocabulary.yaml` are edited by every story on the `software.change/1` chain. In wave 2026-10-13-w3 this story is the first unit, then `story:rollback-verification-rule`, then `story:stale-evidence-fixtures`, serially on one integration branch. The ordering edge to `story:ess-conformance-evidence` (draft, not in this wave) is dropped: it only kept two edits of `implementation.verified` apart, and that story will extend the definition this one leaves. It edits neither `protocols/incident-response/1.yaml` nor `fixtures/incident-response/`.
 
-`story:rollback-verification-rule` depends on this story for two reasons. It uses `different_principal` and the independence-dimension category this story adds, and both stories edit `protocols/vocabulary.yaml`. `story:stale-evidence-fixtures` depends on both.
+`story:rollback-verification-rule` depends on this story: it uses `different_principal`, the independence-dimension category this story adds to the typed reader, and both edit `protocols/vocabulary.yaml`.
 
 ## Protocol first
 
@@ -71,7 +74,16 @@ On that commit `independent_security_review_gates_implementation_verified` fails
 
 ## Canon capability
 
-Evidence applicability (C-004) and an independence requirement form. No Canon TASKBOARD item C-001…C-011 names independence; CANON-INDEPENDENCE-001 appears only in the conformance list (C-010). If neither C-004 nor C-010 delivers the form, this story waits on Canon. Case inputs wait on Canon too (see `story:software-change-profiles` § Canon capability).
+Carried by Canon 0.4.0 (tag peels to 7c2cec13), pinned by this wave:
+
+- `protocol/1` `independence_dimensions` declares `different_principal` and `different_agent_run`;
+- an evidence match takes `independent_on: [different_principal]`;
+- each `canon-evidence/1` record names its `producer`, and the fixture's `canon-case/1` `independence` map, written by the trusted context, lists the dimensions each producer is independent on;
+- a record that fails the demand is inapplicable, never contrary: the claim is `UNKNOWN` and the explanation lists it as `not_independent` (`CANON-INDEPENDENCE-001`).
+
+Case inputs (`affects_security_boundary`, values `true` and `false`) are carried since Canon 0.2.0. C-010's requirements catalogue (`story:conformance-suite` in Canon) is not needed: this story asserts Canon's decision on fixtures, not a catalogue entry.
+
+Every `canon-case/1` for `software.change/1` must now give `affects_security_boundary`, as Canon refuses a case missing a declared input; every fixture under `fixtures/software-change/` gains it, and the release notes say so for case writers.
 
 ## Domain relations
 
@@ -79,13 +91,14 @@ Evidence applicability (C-004) and an independence requirement form. No Canon TA
 
 ## Acceptance
 
-The test `independent_security_review_gates_implementation_verified` in `crates/canon-engineering/tests/security_independence_rules.rs` passes under `task check`. It loads `protocols/software-change/1.yaml` through Canon by way of the harness. It expects:
+The test `independent_security_review_gates_implementation_verified` in `crates/canon-engineering/tests/security_independence_rules.rs` passes under `task check`. It loads `protocols/software-change/1.yaml` through Canon by way of the harness. The fixture `security-boundary` in `fixtures/software-change/` gives its case `independence: {p1: [], p2: [different_principal]}`; P1 is the implementing principal. It expects:
 
-1. Starting from the fixture `security-boundary` in `fixtures/software-change/` (implementation revision R1 by principal P1, `affects_security_boundary = true`, a passing `test_result` bound to R1, no `security_review`), evaluation reports `security.reviewed = UNKNOWN` and `implementation.verified = UNKNOWN`.
-2. Starting from the state of 1 and adding an approving `security_review` bound to R1 from P1, with an independence decision marking P1 not independent, evaluation reports `security.reviewed = UNKNOWN` and `implementation.verified = UNKNOWN`.
-3. Starting from the state of 1 and adding an approving `security_review` bound to R1 from principal P2, with an independence decision marking P2 independent on `different_principal`, evaluation reports `security.reviewed = TRUE` and `implementation.verified = TRUE`.
-4. Starting from the state of 1 with `affects_security_boundary = false`, evaluation reports `implementation.verified = TRUE` with no `security_review`.
-5. Starting from `protocols/vocabulary.yaml` as this story leaves it, read through `crates/canon-engineering/src/vocabulary.rs`, each of `security_review`, `security.reviewed`, `affects_security_boundary`, `different_principal` and `different_agent_run` resolves to exactly one vocabulary entry.
+1. Starting from the fixture `security-boundary` (implementation revision R1, `affects_security_boundary: true`, a passing `test_result` bound to R1 produced by P1, no `security_review`), evaluation reports `security.reviewed = UNKNOWN`, `implementation.verified = UNKNOWN`, the obligation `security_review.required` open and `repository.merge` blocked.
+2. Starting from the state of 1 and adding an approving `security_review` bound to R1 with `producer: p1`, evaluation reports `security.reviewed = UNKNOWN` (not `FALSE`) and `implementation.verified = UNKNOWN`, and Canon's explanation of `security.reviewed` lists that record as `not_independent`.
+3. Starting from the state of 1 and adding an approving `security_review` bound to R1 with `producer: p2`, evaluation reports `security.reviewed = TRUE`, `implementation.verified = TRUE` and `security_review.required` discharged.
+4. Starting from the state of 1 with `affects_security_boundary: false`, evaluation reports `implementation.verified = TRUE` with no `security_review`, and `security_review.required` not applicable.
+5. Starting from `protocols/vocabulary.yaml` as this story leaves it, read through `crates/canon-engineering/src/vocabulary.rs`, each of `security_review`, `security.reviewed`, `affects_security_boundary`, `different_principal` and `different_agent_run` resolves to exactly one vocabulary entry, the last two in the independence-dimension category.
+6. Every existing fixture under `fixtures/software-change/` gives `affects_security_boundary: false` and keeps every expectation it had.
 
 ## Source
 
