@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 80 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 84 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -50,6 +50,8 @@ Category `evidence_kind`.
 | `reproduction` | `core` | a rerun on the same dataset snapshot and run configuration, matched or diverged |
 | `comparison` | `core` | a comparison of a candidate with the baseline, candidate\_better or baseline\_better |
 | `seed_sweep` | `core` | a sweep of a candidate's effect over seeds or ablations, stable or unstable |
+| `regression_test_result` | `software.change` | the result of running a bugfix's regression test against an implementation revision |
+| `implementation_change` | `software.change` | the record that the implementation was changed, moving it to a new revision |
 
 ## Claims
 
@@ -72,6 +74,7 @@ Category `claim_id`.
 | `effect.robust` | `core` | a sweep of the current candidate found its effect stable |
 | `hypothesis.supported` | `core` | the experiment is valid and reproducible, and the candidate beats the baseline robustly |
 | `regression.reproduced` | `software.change` | a failing test has reproduced the regression a bugfix repairs |
+| `regression.shown_first` | `software.change` | a bugfix's regression test failed on its first run, before the implementation was first changed |
 
 ## Actions
 
@@ -103,6 +106,7 @@ Category `obligation_id`.
 | `review.required` | `software.change` | the current implementation revision must be reviewed |
 | `provenance.required` | `software.change` | the release must be proven, its build provenance recorded |
 | `health.required` | `core` | the deployment must be observed healthy |
+| `red_first.required` | `software.change` | a bugfix's regression test must fail on its first run, before the implementation is first changed |
 
 ## Outcomes
 
