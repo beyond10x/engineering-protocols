@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-13T15:09:27Z",
+  "actor": "human:timo",
+  "artifact": "story:stale-evidence-fixtures",
+  "kind": "story",
+  "revision": 15,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --locked -p b10x-canon-engineering --test stale_evidence on 16aa046: exit 101 (red, protocol first; items 3 to 6 fail, the harness reads no per-state at; items 1 and 2 hold, their baseline)"
+  }
+}
