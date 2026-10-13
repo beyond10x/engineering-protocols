@@ -200,8 +200,10 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         [
             "build_provenance",
             "code_review",
+            "implementation_change",
             "objective_observation",
             "operational_observation",
+            "regression_test_result",
             "rollback_result",
             "test_result",
         ]
@@ -214,6 +216,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
             "implementation.verified",
             "objective.realized",
             "regression.reproduced",
+            "regression.shown_first",
             "release.proven",
             "tests.pass",
         ]
@@ -223,6 +226,7 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         [
             "health.required",
             "provenance.required",
+            "red_first.required",
             "review.required",
             "tests.required",
         ]
@@ -291,7 +295,13 @@ fn chg_1842_merge_waits_for_current_revision_tests_and_authority() {
         .iter()
         .map(|id| id.as_str())
         .collect();
-    assert_eq!(produces, ["test_result"]);
+    assert_eq!(produces, ["regression_test_result", "test_result"]);
+    let produces: Vec<&str> = ir.actions[&ActionId::new("implementation.edit")]
+        .may_produce
+        .iter()
+        .map(|id| id.as_str())
+        .collect();
+    assert_eq!(produces, ["implementation_change"]);
 
     // Reading the repository and running the tests are reads; editing, merging and rolling back
     // are writes.

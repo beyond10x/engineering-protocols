@@ -310,7 +310,7 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
             "R1",
             &everything,
         );
-        let expected: BTreeMap<String, String> = order
+        let mut expected: BTreeMap<String, String> = order
             .iter()
             .enumerate()
             .map(|(position, id)| {
@@ -322,6 +322,8 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
                 ((*id).to_owned(), status.to_owned())
             })
             .collect();
+        // A feature carries no red-first obligation at any risk.
+        expected.insert("red_first.required".to_owned(), "not_applicable".to_owned());
         assert_eq!(obligations(&decision), expected, "risk `{risk}`");
     }
 }

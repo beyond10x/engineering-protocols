@@ -2,8 +2,9 @@
 //! `risk` and `change_kind`. A risk profile is the value of `risk`, and changes only which of the
 //! obligations `tests.required`, `review.required`, `provenance.required` and `health.required`
 //! apply; a change-kind profile is the value of `change_kind`, and a `bugfix` may edit the
-//! implementation only once `regression.reproduced`. Every profile is one compiled protocol
-//! evaluated against case data, through the fixture harness and Canon.
+//! implementation only once `regression.reproduced`, and carries one obligation more,
+//! `red_first.required`, at every risk (`story:evidence-order-red-first`). Every profile is one
+//! compiled protocol evaluated against case data, through the fixture harness and Canon.
 //!
 //! The test checks every item of the story's § Acceptance and reports each item that fails, in
 //! item order, rather than stopping at the first.
@@ -27,6 +28,13 @@ const OBLIGATIONS: [&str; 4] = [
     "provenance.required",
     "health.required",
 ];
+
+/// The obligation the change kind selects: a bugfix's, at every risk
+/// (`story:evidence-order-red-first`).
+const RED_FIRST: &str = "red_first.required";
+
+/// The change kinds, the one that carries [`RED_FIRST`] last.
+const CHANGE_KINDS: [&str; 3] = ["feature", "refactor", "bugfix"];
 
 /// The evaluation instant both fixtures of this story give.
 const AT: &str = "2026-10-13T12:00:00Z";
@@ -246,7 +254,8 @@ fn profiles_nest_open_obligations() {
 
     // 2 and 3. The open obligations at each risk are exactly the first one, two, three and four
     //    of OBLIGATIONS, each strictly containing the set below it, and every other obligation is
-    //    reported `not_applicable`.
+    //    reported `not_applicable`: the rest of OBLIGATIONS, and RED_FIRST, since `profiles` is a
+    //    refactor.
     if let Err(differences) = profiles.check(&compiled) {
         failures.that(2, false, || {
             format!(
@@ -282,6 +291,7 @@ fn profiles_nest_open_obligations() {
         }
         let rest: BTreeSet<String> = OBLIGATIONS[index + 1..]
             .iter()
+            .chain([&RED_FIRST])
             .map(|id| (*id).to_owned())
             .collect();
         failures.equal(
@@ -293,10 +303,68 @@ fn profiles_nest_open_obligations() {
         failures.equal(
             3,
             obligations(&decision).len(),
-            OBLIGATIONS.len(),
+            OBLIGATIONS.len() + 1,
             &format!("the obligations reported at `{risk}`"),
         );
         below = Some(open);
+    }
+
+    // 3, for each change kind. The same risks with `change_kind` set to each kind in turn: each
+    //    risk's open obligations still strictly contain those of the risk below, and a bugfix's
+    //    are a feature's or a refactor's with RED_FIRST added, at every risk.
+    let profiles_text = std::fs::read_to_string(
+        support::repo_root().join("fixtures/software-change/profiles.fixture.yaml"),
+    )
+    .expect("profiles reads");
+    failures.equal(
+        3,
+        profiles_text.matches("    change_kind: refactor\n").count(),
+        1,
+        "the change kind `profiles` gives its case",
+    );
+    for kind in CHANGE_KINDS {
+        let text = profiles_text.replacen(
+            "    change_kind: refactor\n",
+            &format!("    change_kind: {kind}\n"),
+            1,
+        );
+        let kinded = match Fixture::from_yaml(&text) {
+            Ok(kinded) => kinded,
+            Err(error) => {
+                failures.that(3, false, || format!("`profiles` as a {kind}: {error}"));
+                continue;
+            }
+        };
+        let mut below: Option<BTreeSet<String>> = None;
+        for (index, risk) in RISKS.into_iter().enumerate() {
+            let decision = match decide(&kinded, &compiled, risk) {
+                Ok(decision) => decision,
+                Err(refusal) => {
+                    failures.that(3, false, || format!("a {kind}: {refusal}"));
+                    continue;
+                }
+            };
+            let open = with_status(&decision, "open");
+            let mut expected: BTreeSet<String> = OBLIGATIONS[..=index]
+                .iter()
+                .map(|id| (*id).to_owned())
+                .collect();
+            if kind == "bugfix" {
+                expected.insert(RED_FIRST.to_owned());
+            }
+            failures.equal(
+                3,
+                &open,
+                &expected,
+                &format!("the open obligations of a {kind} at `{risk}`"),
+            );
+            if let Some(below) = &below {
+                failures.that(3, below.is_subset(&open) && below != &open, || {
+                    format!("{open:?} of a {kind} at `{risk}` does not strictly contain {below:?}")
+                });
+            }
+            below = Some(open);
+        }
     }
 
     // 4. Each term of the risk profiles resolves to exactly one vocabulary entry.
