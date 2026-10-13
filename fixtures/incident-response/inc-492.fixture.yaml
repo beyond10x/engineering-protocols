@@ -36,6 +36,7 @@ states:
         impact.bounded: true
         service.healthy: false
         cause.identified: unknown
+        rollback.verified: unknown
       obligations:
         investigate_cause: open
         restore_service: open
@@ -63,6 +64,7 @@ states:
         impact.bounded: true
         service.healthy: false
         cause.identified: true
+        rollback.verified: unknown
       obligations:
         investigate_cause: discharged
         restore_service: open
@@ -83,6 +85,7 @@ states:
         impact.bounded: true
         service.healthy: false
         cause.identified: true
+        rollback.verified: unknown
       obligations:
         investigate_cause: discharged
         restore_service: open
@@ -104,6 +107,7 @@ states:
         impact.bounded: unknown
         service.healthy: unknown
         cause.identified: unknown
+        rollback.verified: unknown
       obligations:
         investigate_cause: open
         restore_service: open
@@ -139,6 +143,7 @@ states:
         impact.bounded: unknown
         service.healthy: unknown
         cause.identified: unknown
+        rollback.verified: unknown
       obligations:
         investigate_cause: open
         restore_service: open
@@ -174,6 +179,7 @@ states:
         impact.bounded: true
         service.healthy: true
         cause.identified: unknown
+        rollback.verified: unknown
       obligations:
         investigate_cause: open
         restore_service: discharged
@@ -201,6 +207,7 @@ states:
         impact.bounded: true
         service.healthy: true
         cause.identified: true
+        rollback.verified: unknown
       obligations:
         investigate_cause: discharged
         restore_service: discharged

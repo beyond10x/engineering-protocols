@@ -1,0 +1,74 @@
+format: els-fixture/1
+id: rollback-verification
+protocol: protocols/incident-response/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# The INC-492 case with the rollback of release r42 approved. Actor A rolls the release back; the
+# trusted context that wrote the case lists actor A as independent on no dimension and verifier B
+# as independent on different_principal. With no rollback result the rollback is not verified
+# (rollback-approved). Actor A reports its own rollback complete: Canon excludes the record as
+# not_independent and rollback.verified stays UNKNOWN, not FALSE (self-verified). Verifier B's
+# complete result verifies it (independently-verified); actor A's result, still present, is still
+# excluded. `rollback-verification-independent` holds verifier B's result without actor A's.
+case:
+  format: canon-case/1
+  id: INC-492
+  protocol: incident.response
+  independence:
+    actor-a: []
+    verifier-b: [different_principal]
+  artifacts:
+    service: {revision: s1}
+    release: {revision: r42}
+
+states:
+  - id: rollback-approved
+    add_authority:
+      - {capability: release.rollback, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-13T09:00:00Z"
+        record: {format: canon-evidence/1, id: health-1, kind: operational_observation,
+                 result: unhealthy, subject: service, subject_revision: s1, producer: actor-a}
+      - observed_at: "2026-10-13T09:05:00Z"
+        record: {format: canon-evidence/1, id: impact-1, kind: impact_assessment, result: bounded,
+                 subject: service, subject_revision: s1, producer: actor-a}
+    expect:
+      claims: &unverified
+        impact.bounded: true
+        service.healthy: false
+        cause.identified: unknown
+        rollback.verified: unknown
+      obligations: &obligations
+        investigate_cause: open
+        restore_service: open
+      actions: &actions
+        metrics.inspect: admissible
+        logs.search: admissible
+        release.inspect: admissible
+        traffic.shift: approval-required
+        release.rollback: admissible
+        emergency.leave: blocked
+
+  - id: self-verified
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record: {format: canon-evidence/1, id: rollback-actor-a, kind: rollback_result,
+                 result: complete, subject: release, subject_revision: r42, producer: actor-a}
+    expect:
+      claims: *unverified
+      obligations: *obligations
+      actions: *actions
+
+  - id: independently-verified
+    add_evidence:
+      - observed_at: "2026-10-13T11:00:00Z"
+        record: {format: canon-evidence/1, id: rollback-verifier-b, kind: rollback_result,
+                 result: complete, subject: release, subject_revision: r42, producer: verifier-b}
+    expect:
+      claims:
+        impact.bounded: true
+        service.healthy: false
+        cause.identified: unknown
+        rollback.verified: true
+      obligations: *obligations
+      actions: *actions
