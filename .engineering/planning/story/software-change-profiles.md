@@ -31,9 +31,15 @@ scope:
 - confidence: cited
   path: crates/canon-engineering-docs/src/graph.rs
 - confidence: cited
+  path: crates/canon-engineering-docs/tests/adversary_graph_case_inputs.rs
+- confidence: cited
   path: crates/canon-engineering-docs/tests/review_graph_schema.rs
 - confidence: cited
   path: crates/canon-engineering/src/vocabulary.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/adversary2_yaml_errors.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/adversary_software_change_profiles.rs
 - confidence: cited
   path: crates/canon-engineering/tests/adversary_software_change_protocol.rs
 - confidence: cited
@@ -52,6 +58,8 @@ scope:
   path: docs/examples/software-change.md
 - confidence: cited
   path: fixtures/software-change/
+- confidence: cited
+  path: fixtures/software-change/profiles-discharged.fixture.yaml
 - confidence: cited
   path: protocols/software-change/1.yaml
 - confidence: cited
@@ -76,7 +84,7 @@ scope:
   path: website/package-lock.json
 - confidence: cited
   path: website/package.json
-revision: 38
+revision: 40
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-12T21:33:46Z", actor: "human:timo", revision: 32, decided_on: {"recorded":{"review_outcome":4}}}
 - {from: "proposed", to: "active", at: "2026-10-12T23:31:32Z", actor: "human:timo", revision: 37, decided_on: {"recorded":{"review_outcome":4}}}
@@ -195,3 +203,9 @@ Amended 2026-10-13, after the protocol-first commit `270cea4`, in one later comm
 - **`regression.reproduced` names its subject.** With no subject the match broke `every_evidence_match_names_the_artifact_its_kind_is_about` and `evidence_about_another_artifact_moves_no_claim` and gained nothing (see above), so its match is `{kind: test_result, result: fail, subject: implementation}`.
 - **Obligation ids may be dotted.** The reader took one-token obligation ids only; the four obligations this story names are dotted, so an obligation id is one token or dotted, and `tests/adversary2_yaml_errors.rs` tests the edges of that rule instead of refusing `restore.service`.
 - **The bugfix preview is retired.** `website/examples/protocols/software-change-bugfix/1.yaml` and its example graph are removed: the built-in now carries the bugfix rule, and the preview's names differed from it. `step-order.mdx` draws the built-in graph.
+
+**Adversary (commit `95cde62`), two findings:**
+
+- **A green run before the red one leaves the bugfix stuck on that revision.** Canon 0.2.0 reads a pass and a fail about one revision as contradicting, so a bugfix that runs the suite green on R1, writes its regression test and runs it red on R1 has `regression.reproduced` UNKNOWN and `implementation.edit` blocked. Kept as a stated limitation rather than a new evidence kind, which would depart from Atlas ADR 0084 § Also needed (`regression.reproduced` is TRUE on a `test_result` whose result is `fail`): a bugfix records its red run before any green run on that revision. `a_bugfix_green_then_red_on_one_revision_stays_blocked_until_evidence_is_ordered` pins it, and `website/docs/concepts/step-order.mdx` states it. Reading the latest result needs canon `story:evidence-order-predicate`.
+- **No fixture discharged an obligation**, so pointing any `discharged_when` at another claim left every fixture green. the new fixture `profiles-discharged` holds `critical-tested-proven` (tests pass, release proven: `tests.required` and `provenance.required` discharged, the other two open) and `trivial-tested-proven` (the same evidence: `not_applicable` wins over a discharge); the four mutants of `some_fixture_notices_an_obligation_discharged_by_the_wrong_claim` now fail a fixture.
+- Noted, not changed: nothing holds `change_kind` fixed across evaluations of one case, because Canon keeps no case history.
