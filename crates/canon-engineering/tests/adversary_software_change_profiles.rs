@@ -19,7 +19,7 @@ use support::{Compiled, Fixture};
 const PROTOCOL: &str = "protocols/software-change/1.yaml";
 
 /// Every fixture of `software.change/1`.
-const FIXTURES: [&str; 12] = [
+const FIXTURES: [&str; 13] = [
     "abandoned",
     "change-kinds",
     "chg-1842",
@@ -29,6 +29,7 @@ const FIXTURES: [&str; 12] = [
     "red-first",
     "red-first-edit-first",
     "red-first-green-first",
+    "red-first-other-subject",
     "rolled-back-complete",
     "rolled-back",
     "superseded",

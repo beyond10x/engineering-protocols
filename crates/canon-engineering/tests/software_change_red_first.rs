@@ -8,7 +8,9 @@
 //! The fixtures `red-first`, `red-first-edit-first` and `red-first-green-first`
 //! (`fixtures/software-change/`) hold the five cases: one fixture's states are cumulative, and a
 //! history in which the regression test passed first, or the implementation changed first, cannot
-//! later become one in which neither happened. The test checks every acceptance item and reports
+//! later become one in which neither happened. The fixture `red-first-other-subject` holds records
+//! of both kinds about the release, which neither order form reads. The test checks every
+//! acceptance item and reports
 //! each one that fails, in item order, rather than stopping at the first.
 
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
@@ -24,7 +26,12 @@ use support::{Compiled, Fixture};
 const AT: &str = "2026-10-13T12:00:00Z";
 
 /// The fixtures of this story.
-const FIXTURES: [&str; 3] = ["red-first", "red-first-edit-first", "red-first-green-first"];
+const FIXTURES: [&str; 4] = [
+    "red-first",
+    "red-first-edit-first",
+    "red-first-green-first",
+    "red-first-other-subject",
+];
 
 /// The terms this story adds, each with the category it is declared in.
 const TERMS: [(&str, &str); 4] = [
@@ -209,8 +216,8 @@ fn a_bugfix_reads_red_first_from_evidence_order() {
             });
         }
     }
-    let [red_first, edit_first, green_first] = &loaded[..] else {
-        unreachable!("three fixtures")
+    let [red_first, edit_first, green_first, _other_subject] = &loaded[..] else {
+        unreachable!("four fixtures")
     };
 
     // 1. A standard bugfix at R1: the suite passes at 09:00 and the regression test fails at
