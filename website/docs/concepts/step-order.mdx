@@ -1,8 +1,8 @@
 ---
 title: Step order
 sidebar_position: 3
-description: Order between steps comes from preconditions now, and from evidence order and revision order later.
-lede: Order between steps comes from preconditions now, and from evidence order and revision order later.
+description: Order between steps comes from preconditions and evidence order now, and from revision order later.
+lede: Order between steps comes from preconditions and evidence order now, and from revision order later.
 source: Decision records 0083 and 0084, with each status checked against Canon and engineering protocols code
 ---
 
@@ -16,7 +16,7 @@ protocols say so, in three steps.
   {label: 'Ordering by action precondition', status: 'shipped', detail: 'Canon evaluation reports an action blocked while its precondition is not TRUE.'},
   {label: 'Red first for a bugfix', status: 'shipped', detail: 'software.change/1: implementation.edit needs regression.reproduced when the case\'s change_kind is bugfix.'},
   {label: 'Evidence bound to the current revision', status: 'shipped', detail: 'Canon excludes evidence recorded for another revision of its subject.'},
-  {label: 'Evidence-order predicate', status: 'decided', detail: 'One kind\'s first record before another\'s, or the first result of a kind. Syntax open; not in Canon yet.'},
+  {label: 'Evidence-order predicate', status: 'shipped', detail: 'Canon 0.3.0: first and before. software.change/1 reads red first from the first regression test result and the first implementation change.'},
   {label: 'Revision-order relation', status: 'decided', detail: 'Red on R1, green on R2 descended from R1, same test. Later; needs a revision-relation construct.'},
   {label: 'Path scope on capabilities', status: 'decided', detail: 'Tells test edits from code edits. The scope field of decision record 0083; not in Canon yet.'},
 ]} />
@@ -25,10 +25,11 @@ protocols say so, in three steps.
 
 In `software.change/1`, editing the repository is two actions. Writing tests, `tests.write`, has no
 precondition. Changing the implementation, `implementation.edit`, needs the case to be a feature or
-a refactor, or the claim `regression.reproduced`, which a failing test result establishes. The case
-says which kind of change it is in its `change_kind` input when it opens. An agent asking for
-`implementation.edit` on a bugfix before red exists gets "blocked", with the claim and the input
-that block it as the reasons.
+a refactor, or the claim `regression.reproduced`. A failing test result about the current
+implementation revision establishes it, and so does a regression test whose first result, on any
+revision, was a failure. The case says which kind of change it is in its `change_kind` input when
+it opens. An agent asking for `implementation.edit` on a bugfix before red exists gets "blocked",
+with the claim and the input that block it as the reasons.
 
 ```yaml title="excerpt of protocols/software-change/1.yaml"
 case:
@@ -38,7 +39,16 @@ case:
 claims:
   regression.reproduced:
     true_when:
-      evidence: {kind: test_result, result: fail}       # names no subject
+      any:
+        - evidence: {kind: test_result, result: fail, subject: implementation}
+        - first: {kind: regression_test_result, result: fail, subject: implementation}
+  regression.shown_first:
+    true_when:
+      before: {first: regression_test_result, then: implementation_change, subject: implementation}
+obligations:
+  red_first.required:
+    applicable_when: {input: change_kind, in: [bugfix]}
+    discharged_when: {claim: regression.shown_first}
 actions:
   tests.write:
     effect: write                                       # no precondition
@@ -51,34 +61,51 @@ actions:
 ```
 
 Neither action names a capability yet: telling a test edit from an implementation edit needs a path
-scope on capabilities, which Canon does not have. The graph is of the shipped protocol; hover
-`implementation.edit` to see the precondition that gates it.
+scope on capabilities, which Canon does not have. Hover `implementation.edit` in the graph to see the
+precondition that gates it. The graph does not draw the order forms yet: the protocol graph format
+has no leaf for `first` or `before`.
 
 <ProtocolGraph data={softwareChange} />
 
-## What preconditions cannot say
+## Now: evidence order
 
-The precondition admits a history it should not. It asks for a failed test result, but not that the
-failure came before the first edit, and not that the failing test is a test of the change. A
-failure on an unrelated flake satisfies it.
+Canon 0.3.0 orders evidence by when it was observed. `first` asks whether the first record of a kind
+has a result; `before` asks whether the first record of one kind was observed before the first
+record of another. Both read the whole history, records about earlier revisions included, so they
+say what happened in what order, not what holds of the current revision.
 
-Canon also binds every evidence record to the current revision of its subject. A failing result
-recorded on implementation revision R1 stops counting once an edit produces R2, so a bugfix needs
-red recorded again before it edits R2. Within one revision, a pass and a fail contradict each
-other: a bugfix that runs the suite green on R1, adds its regression test and runs it red on R1
-leaves `regression.reproduced` unknown and the edit blocked, so it records its red run before any
-green run on that revision. Keeping red from R1 across the fix, and reading the latest result on a
-revision, need the evidence-order or revision-order constructs below.
+`software.change/1` tells the bugfix's regression test apart from the suite by kind: `tests.run`
+may produce a `test_result` or a `regression_test_result`, and `implementation.edit` may produce an
+`implementation_change`. A bugfix that runs the suite green on R1, writes its regression test and
+runs it red on R1 has reproduced its regression, and may edit. The edit moves the implementation to
+R2, and the red run, about R1, still counts: it is the first regression test result. A fix that
+needs a second edit makes it without running red again.
+
+The obligation `red_first.required` applies to every bugfix and is discharged once
+`regression.shown_first` holds: the first regression test result was observed before the first
+implementation change. An edit made before any regression test ran leaves it open for good, and so
+does a regression test that passed first.
+
+## What the protocol still cannot say
+
+Canon does not know how revisions descend. A red record about any earlier revision counts, whether
+or not the current revision descends from it. Records without an observation time have no place in
+the order, and leave both forms unknown.
+
+The suite's own path is unchanged: a failing `test_result` about the current revision reproduces
+the regression, a pass and a fail of one kind on one revision contradict each other, and a failure
+on an unrelated flake satisfies it. Nothing yet says that the failing test is a test of the change.
 
 | Gap | Closed by | Status |
 |---|---|---|
-| The failing result must come before the fix | an evidence-order predicate: the first `test_result` is `failed`, and it precedes the first implementation diff | decided, not built |
+| The failing result must come before the fix | the evidence-order forms: the first `regression_test_result` is `fail`, and it precedes the first `implementation_change` | shipped |
 | Red and green must be about the same test, across the fix | revision order: red on revision R1 (test added, fix absent), green on R2 descended from R1, same test id | decided, later |
 | A test edit must not touch the implementation | a path scope on capabilities that `tests.write` and `implementation.edit` would require | decided, not built |
 | The red result must come from the test runner, not the agent | evidence independence, declared on the evidence kind or the requirement | decided, syntax open |
 
 Until those land, the order is enforced at the moment an action is invoked (the agent cannot edit the
-implementation before red exists), and the rest is reviewed.
+implementation before red exists) and recorded as the `red_first.required` obligation, and the rest
+is reviewed.
 
 ## Profiles
 

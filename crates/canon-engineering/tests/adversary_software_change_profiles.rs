@@ -19,13 +19,16 @@ use support::{Compiled, Fixture};
 const PROTOCOL: &str = "protocols/software-change/1.yaml";
 
 /// Every fixture of `software.change/1`.
-const FIXTURES: [&str; 9] = [
+const FIXTURES: [&str; 12] = [
     "abandoned",
     "change-kinds",
     "chg-1842",
     "declined",
     "profiles",
     "profiles-discharged",
+    "red-first",
+    "red-first-edit-first",
+    "red-first-green-first",
     "rolled-back-complete",
     "rolled-back",
     "superseded",
@@ -55,11 +58,24 @@ fn record(
     subject: &str,
     revision: &str,
 ) -> EvidenceRecord {
+    observed(id, kind, result, subject, revision, None)
+}
+
+/// One `canon-evidence/1` record, observed at `at` when given.
+fn observed(
+    id: &str,
+    kind: &str,
+    result: Option<&str>,
+    subject: &str,
+    revision: &str,
+    at: Option<&str>,
+) -> EvidenceRecord {
     let result = result.map_or(String::new(), |result| format!("result: {result}, "));
+    let at = at.map_or(String::new(), |at| format!(", observed_at: \"{at}\""));
     eval::evidence_from_value(
         &serde_yaml_ng::from_str(&format!(
             "{{format: canon-evidence/1, id: {id}, kind: {kind}, {result}subject: {subject}, \
-             subject_revision: {revision}}}"
+             subject_revision: {revision}{at}}}"
         ))
         .expect("the record is YAML"),
     )
@@ -113,52 +129,72 @@ fn claim(decision: &Decision, id: &str) -> String {
 }
 
 /// The red-first workflow as a bugfix runs it: the suite is run on R1 and passes, the regression
-/// test is written (`tests.write`, which moves no implementation revision), and the suite is run
-/// on R1 again and fails. Canon 0.2.0 reads a pass and a fail about one revision as
-/// contradicting, so `regression.reproduced` is UNKNOWN and the edit stays blocked on R1: a
-/// bugfix records its red run before any green run on the revision it repairs. This pins that
-/// limitation, which the story's § Amendment and the step-order page state; reading the latest
-/// result instead needs Canon's evidence-order predicate, and when it lands this test changes
-/// with the protocol.
+/// test is written (`tests.write`, which moves no implementation revision), and the regression
+/// test is run on R1 and fails. Canon reads a pass and a fail of one kind about one revision as
+/// contradicting, and the first record of one kind as the earlier one, so a suite run and a
+/// regression test run are told apart by kind: the regression test's first result is a fail, the
+/// regression is reproduced, and the edit is admissible on R1. Recorded as suite runs alone, the
+/// same green-then-red history still leaves the edit blocked: neither path holds.
 #[test]
-fn a_bugfix_green_then_red_on_one_revision_stays_blocked_until_evidence_is_ordered() {
+fn a_bugfix_green_then_red_on_one_revision_may_edit_once_its_regression_test_ran_red() {
     let compiled = compiled();
+    let inputs = "risk: standard, change_kind: bugfix";
+    let suite_green = observed(
+        "suite-r1-green",
+        "test_result",
+        Some("pass"),
+        "implementation",
+        "R1",
+        Some("2026-10-13T09:00:00Z"),
+    );
     let evidence = [
-        record(
-            "suite-r1-green",
-            "test_result",
-            Some("pass"),
+        suite_green.clone(),
+        observed(
+            "regression-r1-red",
+            "regression_test_result",
+            Some("fail"),
             "implementation",
             "R1",
+            Some("2026-10-13T10:00:00Z"),
         ),
-        record(
+    ];
+    let decision = decide(&compiled, inputs, "R1", &evidence);
+    assert_eq!(
+        (
+            claim(&decision, "regression.reproduced"),
+            action(&decision, "implementation.edit")["status"].clone()
+        ),
+        ("true".to_owned(), Json::from("admissible")),
+        "a green suite run then a red regression test run about R1: implementation.edit is {}",
+        action(&decision, "implementation.edit")
+    );
+    let suite_only = [
+        suite_green,
+        observed(
             "suite-r1-red",
             "test_result",
             Some("fail"),
             "implementation",
             "R1",
+            Some("2026-10-13T10:00:00Z"),
         ),
     ];
-    let decision = decide(
-        &compiled,
-        "risk: standard, change_kind: bugfix",
-        "R1",
-        &evidence,
-    );
+    let decision = decide(&compiled, inputs, "R1", &suite_only);
     assert_eq!(
         (
             claim(&decision, "regression.reproduced"),
             action(&decision, "implementation.edit")["status"].clone()
         ),
         ("unknown".to_owned(), Json::from("blocked")),
-        "a pass and a fail about R1 no longer contradict: implementation.edit is {}",
+        "a green then a red suite run about R1: implementation.edit is {}",
         action(&decision, "implementation.edit")
     );
 }
 
 /// No path admits a bugfix's edit without a failing test about the current implementation
-/// revision: none, a pass, a fail about another revision, a fail about the release, a fail about
-/// R1 once the implementation is at R2, or a test result without a result.
+/// revision or a regression test whose first result failed: none, a pass, a fail about another
+/// revision, a fail about the release, a fail about R1 once the implementation is at R2, or a test
+/// result without a result.
 #[test]
 fn a_bugfix_edit_needs_a_failing_test_about_the_current_implementation_revision() {
     let compiled = compiled();
@@ -274,7 +310,7 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
             "R1",
             &everything,
         );
-        let expected: BTreeMap<String, String> = order
+        let mut expected: BTreeMap<String, String> = order
             .iter()
             .enumerate()
             .map(|(position, id)| {
@@ -286,6 +322,8 @@ fn obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it(
                 ((*id).to_owned(), status.to_owned())
             })
             .collect();
+        // A feature carries no red-first obligation at any risk.
+        expected.insert("red_first.required".to_owned(), "not_applicable".to_owned());
         assert_eq!(obligations(&decision), expected, "risk `{risk}`");
     }
 }
@@ -337,8 +375,13 @@ fn some_fixture_notices_an_obligation_discharged_by_the_wrong_claim() {
         ),
         (
             "health.required",
-            "claim: deployment.healthy\n\nactions",
-            "claim: release.proven\n\nactions",
+            "claim: deployment.healthy\n  red_first",
+            "claim: release.proven\n  red_first",
+        ),
+        (
+            "red_first.required",
+            "claim: regression.shown_first\n\nactions",
+            "claim: regression.reproduced\n\nactions",
         ),
     ] {
         assert_eq!(

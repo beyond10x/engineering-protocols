@@ -32,7 +32,14 @@
 //! the obligation always applies; no other node kind carries it. An input is case data, not a
 //! node, so an input test draws no edge, and neither does a claim tested only in
 //! `applicable_when`: the format's edge kinds have none for applicability.
+//!
+//! Canon 0.3.0's order forms, `{first: {kind, result, subject?}}` and `{before: {first, then,
+//! subject?}}`, have no leaf in the pinned schema: docs-system 0.9.0 closes its predicate leaves at
+//! `all`, `any`, `not`, `claim`, `evidence` and `input`. So [`document`] refuses a protocol that
+//! holds one, naming each place and form, rather than writing a document the schema rejects or
+//! dropping the condition.
 
+use anyhow::{Result, bail};
 use b10x_canon::ir::Ir;
 use b10x_canon::model::{EvidenceMatch, Predicate, Truth};
 use serde_json::{Map, Value, json};
@@ -45,6 +52,11 @@ pub const FORMAT: &str = "b10x-protocol-graph/1";
 /// "in": [...]}}` as in `canon-ir/1`. Unlike `canon-ir/1`, an evidence match never carries
 /// `subject`: the format has no key for it, and a match without one does not mean "about any
 /// artifact" here. A claim's matches show their subjects on its `establishes` edges.
+///
+/// # Panics
+///
+/// On an order form (`first` or `before`), which the format cannot carry; [`document`] refuses a
+/// protocol that holds one before it renders any predicate.
 pub fn predicate(predicate: &Predicate) -> Value {
     match predicate {
         Predicate::All(members) => {
@@ -74,7 +86,75 @@ pub fn predicate(predicate: &Predicate) -> Value {
             let values: Vec<&str> = test.r#in.iter().map(|value| value.as_str()).collect();
             json!({"input": {"id": test.input.as_str(), "in": values}})
         }
+        Predicate::First(_) | Predicate::Before(_) => unreachable!(
+            "{FORMAT} has no leaf for the order form `{}`; `document` refuses it first",
+            order_form(predicate)
+        ),
     }
+}
+
+/// An order form as written in `protocol/1`, for an error message: `first: {kind: K, result: R}`
+/// or `before: {first: K1, then: K2}`, with `subject: A` when it names one.
+fn order_form(predicate: &Predicate) -> String {
+    let subject = |subject: Option<&b10x_canon::model::ArtifactId>| {
+        subject.map_or(String::new(), |subject| format!(", subject: {subject}"))
+    };
+    match predicate {
+        Predicate::First(form) => format!(
+            "first: {{kind: {}, result: {}{}}}",
+            form.kind,
+            form.result,
+            subject(form.subject.as_ref())
+        ),
+        Predicate::Before(form) => format!(
+            "before: {{first: {}, then: {}{}}}",
+            form.first,
+            form.then,
+            subject(form.subject.as_ref())
+        ),
+        _ => String::new(),
+    }
+}
+
+/// Every place `ir` holds an order form, each as one line naming the declaration, the field and
+/// the form; empty when the format can carry `ir`.
+fn uncarried(ir: &Ir) -> Vec<String> {
+    let mut found = Vec::new();
+    let mut check = |place: String, field: &str, predicate: &Predicate| {
+        for form in predicate.order_forms() {
+            found.push(format!("{place} holds `{}` in `{field}`", order_form(form)));
+        }
+    };
+    for (id, claim) in &ir.claims {
+        check(format!("claim `{id}`"), "true_when", &claim.true_when);
+    }
+    for (id, obligation) in &ir.obligations {
+        if let Some(applicable_when) = &obligation.applicable_when {
+            check(
+                format!("obligation `{id}`"),
+                "applicable_when",
+                applicable_when,
+            );
+        }
+        check(
+            format!("obligation `{id}`"),
+            "discharged_when",
+            &obligation.discharged_when,
+        );
+    }
+    for (id, action) in &ir.actions {
+        check(
+            format!("action `{id}`"),
+            "precondition",
+            &action.precondition,
+        );
+    }
+    for (id, outcome) in &ir.outcomes {
+        if let Some(requires) = outcome.requires.predicate() {
+            check(format!("outcome `{id}`"), "requires", requires);
+        }
+    }
+    found
 }
 
 /// The top-level `case` object: every case input `ir` declares, with its description (`null`
@@ -181,7 +261,11 @@ fn leaves<'a>(predicate: &'a Predicate, negated: bool, f: &mut impl FnMut(&'a Pr
             }
         }
         Predicate::Not(inner) => leaves(inner, !negated, f),
-        Predicate::Claim(_) | Predicate::Evidence(_) | Predicate::Input(_) => f(predicate, negated),
+        Predicate::Claim(_)
+        | Predicate::Evidence(_)
+        | Predicate::Input(_)
+        | Predicate::First(_)
+        | Predicate::Before(_) => f(predicate, negated),
     }
 }
 
@@ -200,9 +284,22 @@ fn claim_edges(predicate: &Predicate, to: &str, kind: &'static str, add: &mut im
     });
 }
 
-/// The graph document for one compiled protocol; `source` names the document it came from. Every
-/// compiled protocol has one.
-pub fn document(ir: &Ir, source: &str) -> Value {
+/// The graph document for one compiled protocol; `source` names the document it came from.
+///
+/// # Errors
+///
+/// When the protocol holds an order form (`first` or `before`), for which `b10x-protocol-graph/1`
+/// has no leaf; the error names every such place and form.
+pub fn document(ir: &Ir, source: &str) -> Result<Value> {
+    let uncarried = uncarried(ir);
+    if !uncarried.is_empty() {
+        bail!(
+            "{source}: {FORMAT} has no leaf for the order forms `first` and `before` (docs-system \
+             schema/b10x.protocol-graph.v1.schema.json, as website/package.json pins it), so no \
+             graph is written: {}",
+            uncarried.join("; ")
+        );
+    }
     let mut nodes = Vec::new();
     for (id, action) in &ir.actions {
         let mut value = node("action", id.as_str(), &action.description);
@@ -276,7 +373,12 @@ pub fn document(ir: &Ir, source: &str) -> Value {
                 kind: "supports",
                 qualifier: claim_qualifier(test.is, negated),
             }),
-            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
+            Predicate::All(_)
+            | Predicate::Any(_)
+            | Predicate::Not(_)
+            | Predicate::Input(_)
+            | Predicate::First(_)
+            | Predicate::Before(_) => {}
         });
     }
     for (id, outcome) in &ir.outcomes {
@@ -323,7 +425,7 @@ pub fn document(ir: &Ir, source: &str) -> Value {
     if let Some(case) = case(ir) {
         document["case"] = case;
     }
-    document
+    Ok(document)
 }
 
 /// Every node name of one kind, in document order.
@@ -363,7 +465,7 @@ mod tests {
     #[test]
     fn the_investigation_fixture_matches_the_reference_graph() {
         let ir = compile(&parse(INVESTIGATION).expect("parses")).expect("compiles");
-        let ours = document(&ir, "protocols/investigation/1.yaml");
+        let ours = document(&ir, "protocols/investigation/1.yaml").expect("draws");
         let reference: Value = serde_json::from_str(REFERENCE).expect("reference");
         assert_eq!(ours["format"], reference["format"]);
         assert_eq!(ours["nodes"], reference["nodes"]);
@@ -383,7 +485,7 @@ mod tests {
     fn preconditions_gate_and_negative_tests_are_qualified() {
         let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nevidence_kinds: {e: {}}\nclaims:\n  a:\n    true_when: {evidence: {kind: e}}\n  b:\n    true_when: {not: {claim: a, is: unknown}}\nactions:\n  go:\n    precondition: {claim: b}\n    requires: [{capability: c}]\n    effect: write\noutcomes:\n  done:\n    requires: {claim: b, is: false}\n";
         let ir = compile(&parse(source).expect("parses")).expect("compiles");
-        let graph = document(&ir, "x");
+        let graph = document(&ir, "x").expect("draws");
         let edges = sorted(&graph["edges"]);
         assert!(
             edges.contains(
@@ -413,7 +515,7 @@ mod tests {
     fn an_obligation_requires_the_claims_its_discharge_tests() {
         let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nevidence_kinds: {e: {}}\nclaims:\n  a:\n    true_when: {evidence: {kind: e}}\n  b:\n    true_when: {evidence: {kind: e, result: ok}}\nobligations:\n  settle:\n    discharged_when: {all: [{claim: a}, {claim: b, is: false}]}\n";
         let ir = compile(&parse(source).expect("parses")).expect("compiles");
-        let graph = document(&ir, "x");
+        let graph = document(&ir, "x").expect("draws");
         let edges: Vec<String> = sorted(&graph["edges"])
             .into_iter()
             .filter(|edge| edge.contains("obligation:settle"))
@@ -443,7 +545,7 @@ mod tests {
     fn a_claim_or_evidence_under_not_is_qualified_by_the_value_it_needs() {
         let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nevidence_kinds: {e: {}}\nclaims:\n  a:\n    true_when: {not: {evidence: {kind: e, result: ok}}}\n  b:\n    true_when: {any: [{not: {evidence: {kind: e}}}, {not: {not: {claim: a}}}]}\n  c:\n    true_when: {not: {claim: a, is: false}}\nobligations:\n  settle:\n    discharged_when: {not: {claim: a}}\nactions:\n  go:\n    precondition: {not: {claim: b, is: unknown}}\noutcomes:\n  done:\n    requires: {all: [{not: {claim: c}}, {claim: a}]}\n";
         let ir = compile(&parse(source).expect("parses")).expect("compiles");
-        let mut edges = sorted(&document(&ir, "x")["edges"]);
+        let mut edges = sorted(&document(&ir, "x").expect("draws")["edges"]);
         edges.sort();
         let mut expected = vec![
             r#"{"from":"claim:a","kind":"requires","qualifier":"false","to":"obligation:settle"}"#,
@@ -474,7 +576,7 @@ mod tests {
             )
         );
         let ir = compile(&parse(&source).expect("parses")).expect("compiles");
-        let graph = document(&ir, "x");
+        let graph = document(&ir, "x").expect("draws");
         assert_eq!(
             graph["case"],
             json!({"inputs": {
@@ -533,7 +635,7 @@ mod tests {
     fn a_protocol_without_case_inputs_writes_no_case_and_no_applicability() {
         let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nevidence_kinds: {e: {}}\nclaims:\n  a:\n    true_when: {evidence: {kind: e}}\nobligations:\n  settle:\n    discharged_when: {claim: a}\n";
         let ir = compile(&parse(source).expect("parses")).expect("compiles");
-        let graph = document(&ir, "x");
+        let graph = document(&ir, "x").expect("draws");
         assert!(graph.get("case").is_none(), "{graph}");
         let obligation = graph["nodes"]
             .as_array()
@@ -550,7 +652,7 @@ mod tests {
     fn an_evidence_edge_carries_the_subject_of_its_match() {
         let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nartifacts: {x: {}, y: {}}\nevidence_kinds: {e: {}}\nclaims:\n  a:\n    true_when: {all: [{evidence: {kind: e, result: ok, subject: x}}, {evidence: {kind: e, result: ok, subject: y}}]}\n  b:\n    true_when: {any: [{evidence: {kind: e, subject: x}}, {not: {evidence: {kind: e, result: ok, subject: y}}}, {not: {evidence: {kind: e, subject: y}}}]}\n";
         let ir = compile(&parse(source).expect("parses")).expect("compiles");
-        let mut edges = sorted(&document(&ir, "x")["edges"]);
+        let mut edges = sorted(&document(&ir, "x").expect("draws")["edges"]);
         edges.sort();
         let mut expected = vec![
             r#"{"from":"evidence:e","kind":"establishes","qualifier":"ok about x","to":"claim:a"}"#,
@@ -561,5 +663,30 @@ mod tests {
         ];
         expected.sort();
         assert_eq!(edges, expected);
+    }
+
+    /// A protocol that holds an order form is refused, naming every place and form and that the
+    /// format has no leaf for it; no document is written.
+    #[test]
+    fn an_order_form_is_refused_naming_the_form() {
+        let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nartifacts: {x: {}}\nevidence_kinds: {e: {}, f: {}}\nclaims:\n  a:\n    true_when: {any: [{evidence: {kind: e, result: fail}}, {first: {kind: e, result: fail, subject: x}}]}\n  b:\n    true_when: {before: {first: e, then: f, subject: x}}\nactions:\n  go:\n    precondition: {not: {first: {kind: f, result: ok}}}\n";
+        let ir = compile(&parse(source).expect("parses")).expect("compiles");
+        let error = document(&ir, "protocols/p/1.yaml")
+            .expect_err("an order form is refused")
+            .to_string();
+        assert!(error.starts_with("protocols/p/1.yaml: "), "{error}");
+        assert!(
+            error.contains(&format!(
+                "{FORMAT} has no leaf for the order forms `first` and `before`"
+            )),
+            "{error}"
+        );
+        for place in [
+            "claim `a` holds `first: {kind: e, result: fail, subject: x}` in `true_when`",
+            "claim `b` holds `before: {first: e, then: f, subject: x}` in `true_when`",
+            "action `go` holds `first: {kind: f, result: ok}` in `precondition`",
+        ] {
+            assert!(error.contains(place), "`{place}` is not named in: {error}");
+        }
     }
 }

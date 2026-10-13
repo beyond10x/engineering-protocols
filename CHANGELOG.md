@@ -6,6 +6,37 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `software.change/1` reads a bugfix's red-first rule from evidence order, on Canon 0.3.0's
+  `first` and `before`. Evidence kinds `regression_test_result` (`tests.run` may produce it) and
+  `implementation_change` (`implementation.edit` may produce it); `regression.reproduced` also
+  holds when the first `regression_test_result` about the implementation failed, on any revision;
+  claim `regression.shown_first` holds when that first result came before the first
+  `implementation_change`; obligation `red_first.required` applies to every bugfix, at every risk,
+  and is discharged by it. A bugfix that runs the suite green and its regression test red on R1
+  may edit, and its red run keeps counting once the edit moves the implementation to R2: the
+  limitation 0.5.0 stated is lifted. Fixtures `red-first`, `red-first-edit-first` and
+  `red-first-green-first` show it. Known limit, from Canon: a red record about any earlier
+  revision counts, whether or not the current revision descends from it.
+- A protocol page writes the order forms in words.
+
+### Changed
+
+- Canon is pinned at tag 0.3.0.
+- The fixture harness passes each record to Canon observed at its entry's `observed_at`, which the
+  order forms read; it still passes no evaluation instant, so nothing expires.
+- `regression.reproduced` is unknown, not false, for a change whose tests pass and whose
+  regression test never ran: the fixtures `chg-1842`, `superseded` and `profiles-discharged` say
+  so.
+
+### Known issues
+
+- The protocol graph generator refuses a protocol that holds an order form, naming each one: the
+  pinned docs-system `b10x-protocol-graph/1` schema has no leaf for `first` or `before`. Until it
+  does, `canon-engineering-docs generate` fails on `software.change/1`, and the committed graph,
+  protocol page and vocabulary page are those of 0.5.0.
+
 ## [0.5.0] - 2026-10-13
 
 ### Added

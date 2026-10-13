@@ -34,6 +34,7 @@ states:
         deployment.healthy: unknown
         objective.realized: unknown
         regression.reproduced: unknown
+        regression.shown_first: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -64,6 +65,7 @@ states:
         deployment.healthy: unknown
         objective.realized: unknown
         regression.reproduced: unknown
+        regression.shown_first: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -94,6 +96,7 @@ states:
         deployment.healthy: unknown
         objective.realized: unknown
         regression.reproduced: unknown
+        regression.shown_first: unknown
       actions:
         repository.inspect: admissible
         tests.write: admissible
