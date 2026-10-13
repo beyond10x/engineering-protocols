@@ -706,4 +706,28 @@ mod tests {
         expected.sort();
         assert_eq!(edges, expected);
     }
+
+    /// A match that demands independence carries the dimensions it demands on its edge, after its
+    /// result and subject (`approved about implementation, independent on different_principal`),
+    /// several joined with `and`, under `not` too and on a match with neither result nor subject;
+    /// a match that demands none keeps its qualifier.
+    #[test]
+    fn an_evidence_edge_carries_the_independence_its_match_demands() {
+        let source = include_str!("../tests/fixtures/independence-freshness.yaml");
+        let ir = compile(&parse(source).expect("parses")).expect("compiles");
+        let mut edges: Vec<String> = sorted(&document(&ir, "protocols/p/1.yaml")["edges"])
+            .into_iter()
+            .filter(|edge| edge.contains(r#""establishes""#))
+            .collect();
+        edges.sort();
+        let mut expected = vec![
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"approved about implementation, independent on different_principal","to":"claim:reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"approved, independent on different_agent_run and different_principal","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"not rejected, independent on different_principal","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"not present, independent on different_agent_run","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:observation","kind":"establishes","qualifier":"healthy","to":"claim:healthy"}"#,
+        ];
+        expected.sort();
+        assert_eq!(edges, expected);
+    }
 }

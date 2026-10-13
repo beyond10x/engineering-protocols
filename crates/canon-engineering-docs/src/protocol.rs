@@ -506,4 +506,117 @@ mod tests {
             "{obligations}"
         );
     }
+
+    /// A protocol's independence dimensions are listed with their descriptions, every evidence
+    /// match that demands independence says so wherever the page writes it (claim, action and
+    /// outcome text), and an evidence kind with a maximum age shows its horizon.
+    #[test]
+    fn the_page_shows_independence_demands_and_evidence_horizons() {
+        let source = include_str!("../tests/fixtures/independence-freshness.yaml");
+        let ir = b10x_canon::ir::compile(&parse(source).expect("parses")).expect("compiles");
+        let page = page(
+            &ir,
+            &Source {
+                name: "p".to_owned(),
+                major: 1,
+                path: "protocols/p/1.yaml".to_owned(),
+                text: source.to_owned(),
+            },
+        );
+
+        let dimensions = section(&page, "## Independence dimensions");
+        assert!(
+            dimensions.contains("| Dimension | Description |"),
+            "{dimensions}"
+        );
+        assert!(
+            dimensions.contains(
+                "| `different_agent_run` | the producer is another agent run than the one that did the work |"
+            ),
+            "{dimensions}"
+        );
+        assert!(
+            dimensions.contains(
+                "| `different_principal` | the producer is another principal than the one who did the work |"
+            ),
+            "{dimensions}"
+        );
+
+        let claims = section(&page, "## Claims");
+        assert!(
+            claims.contains(
+                "| `reviewed` |  | evidence `security_review` with result `approved` about `implementation`, from a producer independent on `different_principal` |"
+            ),
+            "{claims}"
+        );
+        assert!(
+            claims.contains(
+                "evidence `security_review` with result `approved`, from a producer independent on `different_agent_run` and `different_principal`"
+            ),
+            "{claims}"
+        );
+        assert!(
+            claims.contains(
+                "not (evidence `security_review`, from a producer independent on `different_agent_run`)"
+            ),
+            "{claims}"
+        );
+        assert!(
+            claims.contains("| `healthy` |  | evidence `observation` with result `healthy` |"),
+            "{claims}"
+        );
+
+        let actions = section(&page, "## Actions");
+        assert!(
+            actions.contains(
+                "| `ship` |  | evidence `security_review` with result `approved`, from a producer independent on `different_agent_run` |"
+            ),
+            "{actions}"
+        );
+        let outcomes = section(&page, "## Outcomes");
+        assert!(
+            outcomes.contains(
+                "evidence `security_review` with result `approved` about `implementation`, from a producer independent on `different_principal`"
+            ),
+            "{outcomes}"
+        );
+
+        let kinds = section(&page, "## Evidence kinds");
+        assert!(
+            kinds.contains(
+                "| Evidence kind | Description | Applies for | Produced by | Used by claims |"
+            ),
+            "{kinds}"
+        );
+        assert!(
+            kinds.contains(
+                "| `observation` | an observation of the running system | `30m` after it is observed | *no action* | `healthy` |"
+            ),
+            "{kinds}"
+        );
+        assert!(
+            kinds.contains("| `security_review` |  | *no limit* |"),
+            "{kinds}"
+        );
+    }
+
+    /// A protocol that declares no independence dimension and no maximum age keeps the page it
+    /// had before Canon 0.4.0: no dimensions section and no horizon column.
+    #[test]
+    fn a_page_without_independence_or_horizons_is_unchanged() {
+        let source = include_str!("../tests/fixtures/case-inputs.yaml");
+        let ir = b10x_canon::ir::compile(&parse(source).expect("parses")).expect("compiles");
+        let page = page(
+            &ir,
+            &Source {
+                name: "p".to_owned(),
+                major: 1,
+                path: "protocols/p/1.yaml".to_owned(),
+                text: source.to_owned(),
+            },
+        );
+        assert!(!page.contains("## Independence dimensions"), "{page}");
+        assert!(!page.contains("Applies for"), "{page}");
+        assert!(!page.contains("independent on"), "{page}");
+    }
 }
