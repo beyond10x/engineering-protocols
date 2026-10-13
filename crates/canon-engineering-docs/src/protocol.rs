@@ -68,6 +68,13 @@ pub fn predicate(predicate: &Predicate) -> String {
             if let Some(subject) = &matching.subject {
                 line.push_str(&format!(" about {}", code(subject.as_str())));
             }
+            if let Some(dimensions) = matching.independent_on.as_deref().filter(|d| !d.is_empty()) {
+                let dimensions: Vec<String> = dimensions.iter().map(|d| code(d.as_str())).collect();
+                line.push_str(&format!(
+                    ", from a producer independent on {}",
+                    dimensions.join(" and ")
+                ));
+            }
             line
         }
         Predicate::Claim(test) => format!("{} is {}", code(test.claim.as_str()), truth(test.is)),
@@ -244,25 +251,53 @@ pub fn page(ir: &Ir, source: &Source) -> String {
             .collect(),
     );
 
-    table(
-        &mut out,
-        "Evidence kinds",
-        "The kinds of evidence this protocol admits.",
+    // The "Applies for" column appears only when some evidence kind declares a maximum age, so the
+    // page of a protocol without `max_age` is the page it was before.
+    let horizons = ir
+        .evidence_kinds
+        .values()
+        .any(|kind| kind.max_age.is_some());
+    let kind_head: &[&str] = if horizons {
+        &[
+            "Evidence kind",
+            "Description",
+            "Applies for",
+            "Produced by",
+            "Used by claims",
+        ]
+    } else {
         &[
             "Evidence kind",
             "Description",
             "Produced by",
             "Used by claims",
-        ],
+        ]
+    };
+    let kind_lede = if horizons {
+        "The kinds of evidence this protocol admits. A kind with a maximum age applies for that long after a record's `observed_at`: evaluated at a later instant, the record is excluded as expired."
+    } else {
+        "The kinds of evidence this protocol admits."
+    };
+    table(
+        &mut out,
+        "Evidence kinds",
+        kind_lede,
+        kind_head,
         ir.evidence_kinds
             .iter()
             .map(|(id, kind)| {
-                vec![
-                    code(id.as_str()),
-                    description(&kind.description),
-                    joined(producers(id.as_str()), "no action"),
-                    joined(readers(id.as_str()), "no claim"),
-                ]
+                let mut row = vec![code(id.as_str()), description(&kind.description)];
+                if horizons {
+                    row.push(
+                        kind.max_age
+                            .as_ref()
+                            .map(|age| format!("{} after it is observed", code(age.as_str())))
+                            .unwrap_or_else(|| "*no limit*".to_owned()),
+                    );
+                }
+                row.push(joined(producers(id.as_str()), "no action"));
+                row.push(joined(readers(id.as_str()), "no claim"));
+                row
             })
             .collect(),
     );
@@ -369,6 +404,21 @@ pub fn page(ir: &Ir, source: &Source) -> String {
                         values(&input.values),
                     ]
                 })
+                .collect(),
+        );
+    }
+
+    // Written only when the protocol declares an independence dimension, so a protocol without an
+    // `independence_dimensions` section keeps the page it had before Canon 0.4.0.
+    if !ir.independence_dimensions.is_empty() {
+        table(
+            &mut out,
+            "Independence dimensions",
+            "What an evidence match may demand of a record's producer (`independent_on`). The case lists, for each producer, the dimensions on which it is independent of the case's work; a match that demands a dimension reads only records whose producer the case lists on it. A record that fails the demand neither establishes nor contradicts the match, so a match only such records would decide is UNKNOWN.",
+            &["Dimension", "Description"],
+            ir.independence_dimensions
+                .iter()
+                .map(|(id, dimension)| vec![code(id.as_str()), description(&dimension.description)])
                 .collect(),
         );
     }
