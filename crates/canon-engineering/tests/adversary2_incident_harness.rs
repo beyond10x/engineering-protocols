@@ -87,9 +87,9 @@ fn the_harness_passes_each_entrys_observation_time_to_canon() {
     assert_eq!(
         carried,
         [
-            "health-1 observed_at 2026-10-04T11:00:00Z",
-            "impact-1 observed_at 2026-10-04T11:05:00Z",
-            "cause-1 observed_at 2026-10-04T11:20:00Z",
+            "health-1 observed_at 2026-10-04T11:32:00Z",
+            "impact-1 observed_at 2026-10-04T11:33:00Z",
+            "cause-1 observed_at 2026-10-04T11:34:00Z",
             "release-health-1 observed_at 2026-10-04T11:35:00Z",
             "release-impact-1 observed_at 2026-10-04T11:36:00Z",
             "health-2 observed_at 2026-10-04T11:40:00Z",
@@ -180,18 +180,37 @@ fn an_artifact_the_case_omits() {
     );
 }
 
-/// Probe, green: no expectation of `inc-492` depends on its observation times. The healthy
-/// observation of s2 written as observed before the unhealthy one of s1, and every observation at
-/// the evaluation instant itself, leave every state as expected.
+/// Probe, green: no expectation of `inc-492` depends on the order of its observation times. The
+/// healthy observation of s2 written as observed before the unhealthy one of s1, and every
+/// observation at the evaluation instant itself, leave every state as expected. Since
+/// `story:stale-evidence-fixtures` an operational observation applies for 30 minutes and the
+/// harness passes the instant to Canon, so every time here stays within the 30 minutes before the
+/// fixture's instant; the healthy observation of s2 written 2 hours earlier has expired, and
+/// leaves the service's health UNKNOWN, not FALSE, in the states that rest on it.
 #[test]
 fn inc_492_expectations_do_not_depend_on_observation_times() {
     let compiled = compiled();
     let earlier = inc_492_with(
         "observed_at: \"2026-10-04T11:40:00Z\"",
-        "observed_at: \"2026-10-04T10:00:00Z\"",
+        "observed_at: \"2026-10-04T11:31:00Z\"",
     );
     let fixture = Fixture::from_yaml(&earlier).expect("loads");
     assert_eq!(fixture.check(&compiled), Ok(()));
+
+    let expired = inc_492_with(
+        "observed_at: \"2026-10-04T11:40:00Z\"",
+        "observed_at: \"2026-10-04T10:00:00Z\"",
+    );
+    let fixture = Fixture::from_yaml(&expired).expect("loads");
+    let mut differences = Vec::new();
+    for state in ["service-restored", "cause-identified-after-restore"] {
+        differences.extend([
+            format!("state `{state}`: claim `service.healthy` is unknown, expected true"),
+            format!("state `{state}`: obligation `restore_service` is open, expected discharged"),
+            format!("state `{state}`: action `emergency.leave` is blocked, expected admissible"),
+        ]);
+    }
+    assert_eq!(fixture.check(&compiled), Err(differences));
 
     let text = std::fs::read_to_string(support::repo_root().join(INC_492)).expect("reads");
     let mut all_at_instant = String::new();
