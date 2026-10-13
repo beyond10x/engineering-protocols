@@ -1,0 +1,37 @@
+format: protocol/1
+protocol: {id: p, revision: 1}
+independence_dimensions:
+  different_principal:
+    description: the producer is another principal than the one who did the work
+  different_agent_run:
+    description: the producer is another agent run than the one that did the work
+artifacts: {implementation: {}}
+evidence_kinds:
+  security_review: {}
+  observation:
+    description: an observation of the running system
+    max_age: 30m
+claims:
+  reviewed:
+    true_when:
+      evidence: {kind: security_review, result: approved, subject: implementation, independent_on: [different_principal]}
+  doubly_reviewed:
+    true_when:
+      any:
+        - evidence: {kind: security_review, result: approved, independent_on: [different_principal, different_agent_run]}
+        - not: {evidence: {kind: security_review, result: rejected, independent_on: [different_principal]}}
+        - not: {evidence: {kind: security_review, independent_on: [different_agent_run]}}
+  healthy:
+    true_when: {evidence: {kind: observation, result: healthy}}
+obligations:
+  review:
+    discharged_when: {claim: reviewed}
+actions:
+  ship:
+    precondition: {evidence: {kind: security_review, result: approved, independent_on: [different_agent_run]}}
+outcomes:
+  accepted:
+    requires:
+      all:
+        - {claim: healthy}
+        - evidence: {kind: security_review, result: approved, subject: implementation, independent_on: [different_principal]}

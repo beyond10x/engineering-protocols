@@ -38,14 +38,14 @@ What can be done in a case: what it needs first, which authority it requires, th
 
 ## Evidence kinds
 
-The kinds of evidence this protocol admits.
+The kinds of evidence this protocol admits. A kind with a maximum age applies for that long after a record's `observed_at`: evaluated at a later instant, the record is excluded as expired.
 
-| Evidence kind | Description | Produced by | Used by claims |
-|---|---|---|---|
-| `cause_analysis` | an analysis of why an incident happened | `logs.search`, `release.inspect` | `cause.identified` |
-| `impact_assessment` | an assessment of who and what an incident affects | `metrics.inspect` | `impact.bounded` |
-| `operational_observation` | an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything | `metrics.inspect` | `service.healthy` |
-| `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | `release.rollback` | `rollback.verified` |
+| Evidence kind | Description | Applies for | Produced by | Used by claims |
+|---|---|---|---|---|
+| `cause_analysis` | an analysis of why an incident happened | *no limit* | `logs.search`, `release.inspect` | `cause.identified` |
+| `impact_assessment` | an assessment of who and what an incident affects | *no limit* | `metrics.inspect` | `impact.bounded` |
+| `operational_observation` | an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything | `30m` after it is observed | `metrics.inspect` | `service.healthy` |
+| `rollback_result` | the result of returning a release to the one before it; its result is complete or partial | *no limit* | `release.rollback` | `rollback.verified` |
 
 ## Claims
 
@@ -55,7 +55,7 @@ Each claim is TRUE, FALSE or UNKNOWN, established from evidence by its predicate
 |---|---|---|
 | `cause.identified` | the incident's cause is known | evidence `cause_analysis` with result `identified` |
 | `impact.bounded` | the incident's impact is known and contained | evidence `impact_assessment` with result `bounded` about `service` |
-| `rollback.verified` | the release's rollback is complete, by a rollback result from a producer the case lists as another principal than the one who rolled it back | evidence `rollback_result` with result `complete` about `release` |
+| `rollback.verified` | the release's rollback is complete, by a rollback result from a producer the case lists as another principal than the one who rolled it back | evidence `rollback_result` with result `complete` about `release`, from a producer independent on `different_principal` |
 | `service.healthy` | the service is running healthily | evidence `operational_observation` with result `healthy` about `service` |
 
 ## Obligations
@@ -81,3 +81,11 @@ The things whose revisions evidence is bound to.
 |---|---|
 | `release` | a versioned, deployable unit of the system |
 | `service` | the running service a case concerns |
+
+## Independence dimensions
+
+What an evidence match may demand of a record's producer (`independent_on`). The case lists, for each producer, the dimensions on which it is independent of the case's work; a match that demands a dimension reads only records whose producer the case lists on it. A record that fails the demand neither establishes nor contradicts the match, so a match only such records would decide is UNKNOWN.
+
+| Dimension | Description |
+|---|---|
+| `different_principal` | the producer is another principal than the one who did the case's work |

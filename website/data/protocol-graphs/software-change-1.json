@@ -121,7 +121,7 @@
     {
       "from": "evidence:security_review",
       "kind": "establishes",
-      "qualifier": "approved about implementation",
+      "qualifier": "approved about implementation, independent on different_principal",
       "to": "claim:security.reviewed"
     },
     {

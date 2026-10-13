@@ -40,7 +40,7 @@
     {
       "from": "evidence:rollback_result",
       "kind": "establishes",
-      "qualifier": "complete about release",
+      "qualifier": "complete about release, independent on different_principal",
       "to": "claim:rollback.verified"
     },
     {

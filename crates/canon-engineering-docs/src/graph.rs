@@ -17,10 +17,13 @@
 //! `not present` for a match without a result. A match bound to an artifact appends
 //! `about <subject>` to that qualifier (`pass about implementation`, `about release`), so two
 //! matches of one kind about different artifacts are two edges. A predicate's evidence match has no
-//! `subject` key in the format, so the subject reaches the graph only through that qualifier. An
+//! `subject` key in the format, so the subject reaches the graph only through that qualifier. A
+//! match that demands independence (Canon 0.4.0 `independent_on`) appends `, independent on
+//! <dimensions>` after that, several joined with `and` (`approved about implementation,
+//! independent on different_principal`); the format has no key for the demand either. An
 //! outcome or a precondition that matches evidence directly keeps that match in its predicate,
-//! without its subject; the format has no edge kind for it. A discharge predicate tests claims only: Canon refuses one that matches
-//! evidence.
+//! without its subject or its independence demand; the format has no edge kind for it. A
+//! discharge predicate tests claims only: Canon refuses one that matches evidence.
 //!
 //!
 //! Case inputs (docs-system 0.9.0 `schema/b10x.protocol-graph.v1.schema.json`): a protocol that
@@ -55,9 +58,10 @@ pub const FORMAT: &str = "b10x-protocol-graph/1";
 /// evidence match omits `result` when it has none, and an input test is `{"input": {"id": …,
 /// "in": [...]}}` as in `canon-ir/1`. Unlike `canon-ir/1`, an evidence match never carries
 /// `subject`: the format has no key for it, and a match without one does not mean "about any
-/// artifact" here. A claim's matches show their subjects on its `establishes` edges. An order form
-/// is `{"first": {"kind": …, "result": …}}` or `{"before": {"first": …, "then": …}}` as in
-/// `canon-ir/1`, with `"subject"` when it names one.
+/// artifact" here. Nor does it carry `independent_on`. A claim's matches show their subjects and
+/// independence demands on its `establishes` edges. An order form is `{"first": {"kind": …,
+/// "result": …}}` or `{"before": {"first": …, "then": …}}` as in `canon-ir/1`, with `"subject"`
+/// when it names one.
 pub fn predicate(predicate: &Predicate) -> Value {
     match predicate {
         Predicate::All(members) => {
@@ -188,17 +192,33 @@ fn claim_qualifier(is: Truth, negated: bool) -> Option<String> {
 
 /// The result an evidence match needs, as an edge qualifier; under an odd number of `not`s,
 /// `not <result>`, or `not present` for a match without a result; followed by `about <subject>`
-/// when the match is bound to an artifact.
+/// when the match is bound to an artifact; then `, independent on <dimensions>` (joined with `and`)
+/// when it demands independence, or that demand alone when nothing precedes it.
 fn evidence_qualifier(matching: &EvidenceMatch, negated: bool) -> Option<String> {
     let result = match (&matching.result, negated) {
         (result, false) => result.clone(),
         (Some(result), true) => Some(format!("not {result}")),
         (None, true) => Some("not present".to_owned()),
     };
-    match (result, &matching.subject) {
+    let qualifier = match (result, &matching.subject) {
         (result, None) => result,
         (Some(result), Some(subject)) => Some(format!("{result} about {subject}")),
         (None, Some(subject)) => Some(format!("about {subject}")),
+    };
+    match matching
+        .independent_on
+        .as_deref()
+        .filter(|dimensions| !dimensions.is_empty())
+    {
+        None => qualifier,
+        Some(dimensions) => {
+            let dimensions: Vec<&str> = dimensions.iter().map(|d| d.as_str()).collect();
+            let demand = format!("independent on {}", dimensions.join(" and "));
+            Some(match qualifier {
+                Some(qualifier) => format!("{qualifier}, {demand}"),
+                None => demand,
+            })
+        }
     }
 }
 
@@ -702,6 +722,30 @@ mod tests {
             r#"{"from":"evidence:f","kind":"establishes","qualifier":"not first ok","to":"claim:b"}"#,
             r#"{"from":"evidence:f","kind":"establishes","qualifier":"not before e","to":"claim:c"}"#,
             r#"{"from":"evidence:e","kind":"establishes","qualifier":"not after f","to":"claim:c"}"#,
+        ];
+        expected.sort();
+        assert_eq!(edges, expected);
+    }
+
+    /// A match that demands independence carries the dimensions it demands on its edge, after its
+    /// result and subject (`approved about implementation, independent on different_principal`),
+    /// several joined with `and`, under `not` too and on a match with neither result nor subject;
+    /// a match that demands none keeps its qualifier.
+    #[test]
+    fn an_evidence_edge_carries_the_independence_its_match_demands() {
+        let source = include_str!("../tests/fixtures/independence-freshness.yaml");
+        let ir = compile(&parse(source).expect("parses")).expect("compiles");
+        let mut edges: Vec<String> = sorted(&document(&ir, "protocols/p/1.yaml")["edges"])
+            .into_iter()
+            .filter(|edge| edge.contains(r#""establishes""#))
+            .collect();
+        edges.sort();
+        let mut expected = vec![
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"approved about implementation, independent on different_principal","to":"claim:reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"approved, independent on different_agent_run and different_principal","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"not rejected, independent on different_principal","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:security_review","kind":"establishes","qualifier":"not present, independent on different_agent_run","to":"claim:doubly_reviewed"}"#,
+            r#"{"from":"evidence:observation","kind":"establishes","qualifier":"healthy","to":"claim:healthy"}"#,
         ];
         expected.sort();
         assert_eq!(edges, expected);

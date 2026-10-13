@@ -39,16 +39,16 @@ What can be done in a case: what it needs first, which authority it requires, th
 
 ## Evidence kinds
 
-The kinds of evidence this protocol admits.
+The kinds of evidence this protocol admits. A kind with a maximum age applies for that long after a record's `observed_at`: evaluated at a later instant, the record is excluded as expired.
 
-| Evidence kind | Description | Produced by | Used by claims |
-|---|---|---|---|
-| `classification` | a proposed category and priority for one ticket revision, each one the deployment declares | `ticket.classify` | `classification.proposed` |
-| `classification_review` | a review of the proposed classification; its result is approved or rejected | `classification.review` | `classification.reviewed` |
-| `escalation_record` | the record that an escalation was requested for the ticket, naming where it went | `escalation.request` | `escalation.requested` |
-| `requester_profile` | the requester looked up; its result is identified or unidentified | `requester.lookup` | `requester.known` |
-| `routing_record` | the record that the ticket was routed to a queue or owner, naming the target | `ticket.route` | `ticket.routed` |
-| `ticket_snapshot` | the ticket read at one revision: its id, revision, a digest and its service-level status when read, never its text; its result is breached or within\_target. A read older than 15 minutes no longer says whether the target is breached | `ticket.read` | `sla.breached`, `ticket.current` |
+| Evidence kind | Description | Applies for | Produced by | Used by claims |
+|---|---|---|---|---|
+| `classification` | a proposed category and priority for one ticket revision, each one the deployment declares | *no limit* | `ticket.classify` | `classification.proposed` |
+| `classification_review` | a review of the proposed classification; its result is approved or rejected | *no limit* | `classification.review` | `classification.reviewed` |
+| `escalation_record` | the record that an escalation was requested for the ticket, naming where it went | *no limit* | `escalation.request` | `escalation.requested` |
+| `requester_profile` | the requester looked up; its result is identified or unidentified | *no limit* | `requester.lookup` | `requester.known` |
+| `routing_record` | the record that the ticket was routed to a queue or owner, naming the target | *no limit* | `ticket.route` | `ticket.routed` |
+| `ticket_snapshot` | the ticket read at one revision: its id, revision, a digest and its service-level status when read, never its text; its result is breached or within\_target. A read older than 15 minutes no longer says whether the target is breached | `15m` after it is observed | `ticket.read` | `sla.breached`, `ticket.current` |
 
 ## Claims
 
