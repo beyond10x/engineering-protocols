@@ -9,7 +9,8 @@ protocol:
     realized; or close it declined, superseded or abandoned on an explicit decision, or rolled
     back on a complete rollback result. A case fixes its risk, which selects the obligations that
     apply, and its change kind, which selects whether a regression must be reproduced before the
-    implementation is edited.
+    implementation is edited, and whether its regression test must run before the implementation
+    is first changed.
 
 case:
   inputs:
@@ -21,7 +22,8 @@ case:
     change_kind:
       description: >-
         what the change is; a bugfix must reproduce its regression with a failing test before the
-        implementation is edited
+        implementation is edited, and run its regression test before the implementation is first
+        changed
       values: [feature, bugfix, refactor]
 
 artifacts:
@@ -55,6 +57,13 @@ evidence_kinds:
   rollback_result:
     description: >-
       the result of returning a release to the one before it; its result is complete or partial
+  regression_test_result:
+    description: >-
+      the result of running a bugfix's regression test against an implementation revision; its
+      result is pass or fail
+  implementation_change:
+    description: >-
+      the record that the implementation was changed, moving it to a new revision
 
 claims:
   tests.pass:
@@ -105,12 +114,27 @@ claims:
         subject: intent
   regression.reproduced:
     description: >-
-      a test has failed on the current implementation revision, reproducing the regression a
-      bugfix repairs
+      the regression a bugfix repairs is reproduced: a test has failed on the current
+      implementation revision, or the first run of the regression test, on any revision of the
+      implementation, failed
     true_when:
-      evidence:
-        kind: test_result
-        result: fail
+      any:
+        - evidence:
+            kind: test_result
+            result: fail
+            subject: implementation
+        - first:
+            kind: regression_test_result
+            result: fail
+            subject: implementation
+  regression.shown_first:
+    description: >-
+      the regression test ran before the implementation was first changed: the first regression
+      test result about the implementation was observed before its first change
+    true_when:
+      before:
+        first: regression_test_result
+        then: implementation_change
         subject: implementation
 
 obligations:
@@ -143,6 +167,15 @@ obligations:
       in: [critical]
     discharged_when:
       claim: deployment.healthy
+  red_first.required:
+    description: >-
+      the regression test ran before the implementation was first changed; applies to a bugfix,
+      at every risk
+    applicable_when:
+      input: change_kind
+      in: [bugfix]
+    discharged_when:
+      claim: regression.shown_first
 
 actions:
   repository.inspect:
@@ -156,6 +189,8 @@ actions:
       change the implementation in the repository's working revision; a bugfix needs its
       regression reproduced first
     effect: write
+    may_produce:
+      - evidence: implementation_change
     precondition:
       any:
         - input: change_kind
@@ -166,6 +201,7 @@ actions:
     effect: read
     may_produce:
       - evidence: test_result
+      - evidence: regression_test_result
   repository.merge:
     description: >-
       merge a revision into the repository's mainline; needs the current implementation revision
