@@ -18,6 +18,7 @@ case:
   inputs:
     risk: standard
     change_kind: bugfix
+    affects_security_boundary: false
   artifacts:
     intent: {revision: i1}
     system_specification: {revision: s1}
@@ -47,12 +48,14 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: false
+        security.reviewed: unknown
       obligations: &open
         tests.required: open
         review.required: open
         provenance.required: not_applicable
         health.required: not_applicable
         red_first.required: open
+        security_review.required: not_applicable
       actions:
         repository.inspect: admissible
         tests.write: admissible
@@ -102,6 +105,7 @@ states:
         objective.realized: unknown
         regression.reproduced: true
         regression.shown_first: false
+        security.reviewed: unknown
       obligations: *open
       actions:
         repository.inspect: admissible

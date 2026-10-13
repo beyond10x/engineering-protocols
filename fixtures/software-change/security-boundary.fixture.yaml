@@ -1,0 +1,139 @@
+format: els-fixture/1
+id: security-boundary
+protocol: protocols/software-change/1.yaml
+at: "2026-10-13T12:00:00Z"
+
+# A standard feature at implementation revision R1 that affects a security boundary. P1 is the
+# implementing principal; the trusted context that wrote the case lists P1 as independent on no
+# dimension and P2 as independent on different_principal. P1's tests pass on R1. With no security
+# review the implementation is not verified (initial); outside a security boundary the passing
+# tests alone verify it (outside-boundary). Back on the boundary, P1 approves its own security
+# review: Canon excludes it as not_independent and security.reviewed stays UNKNOWN, not FALSE
+# (self-reviewed). P2's approval verifies it (independently-reviewed); P1's review, still present,
+# is still excluded. `security-boundary-independent` holds P2's approval without P1's.
+case:
+  format: canon-case/1
+  id: CHG-4101
+  protocol: software.change
+  inputs:
+    risk: standard
+    change_kind: feature
+    affects_security_boundary: true
+  independence:
+    p1: []
+    p2: [different_principal]
+  artifacts:
+    intent: {revision: i1}
+    system_specification: {revision: s1}
+    plan: {revision: p1}
+    implementation: {revision: R1}
+    release: {revision: v0}
+    deployment: {revision: d0}
+
+states:
+  - id: initial
+    add_evidence:
+      - observed_at: "2026-10-13T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-r1, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: R1, producer: p1}
+    expect:
+      claims: &unreviewed
+        tests.pass: true
+        implementation.reviewed: unknown
+        implementation.verified: unknown
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations: &open
+        tests.required: discharged
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: not_applicable
+        security_review.required: open
+      actions: &blocked
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: blocked
+        release.rollback: approval-required
+      outcomes: &outcomes
+        accepted: blocked
+        declined: blocked
+        rolled_back: blocked
+        superseded: blocked
+        abandoned: blocked
+
+  - id: outside-boundary
+    set_inputs:
+      affects_security_boundary: false
+    add_evidence: []
+    expect:
+      claims:
+        tests.pass: true
+        implementation.reviewed: unknown
+        implementation.verified: true
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: unknown
+      obligations:
+        tests.required: discharged
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: not_applicable
+        security_review.required: not_applicable
+      actions: &verified
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        tests.run: admissible
+        repository.merge: approval-required
+        release.rollback: approval-required
+      outcomes: *outcomes
+
+  - id: self-reviewed
+    set_inputs:
+      affects_security_boundary: true
+    add_evidence:
+      - observed_at: "2026-10-13T10:00:00Z"
+        record: {format: canon-evidence/1, id: security-review-p1, kind: security_review,
+                 result: approved, subject: implementation, subject_revision: R1, producer: p1}
+    expect:
+      claims: *unreviewed
+      obligations: *open
+      actions: *blocked
+      outcomes: *outcomes
+
+  - id: independently-reviewed
+    add_evidence:
+      - observed_at: "2026-10-13T11:00:00Z"
+        record: {format: canon-evidence/1, id: security-review-p2, kind: security_review,
+                 result: approved, subject: implementation, subject_revision: R1, producer: p2}
+    expect:
+      claims:
+        tests.pass: true
+        implementation.reviewed: unknown
+        implementation.verified: true
+        release.proven: unknown
+        deployment.healthy: unknown
+        objective.realized: unknown
+        regression.reproduced: unknown
+        regression.shown_first: unknown
+        security.reviewed: true
+      obligations:
+        tests.required: discharged
+        review.required: open
+        provenance.required: not_applicable
+        health.required: not_applicable
+        red_first.required: not_applicable
+        security_review.required: discharged
+      actions: *verified
+      outcomes: *outcomes

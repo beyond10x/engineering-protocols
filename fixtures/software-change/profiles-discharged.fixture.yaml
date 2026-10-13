@@ -14,6 +14,7 @@ case:
   inputs:
     risk: critical
     change_kind: refactor
+    affects_security_boundary: false
   artifacts:
     intent: {revision: i1}
     system_specification: {revision: s1}
@@ -55,12 +56,14 @@ states:
         objective.realized: unknown
         regression.reproduced: unknown
         regression.shown_first: unknown
+        security.reviewed: unknown
       obligations:
         tests.required: discharged
         review.required: open
         provenance.required: discharged
         health.required: open
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: &actions
         repository.inspect: admissible
         tests.write: admissible
@@ -89,5 +92,6 @@ states:
         provenance.required: not_applicable
         health.required: not_applicable
         red_first.required: not_applicable
+        security_review.required: not_applicable
       actions: *actions
       outcomes: *outcomes
