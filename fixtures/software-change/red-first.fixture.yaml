@@ -12,7 +12,7 @@ at: "2026-10-13T12:00:00Z"
 # discharges `red_first.required`. A second edit, to R3, still may be made. A feature and a
 # refactor then show that `red_first.required` applies to a bugfix only.
 # The evaluation reads each record's observation time (the order forms `first` and `before` read
-# it); the instant of the fixture is not passed, so nothing expires.
+# it); no evidence kind this fixture holds has a max_age, so nothing in it expires.
 case:
   format: canon-case/1
   id: CHG-3003

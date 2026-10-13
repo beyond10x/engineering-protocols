@@ -35,8 +35,24 @@ releases at bare-version tags.
   `true`, `false`, `security_review`, `security.reviewed`, `security_review.required`,
   `different_principal` and `different_agent_run`.
 - The fixture harness documents the case's `independence` map, which Canon reads with the case.
+- Fixtures `stale-review`, `stale-observation` (`fixtures/software-change/`) and `stale-health`
+  (`fixtures/incident-response/`): a review of a revision the implementation no longer has leaves
+  `implementation.reviewed` unknown, and one healthy observation evaluated 29 and then 31 minutes
+  after it was made holds and then leaves `deployment.healthy` or `service.healthy` unknown, never
+  false; in the incident, `restore_service` reopens and `emergency.leave` is blocked again.
+- The fixture harness passes each state's evaluation instant to Canon, and a state may give its
+  own `at`, not before the instant of the state before it; a state without one inherits it.
 
 ### Changed
+
+- `operational_observation` expires after 30 minutes (`max_age: 30m`) in both
+  `software.change/1` and `incident.response/1`: at an evaluation instant more than 30 minutes
+  after a record's `observed_at`, Canon excludes the record as `expired`, and the claim it would
+  have decided (`deployment.healthy`, `service.healthy`) is unknown, not false. A caller that
+  evaluates without an instant (no `--at`) gets no expiry: Canon reads no clock, so without an
+  instant, or for a record without `observed_at`, nothing expires. Fixtures `chg-1842`, `inc-492`,
+  `rollback-verification` and `rollback-verification-independent` moved their observation times
+  into the 30 minutes before their instant and keep every expectation.
 
 - Every `software.change/1` case must now give `affects_security_boundary`: Canon refuses a case
   that leaves out a declared input (`missing-input`). Every fixture under

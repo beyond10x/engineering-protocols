@@ -8,7 +8,8 @@ protocol:
     on which emergency mode is left, and investigate_cause, which stays open after emergency mode
     ends until a cause analysis of a current revision of the service or the release identifies
     the cause. A rollback of the release is verified only on a complete rollback result from a
-    verifier the case lists as another principal than the one who rolled it back.
+    verifier the case lists as another principal than the one who rolled it back. The service is
+    healthy only on an observation at most 30 minutes old.
 
 independence_dimensions:
   different_principal:
@@ -24,7 +25,10 @@ evidence_kinds:
   impact_assessment:
     description: an assessment of who and what an incident affects
   operational_observation:
-    description: an observation of the running system; its result is healthy or unhealthy
+    description: >-
+      an observation of the running system; its result is healthy or unhealthy, and it applies
+      for 30 minutes after it is observed, after which it no longer says anything
+    max_age: 30m
   cause_analysis:
     description: an analysis of why an incident happened
   rollback_result:

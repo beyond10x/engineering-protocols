@@ -146,7 +146,7 @@
       "name": "impact_assessment"
     },
     {
-      "description": "an observation of the running system; its result is healthy or unhealthy",
+      "description": "an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything",
       "id": "evidence:operational_observation",
       "kind": "evidence",
       "name": "operational_observation"
@@ -229,7 +229,7 @@
     }
   ],
   "protocol": {
-    "description": "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back.",
+    "description": "Respond to an incident through two obligations that progress independently: restore_service, on which emergency mode is left, and investigate_cause, which stays open after emergency mode ends until a cause analysis of a current revision of the service or the release identifies the cause. A rollback of the release is verified only on a complete rollback result from a verifier the case lists as another principal than the one who rolled it back. The service is healthy only on an observation at most 30 minutes old.",
     "id": "incident.response",
     "revision": 1,
     "source": "protocols/incident-response/1.yaml"

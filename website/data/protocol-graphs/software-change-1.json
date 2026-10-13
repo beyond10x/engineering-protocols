@@ -284,7 +284,7 @@
       "name": "objective_observation"
     },
     {
-      "description": "an observation of the running system; its result is healthy or unhealthy",
+      "description": "an observation of the running system; its result is healthy or unhealthy, and it applies for 30 minutes after it is observed, after which it no longer says anything",
       "id": "evidence:operational_observation",
       "kind": "evidence",
       "name": "operational_observation"
@@ -650,7 +650,7 @@
     }
   ],
   "protocol": {
-    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review.",
+    "description": "Deliver a change to a software system: implement it, verify the current implementation revision, merge it under authority, release and deploy it, and accept it once its objective is realized; or close it declined, superseded or abandoned on an explicit decision, or rolled back on a complete rollback result. A case fixes its risk, which selects the obligations that apply, and its change kind, which selects whether a regression must be reproduced before the implementation is edited, and whether its regression test must fail on its first run, before the implementation is first changed; and whether it affects a security boundary, in which case the implementation is verified only once a principal other than the implementer approved its security review. A deployment is healthy only on an observation at most 30 minutes old.",
     "id": "software.change",
     "revision": 1,
     "source": "protocols/software-change/1.yaml"

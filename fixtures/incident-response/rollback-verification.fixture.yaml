@@ -26,10 +26,10 @@ states:
     add_authority:
       - {capability: release.rollback, decision: granted}
     add_evidence:
-      - observed_at: "2026-10-13T09:00:00Z"
+      - observed_at: "2026-10-13T11:35:00Z"
         record: {format: canon-evidence/1, id: health-1, kind: operational_observation,
                  result: unhealthy, subject: service, subject_revision: s1, producer: actor-a}
-      - observed_at: "2026-10-13T09:05:00Z"
+      - observed_at: "2026-10-13T11:36:00Z"
         record: {format: canon-evidence/1, id: impact-1, kind: impact_assessment, result: bounded,
                  subject: service, subject_revision: s1, producer: actor-a}
     expect:
@@ -51,7 +51,7 @@ states:
 
   - id: self-verified
     add_evidence:
-      - observed_at: "2026-10-13T10:00:00Z"
+      - observed_at: "2026-10-13T11:40:00Z"
         record: {format: canon-evidence/1, id: rollback-actor-a, kind: rollback_result,
                  result: complete, subject: release, subject_revision: r42, producer: actor-a}
     expect:
@@ -61,7 +61,7 @@ states:
 
   - id: independently-verified
     add_evidence:
-      - observed_at: "2026-10-13T11:00:00Z"
+      - observed_at: "2026-10-13T11:45:00Z"
         record: {format: canon-evidence/1, id: rollback-verifier-b, kind: rollback_result,
                  result: complete, subject: release, subject_revision: r42, producer: verifier-b}
     expect:

@@ -12,7 +12,7 @@ protocol:
     implementation is edited, and whether its regression test must fail on its first run, before
     the implementation is first changed; and whether it affects a security boundary, in which case
     the implementation is verified only once a principal other than the implementer approved its
-    security review.
+    security review. A deployment is healthy only on an observation at most 30 minutes old.
 
 case:
   inputs:
@@ -60,7 +60,10 @@ evidence_kinds:
   code_review:
     description: a review of an implementation revision; its result is approved or rejected
   operational_observation:
-    description: an observation of the running system; its result is healthy or unhealthy
+    description: >-
+      an observation of the running system; its result is healthy or unhealthy, and it applies
+      for 30 minutes after it is observed, after which it no longer says anything
+    max_age: 30m
   build_provenance:
     description: the record of how a release was built from an implementation
   objective_observation:
