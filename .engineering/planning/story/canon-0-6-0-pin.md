@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:canon-0-6-0-pin
 kind: story
-status: active
+status: implemented
 title: Pin Canon 0.6.0
 summary: Move every Canon dependency to tag 0.6.0, so a consumer on Canon 0.6.0 resolves one b10x-canon.
 relations:
@@ -17,10 +17,11 @@ scope:
   path: crates/canon-engineering-docs/Cargo.toml
 - confidence: cited
   path: crates/canon-engineering/Cargo.toml
-revision: 8
+revision: 9
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-16T16:44:19Z", actor: "human:timo", revision: 7}
 - {from: "proposed", to: "active", at: "2026-10-16T16:44:19Z", actor: "human:timo", revision: 8}
+- {from: "active", to: "implemented", at: "2026-10-16T17:15:38Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
