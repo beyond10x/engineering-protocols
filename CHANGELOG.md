@@ -6,6 +6,18 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-16
+
+### Changed
+
+- `b10x-canon` and `b10x-canon-expr` move from Canon 0.4.0 to Canon 0.6.0 (tag `0.6.0`, commit
+  efcfd040). `registry::get` returns Canon 0.6.0's validated model, so a consumer that also
+  depends on Canon 0.6.0 resolves one `b10x-canon`. Canon 0.5.0 adds optional action argument
+  schemas and Canon 0.6.0 a requirements catalogue for its own conformance run; no protocol here
+  declares either, and every protocol evaluates as before.
+- The assertion contracts in `ess/` and `ess/providers/` require ESS 0.60.0 and are regenerated
+  by it (only the generator stamp changes); CI installs ESS 0.60.0.
+
 ## [0.7.0] - 2026-10-13
 
 ### Added

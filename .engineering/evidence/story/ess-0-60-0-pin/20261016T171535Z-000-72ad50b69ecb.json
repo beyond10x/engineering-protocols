@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-16T17:15:35Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-60-0-pin",
+  "kind": "story",
+  "revision": 13,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --workspace --locked --no-fail-fast on da83463 (ess 0.60.0): 257 passed, 0 failed, exit 0; clippy, fmt and docs generate --check exit 0"
+  }
+}
