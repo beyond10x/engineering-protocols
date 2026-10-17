@@ -2,19 +2,42 @@
 format: aep.planning-md/3
 id: story:eval-gated-change-protocol
 kind: story
-status: draft
+status: implemented
 title: Ship the eval.gated_change/1 protocol as data
 relations:
 - decomposes: epic:els-first-domain
 - serves: vision:O2
-revision: 1
+scope:
+- confidence: cited
+  path: AGENTS.md
+- confidence: cited
+  path: CHANGELOG.md
+- confidence: cited
+  path: README.md
+- confidence: cited
+  path: crates/canon-engineering-docs
+- confidence: cited
+  path: crates/canon-engineering/tests/eval_gated_change_protocol.rs
+- confidence: cited
+  path: fixtures/eval-gated-change
+- confidence: cited
+  path: protocols/eval-gated-change
+- confidence: cited
+  path: protocols/vocabulary.yaml
+- confidence: cited
+  path: website
+revision: 15
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 3}
+- {from: "proposed", to: "active", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-17T07:33:22Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"test_result":2}}}
 ---
 ## Outcome
 
 This repository ships `eval.gated_change/1` as Canon `protocol/1` data at
 `protocols/eval-gated-change/1.yaml`, a fifth built-in, with fixtures under
 `fixtures/eval-gated-change/`, in the shape `architecture-decision-record:eval-gated-change-shape`
-records (proposed; this story waits for it to be accepted). It governs an automated loop that
+records (accepted by the operator on 2026-10-17). It governs an automated loop that
 tunes an agent's text or configuration (guidance, a system prompt, tool caps) against an
 evaluation set: a change is kept only on evidence about that exact change, from a producer other
 than the run that wrote it, so the loop's own say-so never satisfies the gate.
@@ -107,7 +130,7 @@ Items for Canon that the proposal surfaced. None is work in this repository; /1 
 4. A `case_outcome` evidence kind (decided upstream, not built), so an iteration's decision could
    feed a run-level case.
 
-Two readings to confirm against the proposer's model in the Protocol first commit, rewriting the
+Two readings to confirm in the Protocol first commit (the proposer's model is not at hand; the fixtures decide), rewriting the
 acceptance line before the test if they differ: that `change.reject` is not admissible while any
 keep claim is UNKNOWN, even with another FALSE (acceptance 10); and that the vocabulary entry for
 `candidate` still holds for a candidate whose revision hashes its basis.
@@ -132,8 +155,9 @@ candidate and is not listed. They expect:
 1. Starting from the protocol file, it validates and compiles in Canon at the tag the repository
    pins, and the registry lists `eval-gated-change@1` beside the other built-ins.
 2. Starting from `protocols/vocabulary.yaml` as this story leaves it, every artifact, evidence
-   kind, claim, action, capability and outcome id of /1 resolves to exactly one vocabulary entry,
-   and the reused terms listed in § Outcome still resolve to exactly one each.
+   kind, claim, action and outcome id of /1 resolves to exactly one vocabulary entry (capability ids
+   are not checked: `vocabulary/1` has no capability category), and the reused terms listed in
+   § Outcome still resolve to exactly one each.
 3. `canon check` over the compiled /1 runs, its report is clean (no findings), and its state
    count is at most `STATE_BOUND` (65,536); the test asserts both, as
    `support_triage_protocol.rs:283-286` does, and prints the count.

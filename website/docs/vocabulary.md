@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 93 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 111 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -30,6 +30,7 @@ Category `artifact_kind`.
 | `candidate` | `core` | the model or method under test |
 | `run_configuration` | `core` | the settings and environment an experiment's runs used |
 | `results` | `core` | the metrics an experiment's runs produced |
+| `eval_design` | `core` | the evaluation design an automated loop is tuned under, its splits, metrics and guards |
 
 ## Evidence kinds
 
@@ -53,6 +54,9 @@ Category `evidence_kind`.
 | `regression_test_result` | `software.change` | the result of running a bugfix's regression test against an implementation revision |
 | `implementation_change` | `software.change` | the record that the implementation was changed, moving it to a new revision |
 | `security_review` | `software.change` | a review of an implementation revision's effect on a security boundary |
+| `guard_check` | `core` | a check of a candidate against the surface a loop may change and for leaked or forbidden content, outside, leaked or clean |
+| `tuning_comparison` | `core` | a first and a second run of a candidate against the baseline on the tuning split, reproduced, not\_reproduced or not\_better |
+| `heldout_comparison` | `core` | a run of a candidate against the baseline on the held-out split, held or regressed |
 
 ## Claims
 
@@ -78,6 +82,11 @@ Category `claim_id`.
 | `regression.shown_first` | `software.change` | a bugfix's regression test failed on its first run, before the implementation was first changed |
 | `security.reviewed` | `software.change` | the current implementation revision's security review is approved by another principal than the implementer |
 | `rollback.verified` | `core` | the release's rollback is complete, by a rollback result from another principal than the one who rolled it back |
+| `change.within_surface` | `core` | an independent guard check did not find the current candidate outside the surface the loop may change |
+| `content.clean` | `core` | an independent guard check found the current candidate free of expected answers and new forbidden content |
+| `tuning.improved` | `core` | an independent first run of the current candidate on the tuning split was better than the baseline |
+| `heldout.not_regressed` | `core` | an independent run of the current candidate on the held-out split did not regress against the baseline |
+| `change.supported` | `core` | every keep claim holds for the current candidate revision |
 
 ## Actions
 
@@ -96,6 +105,12 @@ Category `action_id`.
 | `tests.run` | `software.change` | run the tests against an implementation revision |
 | `tests.write` | `software.change` | change the tests in the repository's working revision |
 | `implementation.edit` | `software.change` | change the implementation in the repository's working revision |
+| `design.review` | `core` | review the evaluation design, under authority |
+| `candidate.evaluate` | `core` | check and run the current candidate revision, producing its guard check and comparisons |
+| `change.keep` | `core` | keep a candidate a loop produced, on every keep claim and authority to keep |
+| `change.reject` | `core` | discard a candidate once every keep claim is decided and one is false |
+| `change.propose` | `core` | hand a candidate that leaves the loop's surface to a person as a proposal, applying nothing |
+| `change.apply_outside_surface` | `core` | apply a candidate that leaves the loop's surface, under a capability never granted to a loop |
 
 ## Obligations
 
@@ -127,6 +142,9 @@ Category `outcome_id`.
 | `refuted` | `core` | the case closed with its hypothesis refuted by a valid, reproducible result |
 | `invalid_experiment` | `core` | the case closed because its experiment is not valid |
 | `inconclusive` | `core` | the case closed on a decision that its experiment settles nothing |
+| `kept` | `core` | the case closed with its candidate kept |
+| `rejected` | `core` | the case closed with its candidate rejected on a false keep claim |
+| `proposed` | `core` | the case closed with its candidate proposed to a person, because it leaves the loop's surface |
 
 ## Decisions
 

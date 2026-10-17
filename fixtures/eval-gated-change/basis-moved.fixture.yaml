@@ -1,0 +1,86 @@
+format: els-fixture/1
+id: basis-moved
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# The evidence of `kept`, by run-b, with `loop_change.keep` granted: `kept` is legitimate and
+# `change.keep` admissible. Then part of the candidate's basis moves (the baseline, the question
+# set, the data revision or the design it hashes), so the candidate is at a new revision, h2. The
+# records about h1 are excluded as `revision_mismatch`: every claim on the candidate is unknown,
+# not false, and neither keep nor reject is admissible. The design review is about the evaluation
+# design, which did not move, and still holds.
+case:
+  format: canon-case/1
+  id: EGC-103
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: current
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T09:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:00:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1, kind: guard_check,
+                 result: clean, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:10:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1, kind: tuning_comparison,
+                 result: reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:20:00Z"
+        record: {format: canon-evidence/1, id: heldout-comparison-h1, kind: heldout_comparison,
+                 result: held, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: true
+        tuning.improved: true
+        result.reproducible: true
+        heldout.not_regressed: true
+        change.supported: true
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: admissible
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: legitimate
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
+
+  - id: basis-moved
+    set_revisions:
+      candidate: h2
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: unknown
+        content.clean: unknown
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: unknown
+        change.supported: unknown
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked

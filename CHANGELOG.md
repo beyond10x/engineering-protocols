@@ -6,6 +6,41 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-17
+
+### Added
+
+- `eval.gated_change/1` at `protocols/eval-gated-change/1.yaml`, a fifth built-in protocol: it
+  decides one change an automated loop made to an agent's text or configuration against an
+  evaluation set. Artifacts `eval_design` and `candidate`, whose revision hashes its content with
+  its basis (baseline, question set, data revision, design), so a moved basis is a new candidate
+  revision; evidence kinds `design_review`, `guard_check` (`outside`, `leaked`, `clean`),
+  `tuning_comparison` (`reproduced`, `not_reproduced`, `not_better`) and `heldout_comparison`
+  (`held`, `regressed`); the keep claims `experiment.valid`, `change.within_surface`,
+  `content.clean`, `tuning.improved`, `result.reproducible` and `heldout.not_regressed`, each
+  demanding a producer independent on `different_agent_run`, and `change.supported`, all of them.
+  `change.keep` needs `change.supported` and the capability `loop_change.keep`; `change.reject`
+  needs every keep claim decided and one false; `change.propose` a candidate outside the surface;
+  `change.apply_outside_surface` the capability `loop_change.apply_outside_surface`, never granted
+  to a loop. Outcomes `kept`, `rejected`, `proposed`, and `inconclusive` on
+  `explicitly_inconclusive`. Evidence by the run that wrote the candidate, or about an earlier
+  candidate revision, leaves its claim unknown, and unknown neither keeps nor rejects. It declares
+  no invalidation rule and `canon check` covers it in 55,296 states with no findings. Fifteen
+  fixtures under `fixtures/eval-gated-change/` show it.
+- The vocabulary holds its 18 new terms, all core; it reuses `candidate`, `design_review`,
+  `experiment.valid`, `result.reproducible`, `inconclusive`, `explicitly_inconclusive` and
+  `different_agent_run`.
+
+### Limits
+
+- `change.apply_outside_surface` is admissible in any case whose authority grants
+  `loop_change.apply_outside_surface`: "never granted to a loop" rests on the case's authority
+  input, as every protocol's capability does, not on the protocol.
+- `kept` and `inconclusive` can both be legitimate when an `explicitly_inconclusive` decision
+  sits beside passing evidence; only `kept`, `rejected` and `proposed` exclude each other.
+- An explanation says the evidence is about another candidate revision, not which part of the
+  basis moved, and every candidate claim goes unknown when any part of it moves.
+
 ## [0.8.0] - 2026-10-16
 
 ### Changed

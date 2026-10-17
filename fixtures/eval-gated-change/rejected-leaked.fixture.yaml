@@ -1,0 +1,58 @@
+format: els-fixture/1
+id: rejected-leaked
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# The evidence of `kept`, by run-b, with `loop_change.keep` granted, except that the guard check
+# finds expected answers inside the candidate or new forbidden content in answers: the candidate
+# is within the surface but `content.clean` is false, so `change.reject` is admissible,
+# `change.keep` is not, and `rejected` is legitimate.
+case:
+  format: canon-case/1
+  id: EGC-105
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: leaked
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T09:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:00:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1, kind: guard_check,
+                 result: leaked, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:10:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1, kind: tuning_comparison,
+                 result: reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:20:00Z"
+        record: {format: canon-evidence/1, id: heldout-comparison-h1, kind: heldout_comparison,
+                 result: held, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: false
+        tuning.improved: true
+        result.reproducible: true
+        heldout.not_regressed: true
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: admissible
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: legitimate
+        proposed: blocked
+        inconclusive: blocked

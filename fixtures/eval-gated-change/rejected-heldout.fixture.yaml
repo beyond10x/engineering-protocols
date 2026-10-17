@@ -1,0 +1,83 @@
+format: els-fixture/1
+id: rejected-heldout
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# With `loop_change.keep` granted, run-b first finds only that the held-out split regressed:
+# `heldout.not_regressed` is false, but the other keep claims are unknown, so the change is not
+# rejected yet. Run-b then passes the design review, finds the candidate clean and reproduces its
+# improvement on the tuning split: every keep claim is decided and one is false, so
+# `change.reject` is admissible, `change.keep` is not, and `rejected` is legitimate.
+case:
+  format: canon-case/1
+  id: EGC-104
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: heldout-regressed
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T10:20:00Z"
+        record: {format: canon-evidence/1, id: heldout-comparison-h1, kind: heldout_comparison,
+                 result: regressed, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: unknown
+        change.within_surface: unknown
+        content.clean: unknown
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: false
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
+
+  - id: evidence-complete
+    add_evidence:
+      - observed_at: "2026-10-17T10:30:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:40:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1, kind: guard_check,
+                 result: clean, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:50:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1, kind: tuning_comparison,
+                 result: reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: true
+        tuning.improved: true
+        result.reproducible: true
+        heldout.not_regressed: false
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: admissible
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: legitimate
+        proposed: blocked
+        inconclusive: blocked
