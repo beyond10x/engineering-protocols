@@ -76,7 +76,10 @@ const ACTIONS: [&str; 6] = [
 
 /// Every capability an action requires, by action.
 const CAPABILITIES: [(&str, &str); 3] = [
-    ("change.apply_outside_surface", "loop_change.apply_outside_surface"),
+    (
+        "change.apply_outside_surface",
+        "loop_change.apply_outside_surface",
+    ),
     ("change.keep", "loop_change.keep"),
     ("design.review", "eval_design.review"),
 ];
@@ -168,7 +171,10 @@ fn fixture(id: &str, compiled: &Compiled) -> Fixture {
         .map(|(producer, dimensions)| {
             (
                 producer.as_str(),
-                dimensions.iter().map(|dimension| dimension.as_str()).collect(),
+                dimensions
+                    .iter()
+                    .map(|dimension| dimension.as_str())
+                    .collect(),
             )
         })
         .collect();
@@ -315,7 +321,11 @@ fn eval_gated_change_outcomes_are_earned() {
     let compiled = support::compile_protocol(&path)
         .unwrap_or_else(|error| panic!("1. {path} validates and compiles: {error}"));
     let ir = compiled.ir();
-    assert_eq!(ir.protocol.id.as_str(), "eval.gated_change", "1. protocol id");
+    assert_eq!(
+        ir.protocol.id.as_str(),
+        "eval.gated_change",
+        "1. protocol id"
+    );
     assert_eq!(ir.protocol.revision, 1, "1. protocol revision");
     assert_eq!(
         ids(&ir.artifacts, |id| id.as_str()),
@@ -341,7 +351,10 @@ fn eval_gated_change_outcomes_are_earned() {
         })
         .collect();
     assert_eq!(capabilities, CAPABILITIES, "1. capabilities, by action");
-    assert!(ir.invalidation.is_empty(), "1. /1 declares no invalidation rule");
+    assert!(
+        ir.invalidation.is_empty(),
+        "1. /1 declares no invalidation rule"
+    );
     let decisions: BTreeMap<&str, &str> = ir
         .outcomes
         .iter()
@@ -486,7 +499,11 @@ fn eval_gated_change_outcomes_are_earned() {
     //    legitimate; with the held-out split regressed, the guard check leaked and the tuning
     //    comparison not better.
     for (id, state, falsified) in [
-        ("rejected-heldout", "evidence-complete", "heldout.not_regressed"),
+        (
+            "rejected-heldout",
+            "evidence-complete",
+            "heldout.not_regressed",
+        ),
         ("rejected-leaked", "leaked", "content.clean"),
         ("rejected-not-better", "not-better", "tuning.improved"),
     ] {
@@ -499,7 +516,10 @@ fn eval_gated_change_outcomes_are_earned() {
             "9. {id}: change.supported"
         );
         let found = actions(&rejected);
-        assert_eq!(found["change.reject"], "admissible", "9. {id}: change.reject");
+        assert_eq!(
+            found["change.reject"], "admissible",
+            "9. {id}: change.reject"
+        );
         assert_ne!(found["change.keep"], "admissible", "9. {id}: change.keep");
         assert_eq!(
             statuses(&rejected),
