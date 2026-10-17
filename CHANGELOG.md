@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-17
+
 ### Added
 
 - `eval.gated_change/1` at `protocols/eval-gated-change/1.yaml`, a fifth built-in protocol: it
@@ -23,11 +25,21 @@ releases at bare-version tags.
   to a loop. Outcomes `kept`, `rejected`, `proposed`, and `inconclusive` on
   `explicitly_inconclusive`. Evidence by the run that wrote the candidate, or about an earlier
   candidate revision, leaves its claim unknown, and unknown neither keeps nor rejects. It declares
-  no invalidation rule and `canon check` covers it in 55,296 states with no findings. Eight
+  no invalidation rule and `canon check` covers it in 55,296 states with no findings. Fifteen
   fixtures under `fixtures/eval-gated-change/` show it.
 - The vocabulary holds its 18 new terms, all core; it reuses `candidate`, `design_review`,
   `experiment.valid`, `result.reproducible`, `inconclusive`, `explicitly_inconclusive` and
   `different_agent_run`.
+
+### Limits
+
+- `change.apply_outside_surface` is admissible in any case whose authority grants
+  `loop_change.apply_outside_surface`: "never granted to a loop" rests on the case's authority
+  input, as every protocol's capability does, not on the protocol.
+- `kept` and `inconclusive` can both be legitimate when an `explicitly_inconclusive` decision
+  sits beside passing evidence; only `kept`, `rejected` and `proposed` exclude each other.
+- An explanation says the evidence is about another candidate revision, not which part of the
+  basis moved, and every candidate claim goes unknown when any part of it moves.
 
 ## [0.8.0] - 2026-10-16
 
