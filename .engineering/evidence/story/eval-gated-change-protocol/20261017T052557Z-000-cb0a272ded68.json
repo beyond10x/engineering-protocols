@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T05:25:57Z",
+  "actor": "human:timo",
+  "artifact": "story:eval-gated-change-protocol",
+  "kind": "story",
+  "revision": 13,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p b10x-canon-engineering --locked --no-fail-fast on 1443d0d: exit 101 (red, protocol first); eval_gated_change_outcomes_are_earned fails at item 2 only (\"`eval_design` is not a term of the engineering vocabulary\"), eval_gated_change_check_stays_under_the_bound passes; adversary2_incident_subject the_landing_page_status_rows_are_the_shipped_protocols fails until the site is regenerated; 165 passed, 2 failed",
+    "reference": "1443d0d"
+  }
+}
