@@ -26,7 +26,7 @@ scope:
   path: protocols/vocabulary.yaml
 - confidence: cited
   path: website
-revision: 13
+revision: 14
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 4}
@@ -154,8 +154,9 @@ candidate and is not listed. They expect:
 1. Starting from the protocol file, it validates and compiles in Canon at the tag the repository
    pins, and the registry lists `eval-gated-change@1` beside the other built-ins.
 2. Starting from `protocols/vocabulary.yaml` as this story leaves it, every artifact, evidence
-   kind, claim, action, capability and outcome id of /1 resolves to exactly one vocabulary entry,
-   and the reused terms listed in § Outcome still resolve to exactly one each.
+   kind, claim, action and outcome id of /1 resolves to exactly one vocabulary entry (capability ids
+   are not checked: `vocabulary/1` has no capability category), and the reused terms listed in
+   § Outcome still resolve to exactly one each.
 3. `canon check` over the compiled /1 runs, its report is clean (no findings), and its state
    count is at most `STATE_BOUND` (65,536); the test asserts both, as
    `support_triage_protocol.rs:283-286` does, and prints the count.
