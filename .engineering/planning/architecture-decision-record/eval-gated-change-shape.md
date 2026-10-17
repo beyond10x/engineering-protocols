@@ -2,20 +2,22 @@
 format: aep.planning-md/3
 id: architecture-decision-record:eval-gated-change-shape
 kind: architecture-decision-record
-status: proposed
+status: accepted
 title: An eval-gated change is its own protocol, eval.gated_change/1
 relations:
 - decides: story:eval-gated-change-protocol
-revision: 1
+revision: 3
+transitions:
+- {from: "proposed", to: "accepted", at: "2026-10-17T05:05:25Z", actor: "human:timo", revision: 3}
 ---
 ## Decision
 
-Proposed, not accepted: the operator accepts or rejects it.
+Accepted by the operator on 2026-10-17: option A, `eval.gated_change/1` is its own protocol.
 
 An eval-gated change (an automated loop that tunes an agent's text or configuration against an
 evaluation set and keeps a change only on independent evidence about that exact change) is its own
 protocol, `eval.gated_change/1`, not a profile of `ml.experiment/1` and not a profile of
-`software.change/1`. It would live at `protocols/eval-gated-change/1.yaml`, header
+`software.change/1`. It lives at `protocols/eval-gated-change/1.yaml`, header
 `id: eval.gated_change`, `revision: 1`, with fixtures under `fixtures/eval-gated-change/` and its
 new terms in `protocols/vocabulary.yaml`. It reuses the idioms of both neighbours as shared
 vocabulary terms, not by hosting.
