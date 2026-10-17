@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-17T06:49:13Z",
+  "actor": "human:timo",
+  "artifact": "story:eval-gated-change-protocol",
+  "kind": "story",
+  "revision": 13,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p b10x-canon-engineering -p canon-engineering-docs --locked --no-fail-fast on bf6ea5b: exit 0 (green); 167 passed in b10x-canon-engineering, 66 in canon-engineering-docs, 0 failed; fmt, clippy -D warnings and generate --check pass; canon check evaluated 55296 states (bound 65536)",
+    "reference": "bf6ea5b"
+  }
+}
