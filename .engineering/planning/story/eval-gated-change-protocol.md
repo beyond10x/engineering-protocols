@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:eval-gated-change-protocol
 kind: story
-status: active
+status: implemented
 title: Ship the eval.gated_change/1 protocol as data
 relations:
 - decomposes: epic:els-first-domain
@@ -26,10 +26,11 @@ scope:
   path: protocols/vocabulary.yaml
 - confidence: cited
   path: website
-revision: 14
+revision: 15
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 3}
 - {from: "proposed", to: "active", at: "2026-10-17T05:05:32Z", actor: "human:timo", revision: 4}
+- {from: "active", to: "implemented", at: "2026-10-17T07:33:22Z", actor: "human:timo", revision: 15, decided_on: {"recorded":{"test_result":2}}}
 ---
 ## Outcome
 
