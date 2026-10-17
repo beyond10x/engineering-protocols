@@ -373,3 +373,75 @@ terms:
     category: claim_id
     marking: core
     meaning: the release's rollback is complete, by a rollback result from another principal than the one who rolled it back
+  - id: eval_design
+    category: artifact_kind
+    marking: core
+    meaning: the evaluation design an automated loop is tuned under, its splits, metrics and guards
+  - id: guard_check
+    category: evidence_kind
+    marking: core
+    meaning: a check of a candidate against the surface a loop may change and for leaked or forbidden content, outside, leaked or clean
+  - id: tuning_comparison
+    category: evidence_kind
+    marking: core
+    meaning: a first and a second run of a candidate against the baseline on the tuning split, reproduced, not_reproduced or not_better
+  - id: heldout_comparison
+    category: evidence_kind
+    marking: core
+    meaning: a run of a candidate against the baseline on the held-out split, held or regressed
+  - id: change.within_surface
+    category: claim_id
+    marking: core
+    meaning: an independent guard check did not find the current candidate outside the surface the loop may change
+  - id: content.clean
+    category: claim_id
+    marking: core
+    meaning: an independent guard check found the current candidate free of expected answers and new forbidden content
+  - id: tuning.improved
+    category: claim_id
+    marking: core
+    meaning: an independent first run of the current candidate on the tuning split was better than the baseline
+  - id: heldout.not_regressed
+    category: claim_id
+    marking: core
+    meaning: an independent run of the current candidate on the held-out split did not regress against the baseline
+  - id: change.supported
+    category: claim_id
+    marking: core
+    meaning: every keep claim holds for the current candidate revision
+  - id: design.review
+    category: action_id
+    marking: core
+    meaning: review the evaluation design, under authority
+  - id: candidate.evaluate
+    category: action_id
+    marking: core
+    meaning: check and run the current candidate revision, producing its guard check and comparisons
+  - id: change.keep
+    category: action_id
+    marking: core
+    meaning: keep a candidate a loop produced, on every keep claim and authority to keep
+  - id: change.reject
+    category: action_id
+    marking: core
+    meaning: discard a candidate once every keep claim is decided and one is false
+  - id: change.propose
+    category: action_id
+    marking: core
+    meaning: hand a candidate that leaves the loop's surface to a person as a proposal, applying nothing
+  - id: change.apply_outside_surface
+    category: action_id
+    marking: core
+    meaning: apply a candidate that leaves the loop's surface, under a capability never granted to a loop
+  - id: kept
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its candidate kept
+  - id: rejected
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its candidate rejected on a false keep claim
+  - id: proposed
+    category: outcome_id
+    marking: core
+    meaning: the case closed with its candidate proposed to a person, because it leaves the loop's surface
