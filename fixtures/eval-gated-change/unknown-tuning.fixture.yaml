@@ -1,0 +1,86 @@
+format: els-fixture/1
+id: unknown-tuning
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# The design passed, the candidate leaked and the held-out split held, with `loop_change.keep`
+# granted, but no run on the tuning split: `tuning.improved` and `result.reproducible` are unknown,
+# so nothing is rejected. Run-b then records a first run not better and a second not reproduced:
+# the records disagree on `not_better`, so `tuning.improved` stays unknown while
+# `result.reproducible` is false, and `change.reject` stays blocked.
+case:
+  format: canon-case/1
+  id: EGC-108
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: no-tuning
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T10:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1-passed, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:10:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1-leaked, kind: guard_check,
+                 result: leaked, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:20:00Z"
+        record: {format: canon-evidence/1, id: heldout-comparison-h1-held, kind: heldout_comparison,
+                 result: held, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: false
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: true
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
+
+  - id: tuning-disagrees
+    add_evidence:
+      - observed_at: "2026-10-17T10:30:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1-not-better, kind: tuning_comparison,
+                 result: not_better, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:40:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1-not-reproduced, kind: tuning_comparison,
+                 result: not_reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: false
+        tuning.improved: unknown
+        result.reproducible: false
+        heldout.not_regressed: true
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
