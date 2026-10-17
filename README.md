@@ -30,6 +30,7 @@ blocked until evidence for R2 exists.
 | `software.change/1` | [`protocols/software-change/1.yaml`](protocols/software-change/1.yaml) | [software change](https://beyond10x.github.io/engineering-protocols/docs/protocols/software-change/1/) | 0.1.0 |
 | `incident.response/1` | [`protocols/incident-response/1.yaml`](protocols/incident-response/1.yaml) | [incident response](https://beyond10x.github.io/engineering-protocols/docs/protocols/incident-response/1/) | 0.1.0 |
 | `ml.experiment/1` | [`protocols/ml-experiment/1.yaml`](protocols/ml-experiment/1.yaml) | [ML experiment](https://beyond10x.github.io/engineering-protocols/docs/protocols/ml-experiment/1/) | 0.4.0 |
+| `eval.gated_change/1` | [`protocols/eval-gated-change/1.yaml`](protocols/eval-gated-change/1.yaml) | [eval-gated change](https://beyond10x.github.io/engineering-protocols/docs/protocols/eval-gated-change/1/) | unreleased |
 | `support.triage/1` | [`protocols/support-triage/1.yaml`](protocols/support-triage/1.yaml) | [support triage](https://beyond10x.github.io/engineering-protocols/docs/protocols/support-triage/1/) | 0.2.0 |
 
 The terms they are written in are [`protocols/vocabulary.yaml`](protocols/vocabulary.yaml),
@@ -67,7 +68,7 @@ fn main() {
 ```
 
 Against tag 0.8.0 this prints `incident-response@1`, `ml-experiment@1`, `software-change@1` and
-`support-triage@1`.
+`support-triage@1`; a checkout after it also lists `eval-gated-change@1`.
 `registry::get(name, major)` returns one protocol's YAML as released together with Canon's
 validated model of it.
 
@@ -75,6 +76,7 @@ From a checkout, the command line does the same:
 
 ```console
 $ cargo run -q -p b10x-canon-engineering -- protocols list
+eval-gated-change@1
 incident-response@1
 ml-experiment@1
 software-change@1

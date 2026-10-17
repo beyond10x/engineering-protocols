@@ -1,0 +1,84 @@
+format: els-fixture/1
+id: proposed
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# With `loop_change.keep` granted, run-b's guard check finds the candidate outside the surface the
+# loop may change: `change.within_surface` is false, `change.propose` is admissible, `change.keep`
+# is not, and `proposed` is legitimate. Applying the change outside the surface needs a capability
+# no state grants, so it is never admissible. Once run-b has decided every other keep claim, the
+# change may be rejected too, but `rejected` stays blocked: a change outside the surface is
+# proposed, not rejected.
+case:
+  format: canon-case/1
+  id: EGC-107
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: outside
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T10:00:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1, kind: guard_check,
+                 result: outside, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: unknown
+        change.within_surface: false
+        content.clean: false
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: unknown
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: admissible
+        change.apply_outside_surface: approval-required
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: legitimate
+        inconclusive: blocked
+
+  - id: outside-decided
+    add_evidence:
+      - observed_at: "2026-10-17T10:30:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:40:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1, kind: tuning_comparison,
+                 result: reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:50:00Z"
+        record: {format: canon-evidence/1, id: heldout-comparison-h1, kind: heldout_comparison,
+                 result: held, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: false
+        content.clean: false
+        tuning.improved: true
+        result.reproducible: true
+        heldout.not_regressed: true
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: admissible
+        change.propose: admissible
+        change.apply_outside_surface: approval-required
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: legitimate
+        inconclusive: blocked

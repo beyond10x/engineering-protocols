@@ -1,0 +1,77 @@
+format: els-fixture/1
+id: inconclusive
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# A change with no evidence. A decision that the evaluation settles nothing, taken at the case's
+# earlier revision c0, applies to nothing at c1; the same decision taken at c1 earns
+# `inconclusive`.
+case:
+  format: canon-case/1
+  id: EGC-108
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: inconclusive-at-c0
+    add_decisions:
+      - decision: explicitly_inconclusive
+        outcome: inconclusive
+        principal: loop-owner
+        case_revision: c0
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        change.within_surface: unknown
+        content.clean: unknown
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: unknown
+        change.supported: unknown
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
+
+  - id: inconclusive
+    add_decisions:
+      - decision: explicitly_inconclusive
+        outcome: inconclusive
+        principal: loop-owner
+        case_revision: c1
+    add_evidence: []
+    expect:
+      claims:
+        experiment.valid: unknown
+        change.within_surface: unknown
+        content.clean: unknown
+        tuning.improved: unknown
+        result.reproducible: unknown
+        heldout.not_regressed: unknown
+        change.supported: unknown
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: legitimate

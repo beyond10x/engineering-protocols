@@ -1,0 +1,566 @@
+{
+  "edges": [
+    {
+      "from": "action:candidate.evaluate",
+      "kind": "produces",
+      "to": "evidence:guard_check"
+    },
+    {
+      "from": "action:candidate.evaluate",
+      "kind": "produces",
+      "to": "evidence:heldout_comparison"
+    },
+    {
+      "from": "action:candidate.evaluate",
+      "kind": "produces",
+      "to": "evidence:tuning_comparison"
+    },
+    {
+      "from": "action:design.review",
+      "kind": "produces",
+      "to": "evidence:design_review"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "claim:content.clean",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "claim:heldout.not_regressed",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "claim:result.reproducible",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "claim:tuning.improved",
+      "kind": "supports",
+      "to": "claim:change.supported"
+    },
+    {
+      "from": "evidence:guard_check",
+      "kind": "establishes",
+      "qualifier": "not outside about candidate, independent on different_agent_run",
+      "to": "claim:change.within_surface"
+    },
+    {
+      "from": "evidence:guard_check",
+      "kind": "establishes",
+      "qualifier": "clean about candidate, independent on different_agent_run",
+      "to": "claim:content.clean"
+    },
+    {
+      "from": "evidence:design_review",
+      "kind": "establishes",
+      "qualifier": "passed about eval_design, independent on different_agent_run",
+      "to": "claim:experiment.valid"
+    },
+    {
+      "from": "evidence:heldout_comparison",
+      "kind": "establishes",
+      "qualifier": "held about candidate, independent on different_agent_run",
+      "to": "claim:heldout.not_regressed"
+    },
+    {
+      "from": "evidence:tuning_comparison",
+      "kind": "establishes",
+      "qualifier": "reproduced about candidate, independent on different_agent_run",
+      "to": "claim:result.reproducible"
+    },
+    {
+      "from": "evidence:tuning_comparison",
+      "kind": "establishes",
+      "qualifier": "not not_better about candidate, independent on different_agent_run",
+      "to": "claim:tuning.improved"
+    },
+    {
+      "from": "claim:change.supported",
+      "kind": "requires",
+      "to": "outcome:kept"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "requires",
+      "qualifier": "false",
+      "to": "outcome:proposed"
+    },
+    {
+      "from": "claim:change.supported",
+      "kind": "requires",
+      "qualifier": "false",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "requires",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:content.clean",
+      "kind": "requires",
+      "qualifier": "not unknown",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "requires",
+      "qualifier": "not unknown",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:heldout.not_regressed",
+      "kind": "requires",
+      "qualifier": "not unknown",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:result.reproducible",
+      "kind": "requires",
+      "qualifier": "not unknown",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:tuning.improved",
+      "kind": "requires",
+      "qualifier": "not unknown",
+      "to": "outcome:rejected"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "gates",
+      "qualifier": "false",
+      "to": "action:change.apply_outside_surface"
+    },
+    {
+      "from": "claim:change.supported",
+      "kind": "gates",
+      "to": "action:change.keep"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "gates",
+      "qualifier": "false",
+      "to": "action:change.propose"
+    },
+    {
+      "from": "claim:change.supported",
+      "kind": "gates",
+      "qualifier": "false",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:change.within_surface",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:content.clean",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:experiment.valid",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:heldout.not_regressed",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:result.reproducible",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    },
+    {
+      "from": "claim:tuning.improved",
+      "kind": "gates",
+      "qualifier": "not unknown",
+      "to": "action:change.reject"
+    }
+  ],
+  "format": "b10x-protocol-graph/1",
+  "nodes": [
+    {
+      "description": "check and run the current candidate revision: the guard check, the tuning comparison and the held-out comparison",
+      "effect": "read",
+      "id": "action:candidate.evaluate",
+      "kind": "action",
+      "name": "candidate.evaluate"
+    },
+    {
+      "capabilities": [
+        "loop_change.apply_outside_surface"
+      ],
+      "description": "apply a candidate that leaves the surface the loop may change; needs a capability never granted to a loop",
+      "effect": "write",
+      "id": "action:change.apply_outside_surface",
+      "kind": "action",
+      "name": "change.apply_outside_surface",
+      "predicate": {
+        "claim": {
+          "id": "change.within_surface",
+          "is": "false"
+        }
+      }
+    },
+    {
+      "capabilities": [
+        "loop_change.keep"
+      ],
+      "description": "keep the candidate; needs every keep claim to hold for the current candidate revision and authority to keep a loop's change",
+      "effect": "write",
+      "id": "action:change.keep",
+      "kind": "action",
+      "name": "change.keep",
+      "predicate": {
+        "claim": {
+          "id": "change.supported"
+        }
+      }
+    },
+    {
+      "description": "hand a candidate that leaves the surface the loop may change to a person as a proposal, applying nothing",
+      "effect": "none",
+      "id": "action:change.propose",
+      "kind": "action",
+      "name": "change.propose",
+      "predicate": {
+        "claim": {
+          "id": "change.within_surface",
+          "is": "false"
+        }
+      }
+    },
+    {
+      "description": "discard the candidate, leaving the surface as it was; needs every keep claim decided and one of them false, so an unknown claim never rejects",
+      "effect": "none",
+      "id": "action:change.reject",
+      "kind": "action",
+      "name": "change.reject",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "change.supported",
+              "is": "false"
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "change.within_surface",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "content.clean",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "experiment.valid",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "heldout.not_regressed",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "result.reproducible",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "tuning.improved",
+                "is": "unknown"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "capabilities": [
+        "eval_design.review"
+      ],
+      "description": "review the evaluation design, under authority",
+      "effect": "none",
+      "id": "action:design.review",
+      "kind": "action",
+      "name": "design.review"
+    },
+    {
+      "description": "a review of the evaluation design; its result is passed or failed",
+      "id": "evidence:design_review",
+      "kind": "evidence",
+      "name": "design_review"
+    },
+    {
+      "description": "a check of the candidate, in order, against the surface the loop may change, for expected answers inside the candidate and for new forbidden content in answers; its result is outside, leaked or clean",
+      "id": "evidence:guard_check",
+      "kind": "evidence",
+      "name": "guard_check"
+    },
+    {
+      "description": "a run of the candidate against the baseline on the held-out split; its result is held or regressed",
+      "id": "evidence:heldout_comparison",
+      "kind": "evidence",
+      "name": "heldout_comparison"
+    },
+    {
+      "description": "a first and a second run of the candidate against the baseline on the tuning split; its result is reproduced (both better), not_reproduced (the first better, the second not) or not_better (the first not better)",
+      "id": "evidence:tuning_comparison",
+      "kind": "evidence",
+      "name": "tuning_comparison"
+    },
+    {
+      "description": "every keep claim holds for the current candidate revision: the design is valid, the change is within the surface and clean, it improved on the tuning split reproducibly, and the held-out split did not regress",
+      "id": "claim:change.supported",
+      "kind": "claim",
+      "name": "change.supported",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "change.within_surface"
+            }
+          },
+          {
+            "claim": {
+              "id": "content.clean"
+            }
+          },
+          {
+            "claim": {
+              "id": "experiment.valid"
+            }
+          },
+          {
+            "claim": {
+              "id": "heldout.not_regressed"
+            }
+          },
+          {
+            "claim": {
+              "id": "result.reproducible"
+            }
+          },
+          {
+            "claim": {
+              "id": "tuning.improved"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "an independent guard check of the current candidate revision did not find it outside the surface the loop may change",
+      "id": "claim:change.within_surface",
+      "kind": "claim",
+      "name": "change.within_surface",
+      "predicate": {
+        "not": {
+          "evidence": {
+            "kind": "guard_check",
+            "result": "outside"
+          }
+        }
+      }
+    },
+    {
+      "description": "an independent guard check of the current candidate revision found it inside the surface, with no expected answers inside it and no new forbidden content in answers",
+      "id": "claim:content.clean",
+      "kind": "claim",
+      "name": "content.clean",
+      "predicate": {
+        "evidence": {
+          "kind": "guard_check",
+          "result": "clean"
+        }
+      }
+    },
+    {
+      "description": "the current evaluation design passed a review by a producer the case lists as another agent run than the loop's",
+      "id": "claim:experiment.valid",
+      "kind": "claim",
+      "name": "experiment.valid",
+      "predicate": {
+        "evidence": {
+          "kind": "design_review",
+          "result": "passed"
+        }
+      }
+    },
+    {
+      "description": "an independent run of the current candidate revision on the held-out split did not regress against the baseline",
+      "id": "claim:heldout.not_regressed",
+      "kind": "claim",
+      "name": "heldout.not_regressed",
+      "predicate": {
+        "evidence": {
+          "kind": "heldout_comparison",
+          "result": "held"
+        }
+      }
+    },
+    {
+      "description": "an independent second run of the current candidate revision on the tuning split reproduced the first run's improvement",
+      "id": "claim:result.reproducible",
+      "kind": "claim",
+      "name": "result.reproducible",
+      "predicate": {
+        "evidence": {
+          "kind": "tuning_comparison",
+          "result": "reproduced"
+        }
+      }
+    },
+    {
+      "description": "an independent first run of the current candidate revision on the tuning split was better than the baseline",
+      "id": "claim:tuning.improved",
+      "kind": "claim",
+      "name": "tuning.improved",
+      "predicate": {
+        "not": {
+          "evidence": {
+            "kind": "tuning_comparison",
+            "result": "not_better"
+          }
+        }
+      }
+    },
+    {
+      "description": "the case closed on an explicit decision that the evaluation settles nothing",
+      "id": "outcome:inconclusive",
+      "kind": "outcome",
+      "name": "inconclusive"
+    },
+    {
+      "description": "the case closed with the candidate kept; needs every keep claim to hold",
+      "id": "outcome:kept",
+      "kind": "outcome",
+      "name": "kept",
+      "predicate": {
+        "claim": {
+          "id": "change.supported"
+        }
+      }
+    },
+    {
+      "description": "the case closed with the candidate proposed to a person, because it leaves the surface the loop may change",
+      "id": "outcome:proposed",
+      "kind": "outcome",
+      "name": "proposed",
+      "predicate": {
+        "claim": {
+          "id": "change.within_surface",
+          "is": "false"
+        }
+      }
+    },
+    {
+      "description": "the case closed with the candidate rejected; needs it within the surface, every keep claim decided and one of them false. Evidence that is missing, about another candidate revision or not independent rejects nothing: it leaves its claim unknown, not false",
+      "id": "outcome:rejected",
+      "kind": "outcome",
+      "name": "rejected",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "change.supported",
+              "is": "false"
+            }
+          },
+          {
+            "claim": {
+              "id": "change.within_surface"
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "content.clean",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "experiment.valid",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "heldout.not_regressed",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "result.reproducible",
+                "is": "unknown"
+              }
+            }
+          },
+          {
+            "not": {
+              "claim": {
+                "id": "tuning.improved",
+                "is": "unknown"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "protocol": {
+    "description": "Decide one change an automated loop made to an agent's text or configuration (guidance, a system prompt, tool caps) against an evaluation set: keep it only on evidence about that exact candidate revision, from a producer the case lists as another agent run than the one that wrote it, that the evaluation design passed review, the change stays inside the surface the loop may change and carries no leaked or forbidden content, it improved on the tuning split and the improvement reproduced, and the held-out split did not regress; reject it when every one of those is decided and one is false; propose it to a person when it leaves the surface; or close the case inconclusive on an explicit decision. The candidate's revision hashes its content together with its basis (baseline, question set, data revision and design), so a moved basis is a new candidate revision and evidence about the old one no longer counts. Missing, stale or non-independent evidence leaves a claim unknown, and unknown neither keeps nor rejects.",
+    "id": "eval.gated_change",
+    "revision": 1,
+    "source": "protocols/eval-gated-change/1.yaml"
+  }
+}
