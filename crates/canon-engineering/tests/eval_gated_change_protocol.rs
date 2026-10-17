@@ -99,7 +99,7 @@ const REUSED: [(&str, &str); 7] = [
 ];
 
 /// Every fixture of this story, by id.
-const FIXTURES: [&str; 8] = [
+const FIXTURES: [&str; 15] = [
     "kept",
     "not-independent",
     "basis-moved",
@@ -108,6 +108,13 @@ const FIXTURES: [&str; 8] = [
     "rejected-not-better",
     "proposed",
     "inconclusive",
+    "rejected-not-reproduced",
+    "unknown-design",
+    "unknown-tuning",
+    "unknown-reproducible",
+    "unknown-heldout",
+    "unknown-surface",
+    "unknown-clean",
 ];
 
 /// The case revision, the artifact revisions and the independence every fixture starts from.
@@ -579,7 +586,7 @@ fn eval_gated_change_outcomes_are_earned() {
             );
         }
     }
-    assert_eq!(states, 14, "13. every state of every fixture is checked");
+    assert_eq!(states, 23, "13. every state of every fixture is checked");
 }
 
 #[test]

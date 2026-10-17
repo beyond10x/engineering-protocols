@@ -1,0 +1,54 @@
+format: els-fixture/1
+id: unknown-heldout
+protocol: protocols/eval-gated-change/1.yaml
+at: "2026-10-17T12:00:00Z"
+
+# The design passed, the candidate leaked and the improvement reproduced, with `loop_change.keep`
+# granted, but no run on the held-out split: `heldout.not_regressed` is unknown, so nothing is
+# rejected.
+case:
+  format: canon-case/1
+  id: EGC-110
+  protocol: eval.gated_change
+  revision: c1
+  independence:
+    run-b: [different_agent_run]
+  artifacts:
+    eval_design: {revision: h1}
+    candidate: {revision: h1}
+
+states:
+  - id: no-heldout
+    add_authority:
+      - {capability: loop_change.keep, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-17T10:00:00Z"
+        record: {format: canon-evidence/1, id: design-review-h1-passed, kind: design_review,
+                 result: passed, subject: eval_design, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:10:00Z"
+        record: {format: canon-evidence/1, id: guard-check-h1-leaked, kind: guard_check,
+                 result: leaked, subject: candidate, subject_revision: h1, producer: run-b}
+      - observed_at: "2026-10-17T10:20:00Z"
+        record: {format: canon-evidence/1, id: tuning-comparison-h1-reproduced, kind: tuning_comparison,
+                 result: reproduced, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        experiment.valid: true
+        change.within_surface: true
+        content.clean: false
+        tuning.improved: true
+        result.reproducible: true
+        heldout.not_regressed: unknown
+        change.supported: false
+      actions:
+        design.review: approval-required
+        candidate.evaluate: admissible
+        change.keep: blocked
+        change.reject: blocked
+        change.propose: blocked
+        change.apply_outside_surface: blocked
+      outcomes:
+        kept: blocked
+        rejected: blocked
+        proposed: blocked
+        inconclusive: blocked
