@@ -6,6 +6,48 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-26
+
+### Breaking
+
+- `vocabulary::Marking` has two new variants, `SelfImprovement` (`self.improvement`) and
+  `LoopImprovement` (`loop.improvement`); an exhaustive `match` on it no longer compiles.
+- ESS 0.69.2 regenerates the provider contract: `assertion_providers::contract::Status` variants
+  are `Known` and `Unavailable` instead of `V0` and `V1`. The wire values (`known`,
+  `unavailable`) are unchanged.
+
+### Added
+
+- Three built-in protocols moved from takt byte for byte (Atlas ADR 0094, takt tag 0.12.0):
+  `story.delivery/1` (`protocols/story-delivery/1.yaml`), `self.improvement/1` and
+  `loop.improvement/1`. A runtime reads them through `registry::get` instead of carrying a copy;
+  takt's `loop-improvement/metrics.yaml` stays in takt. Fixtures under `fixtures/story-delivery/`
+  (7), `fixtures/self-improvement/` (14) and `fixtures/loop-improvement/` (7) reach every outcome
+  and kill every rule mutant two adversary passes tried.
+- The vocabulary holds 60 new terms (171 in all): 20 marked `software.change`, 25
+  `self.improvement`, 15 `loop.improvement`. The meanings of `baseline`, `candidate` and
+  `declined` are widened to cover the new protocols.
+- Tests that hold every built-in to Canon's `check` under `STATE_BOUND`, to vocabulary coverage
+  for every built-in but `support.triage/1`, and the takt protocols to takt's bytes.
+
+### Changed
+
+- The assertion contracts in `ess/` and `ess/providers/` require ESS 0.69.2 and are regenerated
+  by it; CI installs ESS 0.69.2. The generated `Cargo.toml` files require `serde` and
+  `serde_json` by caret instead of exact version; `Cargo.lock` is unchanged.
+
+### Limits
+
+- `self.improvement/1` (5,971,968 states), `ml.experiment/1` and `software.change/1` are over
+  Canon 0.6.0's state bound of 65,536 and are listed in the check test's `OVER_BOUND`
+  (`story:builtin-state-bound`).
+- Four takt terms break the vocabulary's spelling rule and are not declared: `promoted`,
+  `loop.change.deliver`, `loop.definition.check`, `loop.finding.file`
+  (`story:vocabulary-unspellable-terms`).
+- Six write actions of the takt protocols name no capability: `story.delivery/1` `tests.write`,
+  `implementation.edit`, `pr.open`; `self.improvement/1` `finding.file`; `loop.improvement/1`
+  `loop.change.deliver`, `loop.finding.file` (`story:takt-protocol-write-capabilities`).
+
 ## [0.9.0] - 2026-10-17
 
 ### Added
