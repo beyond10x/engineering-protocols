@@ -1,0 +1,242 @@
+format: els-fixture/1
+id: accepted
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# One improvement turn on a candidate that touches no judge surface. run-a delivered candidate h1;
+# the case lists run-b as independent of it on `different_agent_run`. The finding is filed and
+# reproduced on baseline b1; run-b sees its predicate fail on h1, so the merge waits for
+# `repository.merge`; merged, the scorecard is compared and shows no regression, the promotion
+# waits for `takt.promote`, and once the installed binary is built from h1 the turn is accepted.
+case:
+  format: canon-case/1
+  id: SI-101
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        finding.cited: unknown
+        scenario.reproduced_before: unknown
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: open
+        verification.required: open
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: blocked
+        scenario.verify: blocked
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked
+
+  - id: filed
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: unknown
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: open
+        verification.required: open
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: blocked
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none
+
+  - id: reproduced
+    add_evidence:
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: reproduced, subject: baseline, subject_revision: b1, producer: run-a}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: discharged
+        verification.required: open
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none
+
+  - id: verified
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-b}
+    expect:
+      claims: &verified
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations: &regression-open
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: approval-required
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none
+
+  - id: merge-granted
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence: []
+    expect:
+      claims: *verified
+      obligations: *regression-open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: admissible
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none
+
+  - id: merged
+    add_evidence:
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: merge-h1, kind: merge_observation,
+                 result: merged, subject: candidate, subject_revision: h1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: true
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations: *regression-open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: admissible
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: admissible
+        binary.promote: blocked
+      outcomes: *none
+
+  - id: no-regression
+    add_evidence:
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: scorecard-h1, kind: scorecard_result,
+                 result: no_regression, subject: candidate, subject_revision: h1}
+    expect:
+      claims: &scored
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: true
+        scorecard.no_regression: true
+        promoted: unknown
+      obligations: &all-discharged
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: discharged
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: admissible
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: admissible
+        binary.promote: approval-required
+      outcomes: *none
+
+  - id: promote-granted
+    add_authority:
+      - {capability: takt.promote, decision: granted}
+    add_evidence: []
+    expect:
+      claims: *scored
+      obligations: *all-discharged
+      actions: &promotable
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: admissible
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: admissible
+        binary.promote: admissible
+      outcomes: *none
+
+  - id: promoted
+    add_evidence:
+      - observed_at: "2026-10-26T10:30:00Z"
+        record: {format: canon-evidence/1, id: promotion-p1, kind: promotion_record,
+                 result: promoted, subject: promotion, subject_revision: p1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: true
+        scorecard.no_regression: true
+        promoted: true
+      obligations: *all-discharged
+      actions: *promotable
+      outcomes:
+        accepted: legitimate
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked

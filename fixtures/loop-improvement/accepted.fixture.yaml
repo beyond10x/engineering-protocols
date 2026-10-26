@@ -1,0 +1,148 @@
+format: els-fixture/1
+id: accepted
+protocol: protocols/loop-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# One loop turn. run-a delivered loop candidate lc1; the case lists run-b as independent of it on
+# `different_agent_run`. The loop scorecard shows a metric below its target on baseline lb1, so a
+# finding may be filed and a candidate delivered; the candidate leaves every metric definition
+# unchanged, so it may be merged, which waits for `repository.merge.judge_surface`; merged, the
+# metric is compared again, and run-b's comparison shows it improved: the turn is accepted.
+case:
+  format: canon-case/1
+  id: LI-101
+  protocol: loop.improvement
+  revision: c1
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    loop_baseline: {revision: lb1}
+    loop_candidate: {revision: lc1}
+    loop_finding: {revision: lf1}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        loop.metric_below_target: unknown
+        loop.definition_honest: unknown
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations: &all-open
+        honesty.required: open
+        improvement.required: open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: blocked
+        loop.change.deliver: blocked
+        loop.definition.check: admissible
+        loop.merge: blocked
+        loop.compare: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        abandoned: blocked
+
+  - id: below-target
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: measurement-lb1, kind: loop_measurement,
+                 result: below_target, subject: loop_baseline, subject_revision: lb1}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: unknown
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations: *all-open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: blocked
+        loop.compare: blocked
+      outcomes: *none
+
+  - id: honest
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: definitions-lc1, kind: definition_check,
+                 result: unchanged, subject: loop_candidate, subject_revision: lc1}
+    expect:
+      claims: &honest
+        loop.metric_below_target: true
+        loop.definition_honest: true
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations: &improvement-open
+        honesty.required: discharged
+        improvement.required: open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: approval-required
+        loop.compare: blocked
+      outcomes: *none
+
+  - id: merge-granted
+    add_authority:
+      - {capability: repository.merge.judge_surface, decision: granted}
+    add_evidence: []
+    expect:
+      claims: *honest
+      obligations: *improvement-open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: admissible
+        loop.compare: blocked
+      outcomes: *none
+
+  - id: merged
+    add_evidence:
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: merge-lc1, kind: merge_observation,
+                 result: merged, subject: loop_candidate, subject_revision: lc1}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: true
+        loop.change_merged: true
+        loop.metric_improved: unknown
+      obligations: *improvement-open
+      actions: &merged
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: admissible
+        loop.compare: admissible
+      outcomes: *none
+
+  - id: improved
+    add_evidence:
+      - observed_at: "2026-10-26T11:00:00Z"
+        record: {format: canon-evidence/1, id: comparison-lc1, kind: loop_comparison,
+                 result: improved, subject: loop_candidate, subject_revision: lc1,
+                 producer: run-b}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: true
+        loop.change_merged: true
+        loop.metric_improved: true
+      obligations:
+        honesty.required: discharged
+        improvement.required: discharged
+      actions: *merged
+      outcomes:
+        accepted: legitimate
+        declined: blocked
+        abandoned: blocked

@@ -1,0 +1,58 @@
+format: els-fixture/1
+id: unreproducible
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# The finding is filed, but its predicate does not hold on baseline b1: `scenario.reproduced_before`
+# is false, no candidate is verified against it, and the turn is unreproducible.
+case:
+  format: canon-case/1
+  id: SI-106
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: not-reproduced
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: not_reproduced, subject: baseline, subject_revision: b1,
+                 producer: run-a}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: false
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: open
+        verification.required: open
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: blocked
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        unreproducible: legitimate
+        abandoned: blocked

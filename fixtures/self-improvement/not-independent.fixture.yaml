@@ -1,0 +1,91 @@
+format: els-fixture/1
+id: not-independent
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# run-a delivered candidate h1 and reports the finding's predicate failing on it. Canon excludes
+# that record as `not_independent`: `scenario.passes_after` stays unknown, not false, the
+# verification stays open and no merge is admissible. run-b's same observation verifies it; run-a's
+# record is still excluded.
+case:
+  format: canon-case/1
+  id: SI-103
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: own-verification
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: reproduced, subject: baseline, subject_revision: b1, producer: run-a}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1-run-a, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-a}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: discharged
+        verification.required: open
+        regression.required: open
+      actions: &unverified
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked
+
+  - id: independent-verification
+    add_evidence:
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1-run-b, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-b}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: approval-required
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none
