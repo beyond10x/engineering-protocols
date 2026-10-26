@@ -4,8 +4,9 @@ protocol: protocols/self-improvement/1.yaml
 at: "2026-10-26T12:00:00Z"
 
 # Candidate h1 is verified by run-b and merged, its scorecard shows a regression, and the
-# installed binary is built from h1 all the same: an operator installed it by hand, outside
-# `binary.promote`, and the promotion record attests what is installed. The finding is gone and
+# installed binary is built from h1 all the same. The promotion record is built for this test:
+# Canon decides on a record whoever produced it, and takt 0.12.0 writes one only from
+# `binary.promote`, which waits for no regression. The finding is gone and
 # the candidate is promoted, but with a regression the turn is not accepted.
 case:
   format: canon-case/1

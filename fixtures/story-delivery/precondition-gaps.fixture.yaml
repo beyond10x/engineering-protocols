@@ -11,12 +11,13 @@ at: "2026-10-26T12:00:00Z"
 #   request may not be opened, and `tests.required` stays open although `gate.required` is
 #   discharged: a green gate is not passing tests.
 # - ungated (h2): handed over, tested and ahead, but the gate has not run.
-# - not-handed-over (h3): tested, gated and ahead, but not handed over. The change record comes
-#   from outside the protocol's actions: a job that diffs every pushed revision against the base
-#   branch writes it whether or not `change.read` was taken.
-# - ci-without-pull-request (h4): continuous integration runs on every push, so a green result
-#   for h4 exists although no pull request is open for it. With `repository.merge` granted the
-#   merge still waits for the pull request.
+# - not-handed-over (h3): tested, gated and ahead, but not handed over. The change record is
+#   built for this test: Canon decides on a record whoever produced it, but no action of the
+#   protocol produces one before a handover, and takt 0.12.0 writes it only from `change.read`.
+# - ci-without-pull-request (h4): a green continuous-integration result for h4 although no pull
+#   request is open for it, also built for this test (takt 0.12.0's `ci.read` writes nothing
+#   without a pull request). With `repository.merge` granted the merge still waits for the pull
+#   request.
 case:
   format: canon-case/1
   id: SD-107

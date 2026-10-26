@@ -449,9 +449,10 @@ fn adversary_loop_improvement_fixtures_kill_every_rule_mutant() {
     assert_killed("loop-improvement", LOOP_IMPROVEMENT);
 }
 
-/// `AGENTS.md` § Serves, O1: "Every write action a protocol declares names the capability that
-/// authorises it, except `software.change/1`'s `tests.write` and `implementation.edit`". Walked
-/// over every built-in the registry lists.
+/// `AGENTS.md` § Serves, O1: every write action a protocol declares names the capability that
+/// authorises it, except `software.change/1`'s `tests.write` and `implementation.edit` and the
+/// six write actions of the protocols moved from takt that AGENTS.md lists. Walked over every
+/// built-in the registry lists; `EXCEPTED` must match that AGENTS.md list.
 ///
 /// The three protocols moved from takt are byte-identical to takt 0.12.0, so their six write
 /// actions without a capability are an open defect, asserted here in its current state in both

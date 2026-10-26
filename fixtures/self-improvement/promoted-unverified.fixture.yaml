@@ -4,8 +4,9 @@ protocol: protocols/self-improvement/1.yaml
 at: "2026-10-26T12:00:00Z"
 
 # Only run-a, which delivered candidate h1, saw the finding's predicate fail on it; Canon excludes
-# that record as `not_independent`. h1 was merged anyway, by hand outside `candidate.merge`, its
-# scorecard shows no regression and the installed binary is built from it. Without an
+# that record as `not_independent`. h1 was merged anyway, its scorecard shows no regression and
+# the installed binary is built from it; the merge record is built for this test, since
+# `candidate.merge` waits for the independent verification. Without an
 # independent verification `scenario.passes_after` is unknown and the turn is not accepted.
 case:
   format: canon-case/1

@@ -8,12 +8,12 @@ at: "2026-10-26T12:00:00Z"
 # `different_agent_run`.
 #
 # - redefined-but-merged (lc1): the definition check found a metric redefined without its previous
-#   figures, and the owner merged lc1 by hand outside `loop.merge`, which would have waited for an
-#   honest definition. run-b's comparison shows the metric improved, but an improvement measured
+#   figures, and lc1 is merged all the same; the merge record is built for this test, since
+#   `loop.merge` waits for an honest definition. run-b's comparison shows the metric improved, but an improvement measured
 #   on a silently redefined metric is not accepted.
 # - improved-before-merge (lc2): the candidate leaves every definition unchanged, and run-b
-#   compared the metric over three turns run on a trial branch carrying lc2, outside
-#   `loop.compare`, before anyone merged it. The records about lc1 are about an earlier revision
+#   compared the metric before anyone merged lc2; the comparison is built for this test, since
+#   `loop.compare` waits for the merge. The records about lc1 are about an earlier revision
 #   and count for nothing. An unmerged candidate is not accepted, however well it measured.
 case:
   format: canon-case/1
