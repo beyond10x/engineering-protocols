@@ -34,9 +34,10 @@ const CLAIMS: [&str; 4] = [
 const OUTCOMES: [&str; 3] = ["abandoned", "accepted", "declined"];
 
 /// Every fixture of this protocol, sorted.
-const FIXTURES: [&str; 6] = [
+const FIXTURES: [&str; 7] = [
     "abandoned",
     "accepted",
+    "accepted-gaps",
     "at-target",
     "declined",
     "definition-moved",
@@ -81,7 +82,7 @@ fn loop_improvement_outcomes_are_earned() {
     // 3. The fixtures reach every outcome.
     let (legitimate, states) = reached(&loaded, &compiled);
     assert_eq!(legitimate.into_iter().collect::<Vec<_>>(), OUTCOMES);
-    assert_eq!(states, 14, "every state of every fixture is evaluated");
+    assert_eq!(states, 16, "every state of every fixture is evaluated");
 
     // 4. The comparison by run-a, which delivered the candidate, is excluded as not independent:
     //    `loop.metric_improved` is unknown, not false, and the turn is neither accepted nor

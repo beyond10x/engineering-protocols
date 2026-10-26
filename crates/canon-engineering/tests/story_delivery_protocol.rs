@@ -47,13 +47,14 @@ const ACTIONS: [&str; 10] = [
 const OUTCOMES: [&str; 2] = ["abandoned", "accepted"];
 
 /// Every fixture of this protocol, sorted.
-const FIXTURES: [&str; 6] = [
+const FIXTURES: [&str; 7] = [
     "abandoned",
     "accepted",
     "checks-failed",
     "merge-denied",
     "new-commit",
     "nothing-to-publish",
+    "precondition-gaps",
 ];
 
 #[test]
@@ -92,7 +93,7 @@ fn story_delivery_outcomes_are_earned() {
     // 3. The fixtures reach every outcome.
     let (legitimate, states) = reached(&loaded, &compiled);
     assert_eq!(legitimate.into_iter().collect::<Vec<_>>(), OUTCOMES);
-    assert_eq!(states, 17, "every state of every fixture is evaluated");
+    assert_eq!(states, 21, "every state of every fixture is evaluated");
 
     // 4. `accepted` is earned only once the pull request for the current revision is merged, and
     //    the merge is admissible only with authority granted.

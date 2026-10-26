@@ -1,0 +1,68 @@
+format: els-fixture/1
+id: scored-unmerged
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Candidate h1 is verified by run-b and `takt.promote` is granted, and a scorecard with no
+# regression exists for h1 although h1 is not merged: the scorecard comes from outside the
+# protocol's actions, a nightly job that runs the corpus at every candidate head, merged or not.
+# A clean scorecard is not a merge: the promotion waits for `fix.merged`.
+case:
+  format: canon-case/1
+  id: SI-112
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: scored-before-merge
+    add_authority:
+      - {capability: takt.promote, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: reproduced, subject: baseline, subject_revision: b1, producer: run-a}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-b}
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: nightly-scorecard-h1, kind: scorecard_result,
+                 result: no_regression, subject: candidate, subject_revision: h1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: unknown
+        scorecard.no_regression: true
+        promoted: unknown
+      obligations:
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: discharged
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: approval-required
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked

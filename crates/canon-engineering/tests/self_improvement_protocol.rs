@@ -53,16 +53,20 @@ const CAPABILITIES: [(&str, &str); 3] = [
 ];
 
 /// Every fixture of this protocol, sorted.
-const FIXTURES: [&str; 10] = [
+const FIXTURES: [&str; 14] = [
     "abandoned",
     "accepted",
     "candidate-moved",
     "declined",
     "judge-surface",
+    "judge-surface-unverified",
     "malformed-finding",
     "not-independent",
+    "promoted-unverified",
+    "promoted-with-regression",
     "regression",
     "scenario-error",
+    "scored-unmerged",
     "unreproducible",
 ];
 
@@ -100,7 +104,7 @@ fn self_improvement_outcomes_are_earned() {
     // 3. The fixtures reach every outcome, and no state has two legitimate at once.
     let (legitimate, states) = reached(&loaded, &compiled);
     assert_eq!(legitimate.into_iter().collect::<Vec<_>>(), OUTCOMES);
-    assert_eq!(states, 24, "every state of every fixture is evaluated");
+    assert_eq!(states, 28, "every state of every fixture is evaluated");
     for loaded in &loaded {
         for state in loaded.states() {
             let found = outcomes(&decide(loaded, &compiled, state));
