@@ -1,0 +1,320 @@
+{
+  "edges": [
+    {
+      "from": "action:loop.compare",
+      "kind": "produces",
+      "to": "evidence:loop_comparison"
+    },
+    {
+      "from": "action:loop.definition.check",
+      "kind": "produces",
+      "to": "evidence:definition_check"
+    },
+    {
+      "from": "action:loop.measure",
+      "kind": "produces",
+      "to": "evidence:loop_measurement"
+    },
+    {
+      "from": "action:loop.merge",
+      "kind": "produces",
+      "to": "evidence:merge_observation"
+    },
+    {
+      "from": "evidence:merge_observation",
+      "kind": "establishes",
+      "qualifier": "merged about loop_candidate",
+      "to": "claim:loop.change_merged"
+    },
+    {
+      "from": "evidence:definition_check",
+      "kind": "establishes",
+      "qualifier": "dual_reported about loop_candidate",
+      "to": "claim:loop.definition_honest"
+    },
+    {
+      "from": "evidence:definition_check",
+      "kind": "establishes",
+      "qualifier": "unchanged about loop_candidate",
+      "to": "claim:loop.definition_honest"
+    },
+    {
+      "from": "evidence:loop_measurement",
+      "kind": "establishes",
+      "qualifier": "below_target about loop_baseline",
+      "to": "claim:loop.metric_below_target"
+    },
+    {
+      "from": "evidence:loop_comparison",
+      "kind": "establishes",
+      "qualifier": "improved about loop_candidate, independent on different_agent_run",
+      "to": "claim:loop.metric_improved"
+    },
+    {
+      "from": "claim:loop.change_merged",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:loop.definition_honest",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:loop.metric_improved",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:loop.definition_honest",
+      "kind": "requires",
+      "to": "obligation:honesty.required"
+    },
+    {
+      "from": "claim:loop.metric_improved",
+      "kind": "requires",
+      "to": "obligation:improvement.required"
+    },
+    {
+      "from": "claim:loop.metric_below_target",
+      "kind": "gates",
+      "to": "action:loop.change.deliver"
+    },
+    {
+      "from": "claim:loop.change_merged",
+      "kind": "gates",
+      "to": "action:loop.compare"
+    },
+    {
+      "from": "claim:loop.metric_below_target",
+      "kind": "gates",
+      "to": "action:loop.finding.file"
+    },
+    {
+      "from": "claim:loop.definition_honest",
+      "kind": "gates",
+      "to": "action:loop.merge"
+    }
+  ],
+  "format": "b10x-protocol-graph/1",
+  "nodes": [
+    {
+      "description": "deliver a candidate change to the loop definition: the corpus, a metric definition, the review panel, the intake rules, a protocol or an agent profile",
+      "effect": "write",
+      "id": "action:loop.change.deliver",
+      "kind": "action",
+      "name": "loop.change.deliver",
+      "predicate": {
+        "claim": {
+          "id": "loop.metric_below_target"
+        }
+      }
+    },
+    {
+      "description": "once at least three self.improvement turns ran under the merged candidate, compare the metric with the baseline's",
+      "effect": "read",
+      "id": "action:loop.compare",
+      "kind": "action",
+      "name": "loop.compare",
+      "predicate": {
+        "claim": {
+          "id": "loop.change_merged"
+        }
+      }
+    },
+    {
+      "description": "compare the candidate's metric definitions with the baseline's",
+      "effect": "read",
+      "id": "action:loop.definition.check",
+      "kind": "action",
+      "name": "loop.definition.check"
+    },
+    {
+      "description": "file the lowest metric as a finding against the loop",
+      "effect": "write",
+      "id": "action:loop.finding.file",
+      "kind": "action",
+      "name": "loop.finding.file",
+      "predicate": {
+        "claim": {
+          "id": "loop.metric_below_target"
+        }
+      }
+    },
+    {
+      "description": "compute the loop scorecard over the recorded self.improvement cases",
+      "effect": "read",
+      "id": "action:loop.measure",
+      "kind": "action",
+      "name": "loop.measure"
+    },
+    {
+      "capabilities": [
+        "repository.merge.judge_surface"
+      ],
+      "description": "merge the loop candidate; the owner holds this capability, or a role the owner delegated it to by a revocable record, and a revoked delegation grants nothing (story:judge-guard enforces it)",
+      "effect": "write",
+      "id": "action:loop.merge",
+      "kind": "action",
+      "name": "loop.merge",
+      "predicate": {
+        "claim": {
+          "id": "loop.definition_honest"
+        }
+      }
+    },
+    {
+      "description": "the candidate's diff against the baseline's metric definitions; its result is unchanged, dual_reported (a changed definition whose previous figures are printed beside the new ones) or redefined (a changed definition without them)",
+      "id": "evidence:definition_check",
+      "kind": "evidence",
+      "name": "definition_check"
+    },
+    {
+      "description": "the metric over at least three turns under the candidate against the same metric under the baseline; its result is improved or not_improved",
+      "id": "evidence:loop_comparison",
+      "kind": "evidence",
+      "name": "loop_comparison"
+    },
+    {
+      "description": "the loop scorecard over at least three recorded self.improvement cases at a loop definition revision; figures no validator can observe (escaped defects) enter as human-sourced counts, labelled so; its result is below_target or at_target",
+      "id": "evidence:loop_measurement",
+      "kind": "evidence",
+      "name": "loop_measurement"
+    },
+    {
+      "description": "the loop candidate merged into the mainline; its result is merged",
+      "id": "evidence:merge_observation",
+      "kind": "evidence",
+      "name": "merge_observation"
+    },
+    {
+      "description": "the current loop candidate is merged into the mainline",
+      "id": "claim:loop.change_merged",
+      "kind": "claim",
+      "name": "loop.change_merged",
+      "predicate": {
+        "evidence": {
+          "kind": "merge_observation",
+          "result": "merged"
+        }
+      }
+    },
+    {
+      "description": "the current loop candidate leaves every metric definition unchanged, or reports the previous definition's figures beside the new ones",
+      "id": "claim:loop.definition_honest",
+      "kind": "claim",
+      "name": "loop.definition_honest",
+      "predicate": {
+        "any": [
+          {
+            "evidence": {
+              "kind": "definition_check",
+              "result": "dual_reported"
+            }
+          },
+          {
+            "evidence": {
+              "kind": "definition_check",
+              "result": "unchanged"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "a loop metric is below its target on the baseline loop definition",
+      "id": "claim:loop.metric_below_target",
+      "kind": "claim",
+      "name": "loop.metric_below_target",
+      "predicate": {
+        "evidence": {
+          "kind": "loop_measurement",
+          "result": "below_target"
+        }
+      }
+    },
+    {
+      "description": "the metric improved under the current loop candidate, observed by another agent run than the one that delivered it",
+      "id": "claim:loop.metric_improved",
+      "kind": "claim",
+      "name": "loop.metric_improved",
+      "predicate": {
+        "evidence": {
+          "kind": "loop_comparison",
+          "result": "improved"
+        }
+      }
+    },
+    {
+      "description": "the loop turn closed because it was explicitly abandoned",
+      "id": "outcome:abandoned",
+      "kind": "outcome",
+      "name": "abandoned"
+    },
+    {
+      "description": "the loop turn closed with an honest change merged and its metric improved",
+      "id": "outcome:accepted",
+      "kind": "outcome",
+      "name": "accepted",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "loop.change_merged"
+            }
+          },
+          {
+            "claim": {
+              "id": "loop.definition_honest"
+            }
+          },
+          {
+            "claim": {
+              "id": "loop.metric_improved"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "the loop turn closed because the metric did not improve; the candidate is reverted by a further loop turn",
+      "id": "outcome:declined",
+      "kind": "outcome",
+      "name": "declined",
+      "predicate": {
+        "evidence": {
+          "kind": "loop_comparison",
+          "result": "not_improved"
+        }
+      }
+    },
+    {
+      "description": "a loop change never redefines a metric silently",
+      "id": "obligation:honesty.required",
+      "kind": "obligation",
+      "name": "honesty.required",
+      "predicate": {
+        "claim": {
+          "id": "loop.definition_honest"
+        }
+      }
+    },
+    {
+      "description": "a loop change counts only when its metric improved",
+      "id": "obligation:improvement.required",
+      "kind": "obligation",
+      "name": "improvement.required",
+      "predicate": {
+        "claim": {
+          "id": "loop.metric_improved"
+        }
+      }
+    }
+  ],
+  "protocol": {
+    "description": "One turn of improving the improvement loop itself: the loop scorecard, computed over at least three recorded self.improvement turns, shows a metric below its target on the promoted loop definition (the scenario corpus, the metric definitions, the review panel, the intake rules, the protocols and the agent profiles); a candidate change to the loop is delivered; the candidate is checked not to redefine a metric without reporting the previous definition beside it; the owner, or a role the owner delegated the grant to on record, merges it; and after at least three further turns under the candidate the metric is compared again. Accepted once the metric improved; declined when it did not. Every change to the loop is a judge-surface change, so its merge needs the owner's grant or that of a role the owner delegated it to by a revocable record; a revoked delegation grants nothing (story:judge-guard enforces it).",
+    "id": "loop.improvement",
+    "revision": 1,
+    "source": "protocols/loop-improvement/1.yaml"
+  }
+}

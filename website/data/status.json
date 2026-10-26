@@ -17,7 +17,7 @@
     },
     {
       "area": "Foundations",
-      "detail": "111 terms, each with its category, marking and meaning, in protocols/vocabulary.yaml.",
+      "detail": "171 terms, each with its category, marking and meaning, in protocols/vocabulary.yaml.",
       "href": "/docs/vocabulary",
       "label": "Engineering vocabulary",
       "status": "shipped"
@@ -50,6 +50,13 @@
     },
     {
       "area": "Protocols",
+      "detail": "Canon protocol/1 data declaring 4 claims, 4 evidence kinds, 6 actions, 2 obligations and 3 outcomes, with every evidence match bound to its artifact.",
+      "href": "/docs/protocols/loop-improvement/1",
+      "label": "loop.improvement/1",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "Canon protocol/1 data declaring 5 claims, 5 evidence kinds and 5 outcomes, with every evidence match bound to its artifact.",
       "href": "/docs/protocols/ml-experiment/1",
       "label": "ml.experiment/1",
@@ -57,9 +64,23 @@
     },
     {
       "area": "Protocols",
+      "detail": "Canon protocol/1 data declaring 6 claims, 5 evidence kinds, 7 actions, 3 obligations and 4 outcomes, with every evidence match bound to its artifact.",
+      "href": "/docs/protocols/self-improvement/1",
+      "label": "self.improvement/1",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "Canon protocol/1 data declaring 9 claims, 9 evidence kinds, 6 actions, 6 obligations and 5 outcomes, with every evidence match bound to its artifact.",
       "href": "/docs/protocols/software-change/1",
       "label": "software.change/1",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
+      "detail": "Canon protocol/1 data declaring 7 claims, 7 evidence kinds, 10 actions, 4 obligations and 2 outcomes, with every evidence match bound to its artifact.",
+      "href": "/docs/protocols/story-delivery/1",
+      "label": "story.delivery/1",
       "status": "shipped"
     },
     {

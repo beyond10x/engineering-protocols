@@ -567,15 +567,21 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 111);
+        assert_eq!(vocabulary.terms().len(), 171);
         assert!(
             page.contains("\n## Independence dimensions\n\nCategory `independence_dimension`.")
         );
         for term in vocabulary.terms() {
             assert!(
-                page.contains(&format!("\n| `{}` |", term.id)),
+                page.contains(&format!("\n| `{}` | `{}` |", term.id, term.marking)),
                 "{}",
                 term.id
+            );
+        }
+        for marking in Marking::ALL {
+            assert!(
+                page.contains(&format!("\n- **`{marking}`**: ")),
+                "the page explains marking `{marking}`"
             );
         }
     }
