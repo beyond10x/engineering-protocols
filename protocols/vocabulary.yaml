@@ -144,7 +144,7 @@ terms:
   - id: declined
     category: outcome_id
     marking: core
-    meaning: the case closed on a decision not to carry out its intent
+    meaning: the case closed without carrying out its intent, on a decision not to or on evidence that its candidate did not achieve it
   - id: rolled_back
     category: outcome_id
     marking: core
@@ -184,11 +184,11 @@ terms:
   - id: baseline
     category: artifact_kind
     marking: core
-    meaning: the reference model or method a candidate is compared with
+    meaning: the reference model, method or revision a candidate is compared with
   - id: candidate
     category: artifact_kind
     marking: core
-    meaning: the model or method under test
+    meaning: the model, method or revision under test
   - id: run_configuration
     category: artifact_kind
     marking: core
@@ -445,3 +445,243 @@ terms:
     category: outcome_id
     marking: core
     meaning: the case closed with its candidate proposed to a person, because it leaves the loop's surface
+  - id: change_record
+    category: evidence_kind
+    marking: software.change
+    meaning: whether merging an implementation revision into the base branch's tip would change that tip's tree outside .engineering/
+  - id: ci_result
+    category: evidence_kind
+    marking: software.change
+    meaning: the result of continuous integration on an implementation revision
+  - id: gate_result
+    category: evidence_kind
+    marking: software.change
+    meaning: the result of the repository's gate against an implementation revision
+  - id: handover
+    category: evidence_kind
+    marking: software.change
+    meaning: the record that the harness chose to hand the change over at an implementation revision, changing no file
+  - id: merge_observation
+    category: evidence_kind
+    marking: software.change
+    meaning: the observation that a revision, or the pull request whose head it is, was merged into the repository's mainline
+  - id: pull_request
+    category: evidence_kind
+    marking: software.change
+    meaning: a pull request whose head is an implementation revision, or that revision with only the commits that record its approval above it
+  - id: change.handed_over
+    category: claim_id
+    marking: software.change
+    meaning: the harness handed the change over at the current implementation revision, saying it is complete
+  - id: change.made
+    category: claim_id
+    marking: software.change
+    meaning: merging the current implementation revision into the base branch's tip would change its tree outside .engineering/
+  - id: ci.green
+    category: claim_id
+    marking: software.change
+    meaning: continuous integration passes for the current implementation revision
+  - id: gate.green
+    category: claim_id
+    marking: software.change
+    meaning: the repository's gate is green for the current implementation revision
+  - id: pr.merged
+    category: claim_id
+    marking: software.change
+    meaning: the pull request for the current implementation revision is merged
+  - id: pr.opened
+    category: claim_id
+    marking: software.change
+    meaning: a pull request is open for the current implementation revision
+  - id: change.handover
+    category: action_id
+    marking: software.change
+    meaning: hand the change over, changing no file, once it is complete and no further edit is needed
+  - id: change.read
+    category: action_id
+    marking: software.change
+    meaning: read whether merging the implementation revision into the base branch's tip would change its tree outside .engineering/
+  - id: ci.read
+    category: action_id
+    marking: software.change
+    meaning: read the continuous integration result for the pull request's head
+  - id: gate.run
+    category: action_id
+    marking: software.change
+    meaning: run the repository's gate against an implementation revision
+  - id: pr.open
+    category: action_id
+    marking: software.change
+    meaning: push the implementation revision and open its pull request through the repository's bot route
+  - id: ci.required
+    category: obligation_id
+    marking: software.change
+    meaning: continuous integration must pass for the current implementation revision
+  - id: gate.required
+    category: obligation_id
+    marking: software.change
+    meaning: the repository's gate must be green for the current implementation revision
+  - id: merge.required
+    category: obligation_id
+    marking: software.change
+    meaning: the pull request for the current implementation revision must be merged
+  - id: finding
+    category: artifact_kind
+    marking: self.improvement
+    meaning: a finding against the agent runtime, filed with a machine-checkable predicate and the record that produced it
+  - id: promotion
+    category: artifact_kind
+    marking: self.improvement
+    meaning: the agent runtime's binary installed for runs, built from a named revision
+  - id: finding_record
+    category: evidence_kind
+    marking: self.improvement
+    meaning: the finding as filed, with a predicate that parses and a source that exists, or malformed
+  - id: promotion_record
+    category: evidence_kind
+    marking: self.improvement
+    meaning: the installed binary's embedded revision compared with the merged candidate revision
+  - id: scenario_result
+    category: evidence_kind
+    marking: self.improvement
+    meaning: the finding's predicate run on its scenario, or on its repository at its seed, with the runtime built from a revision
+  - id: scorecard_result
+    category: evidence_kind
+    marking: self.improvement
+    meaning: every scenario of the corpus run at a candidate revision and compared with the baseline's record for the same scenario
+  - id: finding.cited
+    category: claim_id
+    marking: self.improvement
+    meaning: the finding is filed with a predicate that parses and a source that exists
+  - id: fix.merged
+    category: claim_id
+    marking: self.improvement
+    meaning: the current candidate revision is merged into the mainline
+  - id: scenario.passes_after
+    category: claim_id
+    marking: self.improvement
+    meaning: the finding's predicate fails on the current candidate revision, observed by another agent run than the one that delivered it
+  - id: scenario.reproduced_before
+    category: claim_id
+    marking: self.improvement
+    meaning: the finding's predicate holds on the baseline revision
+  - id: scorecard.no_regression
+    category: claim_id
+    marking: self.improvement
+    meaning: no scenario of the corpus is worse at the current candidate revision than at the baseline
+  - id: binary.promote
+    category: action_id
+    marking: self.improvement
+    meaning: build the merged candidate, embed its revision and install it for runs
+  - id: candidate.merge
+    category: action_id
+    marking: self.improvement
+    meaning: merge a candidate that touches no judge surface
+  - id: candidate.merge_judge_surface
+    category: action_id
+    marking: self.improvement
+    meaning: merge a candidate that touches a judge surface, under the owner's capability or a revocable delegation of it
+  - id: finding.file
+    category: action_id
+    marking: self.improvement
+    meaning: file the finding in the planning store with its predicate and its source
+  - id: scenario.reproduce
+    category: action_id
+    marking: self.improvement
+    meaning: run the finding's predicate with the runtime built from the baseline
+  - id: scenario.verify
+    category: action_id
+    marking: self.improvement
+    meaning: run the finding's predicate with the runtime built from the candidate
+  - id: scorecard.compare
+    category: action_id
+    marking: self.improvement
+    meaning: run the scenario corpus at the merged candidate and compare it with the baseline
+  - id: regression.required
+    category: obligation_id
+    marking: self.improvement
+    meaning: the scorecard must show no regression at the candidate
+  - id: reproduction.required
+    category: obligation_id
+    marking: self.improvement
+    meaning: the finding must be reproduced on the baseline before a candidate counts
+  - id: verification.required
+    category: obligation_id
+    marking: self.improvement
+    meaning: the finding must be verified gone on the candidate by another run
+  - id: unreproducible
+    category: outcome_id
+    marking: self.improvement
+    meaning: the turn closed because the finding's predicate does not hold on the baseline
+  - id: surface
+    category: case_input
+    marking: self.improvement
+    meaning: whether the candidate's change, base to head, touches a judge surface
+  - id: judge
+    category: input_value
+    marking: self.improvement
+    meaning: the candidate's change touches a judge surface
+  - id: non_judge
+    category: input_value
+    marking: self.improvement
+    meaning: the candidate's change touches no judge surface
+  - id: loop_baseline
+    category: artifact_kind
+    marking: loop.improvement
+    meaning: the promoted loop definition a loop metric was measured on
+  - id: loop_candidate
+    category: artifact_kind
+    marking: loop.improvement
+    meaning: a changed loop definition meant to raise a loop metric
+  - id: loop_finding
+    category: artifact_kind
+    marking: loop.improvement
+    meaning: a finding against the improvement loop, naming the metric, its target and the turns it was computed from
+  - id: definition_check
+    category: evidence_kind
+    marking: loop.improvement
+    meaning: a loop candidate's metric definitions compared with the baseline's; unchanged, dual_reported or redefined
+  - id: loop_comparison
+    category: evidence_kind
+    marking: loop.improvement
+    meaning: a loop metric over turns under the candidate compared with the same metric under the baseline
+  - id: loop_measurement
+    category: evidence_kind
+    marking: loop.improvement
+    meaning: the loop scorecard over at least three recorded self-improvement turns at a loop definition revision
+  - id: loop.change_merged
+    category: claim_id
+    marking: loop.improvement
+    meaning: the current loop candidate is merged into the mainline
+  - id: loop.definition_honest
+    category: claim_id
+    marking: loop.improvement
+    meaning: the current loop candidate leaves every metric definition unchanged, or reports the previous definition's figures beside the new ones
+  - id: loop.metric_below_target
+    category: claim_id
+    marking: loop.improvement
+    meaning: a loop metric is below its target on the baseline loop definition
+  - id: loop.metric_improved
+    category: claim_id
+    marking: loop.improvement
+    meaning: the metric improved under the current loop candidate, observed by another agent run than the one that delivered it
+  - id: loop.compare
+    category: action_id
+    marking: loop.improvement
+    meaning: compare the metric with the baseline's once at least three turns ran under the merged candidate
+  - id: loop.measure
+    category: action_id
+    marking: loop.improvement
+    meaning: compute the loop scorecard over the recorded self-improvement turns
+  - id: loop.merge
+    category: action_id
+    marking: loop.improvement
+    meaning: merge the loop candidate under the owner's capability or a revocable delegation of it
+  - id: honesty.required
+    category: obligation_id
+    marking: loop.improvement
+    meaning: a loop change never redefines a metric silently
+  - id: improvement.required
+    category: obligation_id
+    marking: loop.improvement
+    meaning: a loop change counts only when its metric improved

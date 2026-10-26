@@ -133,7 +133,7 @@ fn category_title(category: Category) -> &'static str {
 fn vocabulary_page(vocabulary: &Vocabulary) -> String {
     let terms = vocabulary.terms();
     let mut out = format!(
-        "---\n{HEADER}\ntitle: \"Engineering vocabulary\"\nsidebar_position: 3\ndescription: \"The names the engineering protocols use, each with its category, marking and meaning.\"\ncustom_edit_url: null\n---\n\nThe {} names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.\n\n- **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.\n- **`software.change`**: only makes sense for Git, pull requests or code.\n",
+        "---\n{HEADER}\ntitle: \"Engineering vocabulary\"\nsidebar_position: 3\ndescription: \"The names the engineering protocols use, each with its category, marking and meaning.\"\ncustom_edit_url: null\n---\n\nThe {} names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.\n\n- **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.\n- **`software.change`**: only makes sense for Git, pull requests or code.\n- **`self.improvement`**: only makes sense in an agent runtime's self-improvement turn (`self.improvement/1`).\n- **`loop.improvement`**: only makes sense in a turn that improves the improvement loop itself (`loop.improvement/1`).\n",
         terms.len()
     );
     for category in Category::ALL {
@@ -156,6 +156,8 @@ fn vocabulary_page(vocabulary: &Vocabulary) -> String {
             let marking = match term.marking {
                 Marking::Core => "core",
                 Marking::SoftwareChange => "software.change",
+                Marking::SelfImprovement => "self.improvement",
+                Marking::LoopImprovement => "loop.improvement",
             };
             let _ = writeln!(
                 out,
