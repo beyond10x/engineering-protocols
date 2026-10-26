@@ -1,0 +1,54 @@
+format: els-fixture/1
+id: malformed-finding
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# The finding is filed without a predicate that parses: `finding.cited` is false and its scenario
+# may not be reproduced; filing it again stays admissible.
+case:
+  format: canon-case/1
+  id: SI-109
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: malformed
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record,
+                 result: malformed, subject: finding, subject_revision: f1}
+    expect:
+      claims:
+        finding.cited: false
+        scenario.reproduced_before: unknown
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations:
+        reproduction.required: open
+        verification.required: open
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: blocked
+        scenario.verify: blocked
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked

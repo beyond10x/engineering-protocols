@@ -1,0 +1,95 @@
+format: els-fixture/1
+id: checks-failed
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# The change is handed over at h1 and a merge would change the base branch, but the tests and the
+# gate fail: both claims are false and the pull request may not be opened. A pull request is open
+# for h1 all the same and its continuous integration fails: `ci.green` is false, so the merge is
+# blocked even with authority granted, and nothing is earned.
+case:
+  format: canon-case/1
+  id: SD-103
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: tests-and-gate-fail
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h1, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: false
+        gate.green: false
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations: &all-open
+        tests.required: open
+        gate.required: open
+        ci.required: open
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: &none
+        accepted: blocked
+        abandoned: blocked
+
+  - id: ci-fails
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T09:40:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h1, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: false
+        gate.green: false
+        pr.opened: true
+        ci.green: false
+        pr.merged: unknown
+      obligations: *all-open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: admissible
+        repository.merge: blocked
+      outcomes: *none

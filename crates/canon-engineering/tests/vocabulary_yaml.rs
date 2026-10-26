@@ -399,6 +399,8 @@ fn rows_in_document(text: &str) -> Vec<Row> {
             let marking = match field("marking").as_str() {
                 "core" => Marking::Core,
                 "software.change" => Marking::SoftwareChange,
+                "self.improvement" => Marking::SelfImprovement,
+                "loop.improvement" => Marking::LoopImprovement,
                 other => panic!("unknown marking `{other}`"),
             };
             (field("id"), category, marking, field("meaning"))

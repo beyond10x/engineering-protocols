@@ -1,7 +1,9 @@
 //! The engineering vocabulary: the names the engineering protocols use for their terms.
 //!
-//! The vocabulary is data. Every term `software.change/1` and `incident.response/1` names is
-//! declared once in `protocols/vocabulary.yaml`, with its category and its marking; this module is
+//! The vocabulary is data. Every term a built-in protocol names is declared once in
+//! `protocols/vocabulary.yaml`, with its category and its marking, except `support.triage/1`'s and
+//! the few the spelling rule below refuses (`tests/builtin_vocabulary_coverage.rs` names them,
+//! `NOT_SPELLABLE`); this module is
 //! the typed reader of that document and declares no term itself. The released file is compiled
 //! into the library, [`Vocabulary::from_yaml`] reads any vocabulary document given as text, and
 //! [`Vocabulary::to_yaml`] writes one.
@@ -101,13 +103,30 @@ pub enum Marking {
     /// Only makes sense for Git, pull requests or code.
     #[serde(rename = "software.change")]
     SoftwareChange,
+    /// Only makes sense in an agent runtime's self-improvement turn (`self.improvement/1`).
+    #[serde(rename = "self.improvement")]
+    SelfImprovement,
+    /// Only makes sense in a turn that improves the improvement loop itself
+    /// (`loop.improvement/1`).
+    #[serde(rename = "loop.improvement")]
+    LoopImprovement,
 }
 
 impl Marking {
+    /// Every marking, in declaration order.
+    pub const ALL: [Marking; 4] = [
+        Marking::Core,
+        Marking::SoftwareChange,
+        Marking::SelfImprovement,
+        Marking::LoopImprovement,
+    ];
+
     pub const fn as_str(self) -> &'static str {
         match self {
             Marking::Core => "core",
             Marking::SoftwareChange => "software.change",
+            Marking::SelfImprovement => "self.improvement",
+            Marking::LoopImprovement => "loop.improvement",
         }
     }
 }
@@ -418,9 +437,13 @@ terms:
             assert!(refusal.contains(category.as_str()), "{refusal}");
             assert!(!refusal.contains(&format!("{category:?}")), "{refusal}");
         }
-        for marking in [Marking::Core, Marking::SoftwareChange] {
+        for marking in Marking::ALL {
             let written = serde_yaml_ng::to_string(&marking).unwrap();
             assert_eq!(written.trim_end(), marking.as_str());
+            assert_eq!(marking.to_string(), marking.as_str());
+            let read = Vocabulary::from_yaml(&ONE.replace("core", marking.as_str()))
+                .unwrap_or_else(|error| panic!("marking `{marking}`: {error}"));
+            assert_eq!(read.lookup("alpha").map(|t| t.marking), Ok(marking));
         }
     }
 

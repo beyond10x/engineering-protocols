@@ -1,0 +1,69 @@
+format: els-fixture/1
+id: merge-denied
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Everything the merge's precondition reads holds at h1, but the authority denies
+# `repository.merge`: a connection to the repository host is not authority, the merge is blocked
+# and the story is not accepted.
+case:
+  format: canon-case/1
+  id: SD-105
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: denied
+    add_authority:
+      - {capability: repository.merge, decision: denied}
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h1, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:40:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h1, kind: ci_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: true
+        ci.green: true
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: discharged
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: admissible
+        repository.merge: blocked
+      outcomes:
+        accepted: blocked
+        abandoned: blocked

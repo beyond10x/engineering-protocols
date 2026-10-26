@@ -1,0 +1,226 @@
+format: els-fixture/1
+id: accepted
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# A story delivered end to end at implementation revision h1. Nothing is known at first: every
+# claim is unknown, every obligation open, and only the actions without a precondition and the
+# handover (whose precondition is that no handover is known yet) are admissible. The harness hands
+# the change over; the tests and the gate pass and a merge would change the base branch, so the
+# pull request may be opened; it is open, continuous integration is green, and the merge waits for
+# authority. Granted, the merge is admissible; merged, the story is accepted.
+case:
+  format: canon-case/1
+  id: SD-101
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims:
+        change.handed_over: unknown
+        change.made: unknown
+        tests.pass: unknown
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations: &all-open
+        tests.required: open
+        gate.required: open
+        ci.required: open
+        merge.required: open
+      actions: &not-handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: &none
+        accepted: blocked
+        abandoned: blocked
+
+  - id: handed-over
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: unknown
+        tests.pass: unknown
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations: *all-open
+      actions: &handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: *none
+
+  - id: verified
+    add_evidence:
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h1, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: open
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: *none
+
+  - id: pr-opened
+    add_evidence:
+      - observed_at: "2026-10-26T09:40:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: true
+        ci.green: unknown
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: open
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: admissible
+        repository.merge: blocked
+      outcomes: *none
+
+  - id: ci-green
+    add_evidence:
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h1, kind: ci_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims: &ci-green
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: true
+        ci.green: true
+        pr.merged: unknown
+      obligations: &merge-open
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: discharged
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: admissible
+        repository.merge: approval-required
+      outcomes: *none
+
+  - id: merge-granted
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence: []
+    expect:
+      claims: *ci-green
+      obligations: *merge-open
+      actions: &mergeable
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: admissible
+        repository.merge: admissible
+      outcomes: *none
+
+  - id: merged
+    add_evidence:
+      - observed_at: "2026-10-26T10:30:00Z"
+        record: {format: canon-evidence/1, id: merge-h1, kind: merge_observation, result: merged,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: true
+        ci.green: true
+        pr.merged: true
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: discharged
+        merge.required: discharged
+      actions: *mergeable
+      outcomes:
+        accepted: legitimate
+        abandoned: blocked

@@ -1,0 +1,46 @@
+format: els-fixture/1
+id: at-target
+protocol: protocols/loop-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# The loop scorecard on baseline lb1 shows every metric at its target: `loop.metric_below_target`
+# is false, so no finding may be filed against the loop and no candidate delivered.
+case:
+  format: canon-case/1
+  id: LI-105
+  protocol: loop.improvement
+  revision: c1
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    loop_baseline: {revision: lb1}
+    loop_candidate: {revision: lc1}
+    loop_finding: {revision: lf1}
+
+states:
+  - id: at-target
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: measurement-lb1, kind: loop_measurement,
+                 result: at_target, subject: loop_baseline, subject_revision: lb1}
+    expect:
+      claims:
+        loop.metric_below_target: false
+        loop.definition_honest: unknown
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations:
+        honesty.required: open
+        improvement.required: open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: blocked
+        loop.change.deliver: blocked
+        loop.definition.check: admissible
+        loop.merge: blocked
+        loop.compare: blocked
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        abandoned: blocked
