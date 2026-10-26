@@ -14,7 +14,7 @@ session's scratch root, one directory per unit.
 | Story | Managed tree | Branch | Stage | Head | Merge |
 |---|---|---|---|---|---|
 | `story:ess-0-69-2-pin` | `ep-unit-ess-pin` | `impl/ess-0-69-2-pin` | merged; adversary pass 1 green (`3f44d07`) | `3f44d07` | `35cdcbe` |
-| `story:takt-protocols-builtin` | `ep-unit-takt-protocols` | `impl/takt-protocols-builtin` | adversary pass 1 (`aep:adversary`, opus) | `7d960a2` | |
+| `story:takt-protocols-builtin` | `ep-unit-takt-protocols` | `impl/takt-protocols-builtin` | merged; adversary passes 1 (`449ddd3`, red, fixed in `3aa5211`) and 2 (`2420c1d`, green; comments fixed in `fa5b460`) | `fa5b460` | `c690567` |
 
 Coordinator-owned files: `AGENTS.md`, `README.md`, `CHANGELOG.md`, `Cargo.toml`, `Cargo.lock`, the
 store.
