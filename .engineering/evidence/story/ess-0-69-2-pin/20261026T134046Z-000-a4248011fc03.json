@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T13:40:46Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-69-2-pin",
+  "kind": "story",
+  "revision": 15,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "gate on b669cf4 (wave/2026-10-26-w1) with ess 0.69.2: cargo fmt --all --check 0, cargo clippy --workspace --all-targets --locked -D warnings 0, cargo test --workspace --locked --no-fail-fast 0 (291 passed, 0 failed, 78 result lines; --list 291), canon-engineering-docs generate --check 0 (30 files, 8 protocols), aep plan artifact validate 0",
+    "reference": "b669cf4"
+  }
+}

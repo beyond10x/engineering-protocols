@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:takt-protocols-builtin
 kind: story
-status: active
+status: implemented
 title: Ship story.delivery/1, self.improvement/1 and loop.improvement/1 as built-ins (Atlas ADR 0094)
 summary: takt's three protocols move here byte for byte, with vocabulary, fixtures and a canon check over every built-in.
 refs:
@@ -36,10 +36,11 @@ scope:
   path: website/data
 - confidence: cited
   path: website/docs
-revision: 19
+revision: 20
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-26T12:35:26Z", actor: "human:timo", revision: 18}
 - {from: "proposed", to: "active", at: "2026-10-26T12:35:26Z", actor: "human:timo", revision: 19}
+- {from: "active", to: "implemented", at: "2026-10-26T13:40:46Z", actor: "human:timo", revision: 20, decided_on: {"recorded":{"test_result":2,"review_outcome":2}}}
 ---
 ## Outcome
 
