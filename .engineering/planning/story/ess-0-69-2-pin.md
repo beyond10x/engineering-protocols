@@ -12,11 +12,15 @@ scope:
 - confidence: cited
   path: .github/workflows/check.yml
 - confidence: cited
+  path: AGENTS.md
+- confidence: cited
   path: crates/assertion-providers/README.md
 - confidence: cited
   path: crates/assertion-providers/generated/
 - confidence: cited
   path: crates/assertion-providers/src/lib.rs
+- confidence: cited
+  path: crates/assertion-providers/src/process.rs
 - confidence: cited
   path: crates/canon-engineering-assertions/generated/
 - confidence: cited
@@ -25,7 +29,7 @@ scope:
   path: ess/ess-inputs.yaml
 - confidence: cited
   path: ess/providers/ess-inputs.yaml
-revision: 13
+revision: 15
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-26T12:35:26Z", actor: "human:timo", revision: 12}
 - {from: "proposed", to: "active", at: "2026-10-26T12:35:26Z", actor: "human:timo", revision: 13}

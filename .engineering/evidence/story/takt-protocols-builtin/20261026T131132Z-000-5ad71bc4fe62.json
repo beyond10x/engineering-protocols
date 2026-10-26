@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T13:11:32Z",
+  "actor": "human:timo",
+  "artifact": "story:takt-protocols-builtin",
+  "kind": "story",
+  "revision": 19,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only cargo test -p b10x-canon-engineering --locked --no-fail-fast on 9933bf8: exit 101 (red, protocol first); builtin_vocabulary_coverage::every_builtin_term_is_declared_in_the_category_it_is_used_in fails (62 terms of the three protocols undeclared); adversary2_incident_subject::the_landing_page_status_rows_are_the_shipped_protocols fails until the site is regenerated; 188 passed, 2 failed (implementor report)",
+    "reference": "9933bf8"
+  }
+}
