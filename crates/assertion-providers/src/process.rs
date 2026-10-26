@@ -77,10 +77,12 @@ pub(super) fn external(
         ));
     }
     match (*response.status, response.value_json, response.reason) {
-        (Status::V0, EssPresence::Present(value), EssPresence::Absent) => {
+        (Status::Known, EssPresence::Present(value), EssPresence::Absent) => {
             known(serde_json::from_str::<Value>(&value)?)
         }
-        (Status::V1, EssPresence::Absent, EssPresence::Present(reason)) if !reason.is_empty() => {
+        (Status::Unavailable, EssPresence::Absent, EssPresence::Present(reason))
+            if !reason.is_empty() =>
+        {
             Ok(Collected::Unavailable(reason))
         }
         _ => Err(ProviderError::Invalid(
