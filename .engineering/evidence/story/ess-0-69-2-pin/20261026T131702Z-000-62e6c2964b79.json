@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T13:17:02Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-69-2-pin",
+  "kind": "story",
+  "revision": 15,
+  "change": {
+    "change": "evidence",
+    "kind": "review_outcome",
+    "source": "review-result:adversary-w20261026-ess-0-69-2-pin-pass-1",
+    "review": "review-result:adversary-w20261026-ess-0-69-2-pin-pass-1",
+    "outcome": "fixed"
+  }
+}

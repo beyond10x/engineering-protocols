@@ -1,0 +1,474 @@
+{
+  "edges": [
+    {
+      "from": "action:change.handover",
+      "kind": "produces",
+      "to": "evidence:handover"
+    },
+    {
+      "from": "action:change.read",
+      "kind": "produces",
+      "to": "evidence:change_record"
+    },
+    {
+      "from": "action:ci.read",
+      "kind": "produces",
+      "to": "evidence:ci_result"
+    },
+    {
+      "from": "action:gate.run",
+      "kind": "produces",
+      "to": "evidence:gate_result"
+    },
+    {
+      "from": "action:pr.open",
+      "kind": "produces",
+      "to": "evidence:pull_request"
+    },
+    {
+      "from": "action:repository.merge",
+      "kind": "produces",
+      "to": "evidence:merge_observation"
+    },
+    {
+      "from": "action:tests.run",
+      "kind": "produces",
+      "to": "evidence:test_result"
+    },
+    {
+      "from": "evidence:handover",
+      "kind": "establishes",
+      "qualifier": "about implementation",
+      "to": "claim:change.handed_over"
+    },
+    {
+      "from": "evidence:change_record",
+      "kind": "establishes",
+      "qualifier": "ahead about implementation",
+      "to": "claim:change.made"
+    },
+    {
+      "from": "evidence:ci_result",
+      "kind": "establishes",
+      "qualifier": "pass about implementation",
+      "to": "claim:ci.green"
+    },
+    {
+      "from": "evidence:gate_result",
+      "kind": "establishes",
+      "qualifier": "pass about implementation",
+      "to": "claim:gate.green"
+    },
+    {
+      "from": "evidence:merge_observation",
+      "kind": "establishes",
+      "qualifier": "merged about implementation",
+      "to": "claim:pr.merged"
+    },
+    {
+      "from": "evidence:pull_request",
+      "kind": "establishes",
+      "qualifier": "open about implementation",
+      "to": "claim:pr.opened"
+    },
+    {
+      "from": "evidence:test_result",
+      "kind": "establishes",
+      "qualifier": "pass about implementation",
+      "to": "claim:tests.pass"
+    },
+    {
+      "from": "claim:pr.merged",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:ci.green",
+      "kind": "requires",
+      "to": "obligation:ci.required"
+    },
+    {
+      "from": "claim:gate.green",
+      "kind": "requires",
+      "to": "obligation:gate.required"
+    },
+    {
+      "from": "claim:pr.merged",
+      "kind": "requires",
+      "to": "obligation:merge.required"
+    },
+    {
+      "from": "claim:tests.pass",
+      "kind": "requires",
+      "to": "obligation:tests.required"
+    },
+    {
+      "from": "claim:change.handed_over",
+      "kind": "gates",
+      "qualifier": "unknown",
+      "to": "action:change.handover"
+    },
+    {
+      "from": "claim:change.handed_over",
+      "kind": "gates",
+      "to": "action:change.read"
+    },
+    {
+      "from": "claim:pr.opened",
+      "kind": "gates",
+      "to": "action:ci.read"
+    },
+    {
+      "from": "claim:change.handed_over",
+      "kind": "gates",
+      "to": "action:pr.open"
+    },
+    {
+      "from": "claim:change.made",
+      "kind": "gates",
+      "to": "action:pr.open"
+    },
+    {
+      "from": "claim:gate.green",
+      "kind": "gates",
+      "to": "action:pr.open"
+    },
+    {
+      "from": "claim:tests.pass",
+      "kind": "gates",
+      "to": "action:pr.open"
+    },
+    {
+      "from": "claim:ci.green",
+      "kind": "gates",
+      "to": "action:repository.merge"
+    },
+    {
+      "from": "claim:pr.opened",
+      "kind": "gates",
+      "to": "action:repository.merge"
+    }
+  ],
+  "format": "b10x-protocol-graph/1",
+  "nodes": [
+    {
+      "description": "hand the change over, changing no file, once it is complete (the story's tests written and the implementation done) and no further edit is needed; takt records the choice, and the pull request is opened for this revision and its continuous integration read once",
+      "effect": "read",
+      "id": "action:change.handover",
+      "kind": "action",
+      "name": "change.handover",
+      "predicate": {
+        "claim": {
+          "id": "change.handed_over",
+          "is": "unknown"
+        }
+      }
+    },
+    {
+      "description": "read whether merging the implementation revision into the base branch's tip would change its tree outside .engineering/; taken once the change is handed over",
+      "effect": "read",
+      "id": "action:change.read",
+      "kind": "action",
+      "name": "change.read",
+      "predicate": {
+        "claim": {
+          "id": "change.handed_over"
+        }
+      }
+    },
+    {
+      "description": "read the continuous integration result for the pull request's head; needs the pull request open for the implementation revision",
+      "effect": "read",
+      "id": "action:ci.read",
+      "kind": "action",
+      "name": "ci.read",
+      "predicate": {
+        "claim": {
+          "id": "pr.opened"
+        }
+      }
+    },
+    {
+      "description": "run the repository's gate against an implementation revision",
+      "effect": "read",
+      "id": "action:gate.run",
+      "kind": "action",
+      "name": "gate.run"
+    },
+    {
+      "description": "change the implementation in the repository's working revision",
+      "effect": "write",
+      "id": "action:implementation.edit",
+      "kind": "action",
+      "name": "implementation.edit"
+    },
+    {
+      "description": "push the implementation revision, with the commits that record its approval above it when there are any, and open its pull request through the repository's bot route; needs the tests and the gate green, the change handed over at the revision, and a merge of it into the base branch's tip that would change the tip outside .engineering/, so nothing is opened at the seed or for content the base already has",
+      "effect": "write",
+      "id": "action:pr.open",
+      "kind": "action",
+      "name": "pr.open",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "change.handed_over"
+            }
+          },
+          {
+            "claim": {
+              "id": "change.made"
+            }
+          },
+          {
+            "claim": {
+              "id": "gate.green"
+            }
+          },
+          {
+            "claim": {
+              "id": "tests.pass"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "read the repository",
+      "effect": "read",
+      "id": "action:repository.inspect",
+      "kind": "action",
+      "name": "repository.inspect"
+    },
+    {
+      "capabilities": [
+        "repository.merge"
+      ],
+      "description": "merge the pull request into the repository's mainline; needs continuous integration green, the pull request open and authority to merge, never only a connection to the repository host",
+      "effect": "write",
+      "id": "action:repository.merge",
+      "kind": "action",
+      "name": "repository.merge",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "ci.green"
+            }
+          },
+          {
+            "claim": {
+              "id": "pr.opened"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "run the tests against an implementation revision",
+      "effect": "read",
+      "id": "action:tests.run",
+      "kind": "action",
+      "name": "tests.run"
+    },
+    {
+      "description": "change the tests in the repository's working revision",
+      "effect": "write",
+      "id": "action:tests.write",
+      "kind": "action",
+      "name": "tests.write"
+    },
+    {
+      "description": "whether merging an implementation revision into the base branch's tip would change that tip's tree outside .engineering/; its result is ahead or none",
+      "id": "evidence:change_record",
+      "kind": "evidence",
+      "name": "change_record"
+    },
+    {
+      "description": "the result of continuous integration on an implementation revision; its result is pass or fail",
+      "id": "evidence:ci_result",
+      "kind": "evidence",
+      "name": "ci_result"
+    },
+    {
+      "description": "the result of the repository's gate against an implementation revision; its result is pass or fail",
+      "id": "evidence:gate_result",
+      "kind": "evidence",
+      "name": "gate_result"
+    },
+    {
+      "description": "the harness chose to hand the change over at this implementation revision, with no file changed: takt records the choice from the step, as it records a request for an approval. The record attests a choice, not that the change is correct: the tests, the gate and continuous integration stay validator evidence; it has no result",
+      "id": "evidence:handover",
+      "kind": "evidence",
+      "name": "handover"
+    },
+    {
+      "description": "the observation that the pull request whose head is an implementation revision, or that revision with only the commits that record its approval above it, was merged; its result is merged",
+      "id": "evidence:merge_observation",
+      "kind": "evidence",
+      "name": "merge_observation"
+    },
+    {
+      "description": "a pull request whose head is an implementation revision, or that revision with only the commits that record its approval above it; its result is open",
+      "id": "evidence:pull_request",
+      "kind": "evidence",
+      "name": "pull_request"
+    },
+    {
+      "description": "the result of running tests against an implementation revision; its result is pass or fail",
+      "id": "evidence:test_result",
+      "kind": "evidence",
+      "name": "test_result"
+    },
+    {
+      "description": "the harness handed the change over at the current implementation revision, saying it is complete; a new commit returns it to unknown",
+      "id": "claim:change.handed_over",
+      "kind": "claim",
+      "name": "change.handed_over",
+      "predicate": {
+        "evidence": {
+          "kind": "handover"
+        }
+      }
+    },
+    {
+      "description": "merging the current implementation revision into the base branch's tip would change its tree outside .engineering/: there is a change to publish",
+      "id": "claim:change.made",
+      "kind": "claim",
+      "name": "change.made",
+      "predicate": {
+        "evidence": {
+          "kind": "change_record",
+          "result": "ahead"
+        }
+      }
+    },
+    {
+      "description": "continuous integration passes for the current implementation revision",
+      "id": "claim:ci.green",
+      "kind": "claim",
+      "name": "ci.green",
+      "predicate": {
+        "evidence": {
+          "kind": "ci_result",
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "description": "the repository's gate is green for the current implementation revision",
+      "id": "claim:gate.green",
+      "kind": "claim",
+      "name": "gate.green",
+      "predicate": {
+        "evidence": {
+          "kind": "gate_result",
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "description": "the pull request for the current implementation revision is merged",
+      "id": "claim:pr.merged",
+      "kind": "claim",
+      "name": "pr.merged",
+      "predicate": {
+        "evidence": {
+          "kind": "merge_observation",
+          "result": "merged"
+        }
+      }
+    },
+    {
+      "description": "a pull request is open for the current implementation revision",
+      "id": "claim:pr.opened",
+      "kind": "claim",
+      "name": "pr.opened",
+      "predicate": {
+        "evidence": {
+          "kind": "pull_request",
+          "result": "open"
+        }
+      }
+    },
+    {
+      "description": "the tests pass for the current implementation revision",
+      "id": "claim:tests.pass",
+      "kind": "claim",
+      "name": "tests.pass",
+      "predicate": {
+        "evidence": {
+          "kind": "test_result",
+          "result": "pass"
+        }
+      }
+    },
+    {
+      "description": "the story closed because it was explicitly abandoned",
+      "id": "outcome:abandoned",
+      "kind": "outcome",
+      "name": "abandoned"
+    },
+    {
+      "description": "the story closed with its pull request merged",
+      "id": "outcome:accepted",
+      "kind": "outcome",
+      "name": "accepted",
+      "predicate": {
+        "claim": {
+          "id": "pr.merged"
+        }
+      }
+    },
+    {
+      "description": "continuous integration passes for the current implementation revision",
+      "id": "obligation:ci.required",
+      "kind": "obligation",
+      "name": "ci.required",
+      "predicate": {
+        "claim": {
+          "id": "ci.green"
+        }
+      }
+    },
+    {
+      "description": "the repository's gate is green for the current implementation revision",
+      "id": "obligation:gate.required",
+      "kind": "obligation",
+      "name": "gate.required",
+      "predicate": {
+        "claim": {
+          "id": "gate.green"
+        }
+      }
+    },
+    {
+      "description": "the pull request for the current implementation revision is merged",
+      "id": "obligation:merge.required",
+      "kind": "obligation",
+      "name": "merge.required",
+      "predicate": {
+        "claim": {
+          "id": "pr.merged"
+        }
+      }
+    },
+    {
+      "description": "the tests pass for the current implementation revision",
+      "id": "obligation:tests.required",
+      "kind": "obligation",
+      "name": "tests.required",
+      "predicate": {
+        "claim": {
+          "id": "tests.pass"
+        }
+      }
+    }
+  ],
+  "protocol": {
+    "description": "Deliver a planning-store story: implement it, verify the current implementation revision with its tests and the repository's gate, open a pull request for it, read its continuous integration, and merge it under authority. Accepted once the pull request is merged, or abandoned on an explicit decision. Every claim is about the implementation at its current revision, so a new commit returns all of them to unknown.",
+    "id": "story.delivery",
+    "revision": 1,
+    "source": "protocols/story-delivery/1.yaml"
+  }
+}

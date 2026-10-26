@@ -1,0 +1,82 @@
+format: els-fixture/1
+id: judge-surface
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# The same turn on a candidate that touches a judge surface. The finding is verified gone on h1
+# by run-b and `repository.merge` is granted, but the planner's merge is blocked by the case
+# input: only the judge-surface merge applies, and it waits for
+# `repository.merge.judge_surface`, which the owner holds. Granted, it is admissible.
+case:
+  format: canon-case/1
+  id: SI-102
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: verified
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: reproduced, subject: baseline, subject_revision: b1, producer: run-a}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-b}
+    expect:
+      claims: &verified
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations: &regression-open
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: blocked
+        candidate.merge_judge_surface: approval-required
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked
+
+  - id: judge-granted
+    add_authority:
+      - {capability: repository.merge.judge_surface, decision: granted}
+    add_evidence: []
+    expect:
+      claims: *verified
+      obligations: *regression-open
+      actions:
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: blocked
+        candidate.merge_judge_surface: admissible
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: *none

@@ -3,7 +3,7 @@
 This file is for an agent changing the repository. What engineering protocols are, how to depend on
 them and how to run them is in [README.md](README.md); the public site is
 <https://beyond10x.github.io/engineering-protocols/>. The cross-repository architecture is Atlas
-ADRs 0066–0075 and Atlas `docs/design/governed-autonomy/`.
+ADRs 0066–0075 and 0094, and Atlas `docs/design/governed-autonomy/`.
 
 ## Serves
 
@@ -11,8 +11,11 @@ ADRs 0066–0075 and Atlas `docs/design/governed-autonomy/`.
   data and evaluated against cited, revision-bound evidence, with `UNKNOWN` kept apart from `FALSE`.
 - **O1 — governed reach.** Every write action a protocol declares names the capability that
   authorises it, except `software.change/1`'s `tests.write` and `implementation.edit` (telling
-  them apart needs a path scope on capabilities, which Canon does not have), and Loom's
-  `loom-governor` consumes these protocols.
+  them apart needs a path scope on capabilities, which Canon does not have), and the six write
+  actions of the protocols moved from takt byte for byte that name none: `story.delivery/1`'s
+  `tests.write`, `implementation.edit` and `pr.open`, `self.improvement/1`'s `finding.file`,
+  `loop.improvement/1`'s `loop.change.deliver` and `loop.finding.file`
+  (`story:takt-protocol-write-capabilities`). Loom's `loom-governor` consumes these protocols.
 
 ## Boundary
 
@@ -22,6 +25,14 @@ today, investigation, migration and security response later. `support.triage/1` 
 protocol outside engineering, placed here by operator decision of 2026-10-05 as the rules half of
 a support triage example; its terms stay out of `protocols/vocabulary.yaml`, and its actions are tool-agnostic like every other
 protocol's.
+
+Every spec-level protocol a runtime uses lives here (Atlas ADR 0094): `story.delivery/1`,
+`self.improvement/1` and `loop.improvement/1` came from takt byte for byte (takt tag 0.12.0) and
+must stay identical to it until a new major is agreed with takt. A runtime pins a release of
+`b10x-canon-engineering` and reads them through `registry::get`; runtime data that is not a
+protocol (takt's `loop-improvement/metrics.yaml`) stays in the runtime. Their terms are in the
+vocabulary, marked `software.change`, `self.improvement` or `loop.improvement` when they mean
+nothing outside that domain or protocol.
 
 It does not own:
 
@@ -51,7 +62,10 @@ protocols.
 | An eval-gated change is kept only on evidence about the current candidate revision from a producer the case lists as independent on `different_agent_run`; evidence by the run that wrote the candidate is excluded as `not_independent`, and evidence about an earlier candidate revision (a moved basis) as `revision_mismatch`, each leaving its claim `UNKNOWN`, not `FALSE`, so neither `change.keep` nor `change.reject` is admissible | `tests/eval_gated_change_protocol.rs::eval_gated_change_outcomes_are_earned` |
 | `eval.gated_change/1` checks under Canon's `STATE_BOUND` with no findings | `tests/eval_gated_change_protocol.rs::eval_gated_change_check_stays_under_the_bound` |
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |
+| Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
+| The protocols moved from takt are byte-identical to takt tag 0.12.0 | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
+| Every term a built-in other than `support.triage/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
 | The package, library and binary names are `b10x-canon-engineering`, `canon_engineering`, `canon-engineering`; no retired name ships | `tests/crate_names.rs`, `tests/adversary_rename.rs` |
@@ -129,7 +143,7 @@ engineering protocols may admit (`story:ess-conformance-evidence`, draft); that 
 output, not a specification of this repository.
 
 Assertion collection and its CLI are not part of that opt-out. Their wire model lives in `ess/`;
-provider envelopes live in `ess/providers/`, both pinned to ESS 0.60.0. The gate document is a
+provider envelopes live in `ess/providers/`, both pinned to ESS 0.69.2. The gate document is a
 generated Rust data library. The Canon expression schema is vendored by `canon-engineering-docs`
 from the pinned core's `MODEL_SPEC`, with only the namespace remapped. Do not edit generated
 contracts or `.ess-output` ownership state. `crates/canon-engineering-assertions/tests/ess_contract.rs`

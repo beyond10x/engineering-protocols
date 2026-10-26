@@ -1,0 +1,133 @@
+format: els-fixture/1
+id: new-commit
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Every claim is about the implementation at its current revision. At h1 the change is handed
+# over, tested, gated, opened and green, and the merge is granted: it is admissible. A new commit
+# moves the implementation to h2: every record about h1 is excluded as `revision_mismatch` and
+# every claim is unknown, not false, so the pull request may not be opened, continuous integration
+# not read and the merge not taken; the handover is admissible again. A merge observation about
+# h1 earns nothing at h2. Tests that fail at h2 make `tests.pass` false: a result about the
+# current revision, not the absence of one.
+case:
+  format: canon-case/1
+  id: SD-102
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: merge-ready
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h1, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T09:40:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h1, kind: ci_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: true
+        ci.green: true
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: discharged
+        merge.required: open
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: admissible
+        repository.merge: admissible
+      outcomes: &none
+        accepted: blocked
+        abandoned: blocked
+
+  - id: new-commit
+    set_revisions:
+      implementation: h2
+    add_evidence: []
+    expect:
+      claims: &all-unknown
+        change.handed_over: unknown
+        change.made: unknown
+        tests.pass: unknown
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations: &all-open
+        tests.required: open
+        gate.required: open
+        ci.required: open
+        merge.required: open
+      actions: &not-handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: *none
+
+  - id: merged-old-revision
+    add_evidence:
+      - observed_at: "2026-10-26T10:30:00Z"
+        record: {format: canon-evidence/1, id: merge-h1, kind: merge_observation, result: merged,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims: *all-unknown
+      obligations: *all-open
+      actions: *not-handed-over
+      outcomes: *none
+
+  - id: tests-fail
+    add_evidence:
+      - observed_at: "2026-10-26T11:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h2, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.handed_over: unknown
+        change.made: unknown
+        tests.pass: false
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations: *all-open
+      actions: *not-handed-over
+      outcomes: *none

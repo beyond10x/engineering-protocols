@@ -1,0 +1,88 @@
+format: els-fixture/1
+id: regression
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Candidate h1 is verified by run-b and merged, and `takt.promote` is granted, but the scorecard
+# shows a regression: `scorecard.no_regression` is false and the promotion is blocked. A promotion
+# record whose embedded revision does not match the merged candidate makes `promoted` false. The
+# turn is not accepted.
+case:
+  format: canon-case/1
+  id: SI-108
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: regressed
+    add_authority:
+      - {capability: takt.promote, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: reproduced, subject: baseline, subject_revision: b1, producer: run-a}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1, kind: scenario_result,
+                 result: not_reproduced, subject: candidate, subject_revision: h1,
+                 producer: run-b}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: merge-h1, kind: merge_observation,
+                 result: merged, subject: candidate, subject_revision: h1}
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: scorecard-h1, kind: scorecard_result,
+                 result: regression, subject: candidate, subject_revision: h1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: true
+        scorecard.no_regression: false
+        promoted: unknown
+      obligations: &regression-open
+        reproduction.required: discharged
+        verification.required: discharged
+        regression.required: open
+      actions: &regressed
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: admissible
+        candidate.merge: approval-required
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: admissible
+        binary.promote: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked
+
+  - id: promotion-mismatch
+    add_evidence:
+      - observed_at: "2026-10-26T10:30:00Z"
+        record: {format: canon-evidence/1, id: promotion-p1, kind: promotion_record,
+                 result: mismatch, subject: promotion, subject_revision: p1}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: true
+        scenario.passes_after: true
+        fix.merged: true
+        scorecard.no_regression: false
+        promoted: false
+      obligations: *regression-open
+      actions: *regressed
+      outcomes: *none

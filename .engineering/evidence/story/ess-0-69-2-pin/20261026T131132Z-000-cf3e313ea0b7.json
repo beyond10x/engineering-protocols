@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T13:11:32Z",
+  "actor": "human:timo",
+  "artifact": "story:ess-0-69-2-pin",
+  "kind": "story",
+  "revision": 15,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "cargo test -p b10x-canon-engineering-assertions -p b10x-assertion-providers --locked --no-fail-fast with ess 0.69.2 first on PATH: baseline e74fdb2 ess_contract 1 passed 2 failed (gate_spec_compiles_synthesizes_and_generated_contract_has_no_drift, provider_contract_validates_and_generated_types_have_no_drift: requires ess 0.60.0, --strict-requires refuses); treatment 8eb9771 exit 0, ess_contract 3 passed; clippy of both packages -D warnings exit 0. VERIFIED",
+    "reference": "e74fdb2 vs 8eb9771"
+  }
+}

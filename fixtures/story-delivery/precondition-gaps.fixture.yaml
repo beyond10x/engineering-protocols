@@ -1,0 +1,166 @@
+format: els-fixture/1
+id: precondition-gaps
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Each state leaves exactly one claim of a precondition unestablished at the current revision and
+# shows that the action still waits for it; each moves the implementation to a new revision, so
+# the records of the states before it are about an earlier revision and count for nothing.
+#
+# - untested (h1): handed over, gated and ahead of the base, but no test result yet. The pull
+#   request may not be opened, and `tests.required` stays open although `gate.required` is
+#   discharged: a green gate is not passing tests.
+# - ungated (h2): handed over, tested and ahead, but the gate has not run.
+# - not-handed-over (h3): tested, gated and ahead, but not handed over. The change record is
+#   built for this test: Canon decides on a record whoever produced it, but no action of the
+#   protocol produces one before a handover, and takt 0.12.0 writes it only from `change.read`.
+# - ci-without-pull-request (h4): a green continuous-integration result for h4 although no pull
+#   request is open for it, also built for this test (takt 0.12.0's `ci.read` writes nothing
+#   without a pull request). With `repository.merge` granted the merge still waits for the pull
+#   request.
+case:
+  format: canon-case/1
+  id: SD-107
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: untested
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-26T08:20:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: unknown
+        gate.green: true
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations:
+        tests.required: open
+        gate.required: discharged
+        ci.required: open
+        merge.required: open
+      actions: &handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: &none
+        accepted: blocked
+        abandoned: blocked
+
+  - id: ungated
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h2, kind: handover,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-26T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h2, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-26T09:20:00Z"
+        record: {format: canon-evidence/1, id: change-h2, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.handed_over: true
+        change.made: true
+        tests.pass: true
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: open
+        ci.required: open
+        merge.required: open
+      actions: *handed-over
+      outcomes: *none
+
+  - id: not-handed-over
+    set_revisions:
+      implementation: h3
+    add_evidence:
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h3, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-26T10:10:00Z"
+        record: {format: canon-evidence/1, id: gate-h3, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-26T10:20:00Z"
+        record: {format: canon-evidence/1, id: change-h3, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.handed_over: unknown
+        change.made: true
+        tests.pass: true
+        gate.green: true
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      obligations:
+        tests.required: discharged
+        gate.required: discharged
+        ci.required: open
+        merge.required: open
+      actions: &not-handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+      outcomes: *none
+
+  - id: ci-without-pull-request
+    set_revisions:
+      implementation: h4
+    add_authority:
+      - {capability: repository.merge, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-26T11:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h4, kind: ci_result, result: pass,
+                 subject: implementation, subject_revision: h4}
+    expect:
+      claims:
+        change.handed_over: unknown
+        change.made: unknown
+        tests.pass: unknown
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: true
+        pr.merged: unknown
+      obligations:
+        tests.required: open
+        gate.required: open
+        ci.required: discharged
+        merge.required: open
+      actions: *not-handed-over
+      outcomes: *none

@@ -1,0 +1,89 @@
+format: els-fixture/1
+id: definition-moved
+protocol: protocols/loop-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# Loop candidate lc1 changes a metric definition and prints the previous definition's figures
+# beside the new ones: it is honest, and its merge waits for authority. A commit moves the
+# candidate to lc2: the check about lc1 is excluded as `revision_mismatch` and
+# `loop.definition_honest` is unknown, not false. At lc2 the candidate redefines the metric
+# without them: the claim is false and the merge is blocked.
+case:
+  format: canon-case/1
+  id: LI-102
+  protocol: loop.improvement
+  revision: c1
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    loop_baseline: {revision: lb1}
+    loop_candidate: {revision: lc1}
+    loop_finding: {revision: lf1}
+
+states:
+  - id: dual-reported
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: measurement-lb1, kind: loop_measurement,
+                 result: below_target, subject: loop_baseline, subject_revision: lb1}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: definitions-lc1, kind: definition_check,
+                 result: dual_reported, subject: loop_candidate, subject_revision: lc1}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: true
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations:
+        honesty.required: discharged
+        improvement.required: open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: approval-required
+        loop.compare: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        abandoned: blocked
+
+  - id: candidate-moved
+    set_revisions:
+      loop_candidate: lc2
+    add_evidence: []
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: unknown
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations: &all-open
+        honesty.required: open
+        improvement.required: open
+      actions: &unmergeable
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: blocked
+        loop.compare: blocked
+      outcomes: *none
+
+  - id: redefined
+    add_evidence:
+      - observed_at: "2026-10-26T10:00:00Z"
+        record: {format: canon-evidence/1, id: definitions-lc2, kind: definition_check,
+                 result: redefined, subject: loop_candidate, subject_revision: lc2}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: false
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      obligations: *all-open
+      actions: *unmergeable
+      outcomes: *none

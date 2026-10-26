@@ -1,0 +1,52 @@
+format: els-fixture/1
+id: abandoned
+protocol: protocols/loop-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# A loop turn with no evidence. A decision to abandon it taken at the case's earlier revision c0
+# applies to nothing at c1; the same decision taken at c1 earns `abandoned`.
+case:
+  format: canon-case/1
+  id: LI-106
+  protocol: loop.improvement
+  revision: c1
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    loop_baseline: {revision: lb1}
+    loop_candidate: {revision: lc1}
+    loop_finding: {revision: lf1}
+
+states:
+  - id: abandoned-at-c0
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: owner
+        case_revision: c0
+    add_evidence: []
+    expect:
+      claims: &all-unknown
+        loop.metric_below_target: unknown
+        loop.definition_honest: unknown
+        loop.change_merged: unknown
+        loop.metric_improved: unknown
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        abandoned: blocked
+
+  - id: abandoned
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: owner
+        case_revision: c1
+    add_evidence: []
+    expect:
+      claims: *all-unknown
+      outcomes:
+        accepted: blocked
+        declined: blocked
+        abandoned: legitimate

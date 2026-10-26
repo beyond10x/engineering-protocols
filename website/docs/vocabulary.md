@@ -6,10 +6,12 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 111 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 171 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
+- **`self.improvement`**: only makes sense in an agent runtime's self-improvement turn (`self.improvement/1`).
+- **`loop.improvement`**: only makes sense in a turn that improves the improvement loop itself (`loop.improvement/1`).
 
 ## Artifact kinds
 
@@ -26,11 +28,16 @@ Category `artifact_kind`.
 | `implementation` | `software.change` | a revision of the code that realizes the plan |
 | `experiment_design` | `core` | the metrics, splits, seeds and success criterion an experiment is run under |
 | `dataset_snapshot` | `core` | the frozen data an experiment's runs read |
-| `baseline` | `core` | the reference model or method a candidate is compared with |
-| `candidate` | `core` | the model or method under test |
+| `baseline` | `core` | the reference model, method or revision a candidate is compared with |
+| `candidate` | `core` | the model, method or revision under test |
 | `run_configuration` | `core` | the settings and environment an experiment's runs used |
 | `results` | `core` | the metrics an experiment's runs produced |
 | `eval_design` | `core` | the evaluation design an automated loop is tuned under, its splits, metrics and guards |
+| `finding` | `self.improvement` | a finding against the agent runtime, filed with a machine-checkable predicate and the record that produced it |
+| `promotion` | `self.improvement` | the agent runtime's binary installed for runs, built from a named revision |
+| `loop_baseline` | `loop.improvement` | the promoted loop definition a loop metric was measured on |
+| `loop_candidate` | `loop.improvement` | a changed loop definition meant to raise a loop metric |
+| `loop_finding` | `loop.improvement` | a finding against the improvement loop, naming the metric, its target and the turns it was computed from |
 
 ## Evidence kinds
 
@@ -57,6 +64,19 @@ Category `evidence_kind`.
 | `guard_check` | `core` | a check of a candidate against the surface a loop may change and for leaked or forbidden content, outside, leaked or clean |
 | `tuning_comparison` | `core` | a first and a second run of a candidate against the baseline on the tuning split, reproduced, not\_reproduced or not\_better |
 | `heldout_comparison` | `core` | a run of a candidate against the baseline on the held-out split, held or regressed |
+| `change_record` | `software.change` | whether merging an implementation revision into the base branch's tip would change that tip's tree outside .engineering/ |
+| `ci_result` | `software.change` | the result of continuous integration on an implementation revision |
+| `gate_result` | `software.change` | the result of the repository's gate against an implementation revision |
+| `handover` | `software.change` | the record that the harness chose to hand the change over at an implementation revision, changing no file |
+| `merge_observation` | `software.change` | the observation that a revision, or the pull request whose head it is, was merged into the repository's mainline |
+| `pull_request` | `software.change` | a pull request whose head is an implementation revision, or that revision with only the commits that record its approval above it |
+| `finding_record` | `self.improvement` | the finding as filed, with a predicate that parses and a source that exists, or malformed |
+| `promotion_record` | `self.improvement` | the installed binary's embedded revision compared with the merged candidate revision |
+| `scenario_result` | `self.improvement` | the finding's predicate run on its scenario, or on its repository at its seed, with the runtime built from a revision |
+| `scorecard_result` | `self.improvement` | every scenario of the corpus run at a candidate revision and compared with the baseline's record for the same scenario |
+| `definition_check` | `loop.improvement` | a loop candidate's metric definitions compared with the baseline's; unchanged, dual\_reported or redefined |
+| `loop_comparison` | `loop.improvement` | a loop metric over turns under the candidate compared with the same metric under the baseline |
+| `loop_measurement` | `loop.improvement` | the loop scorecard over at least three recorded self-improvement turns at a loop definition revision |
 
 ## Claims
 
@@ -87,6 +107,21 @@ Category `claim_id`.
 | `tuning.improved` | `core` | an independent first run of the current candidate on the tuning split was better than the baseline |
 | `heldout.not_regressed` | `core` | an independent run of the current candidate on the held-out split did not regress against the baseline |
 | `change.supported` | `core` | every keep claim holds for the current candidate revision |
+| `change.handed_over` | `software.change` | the harness handed the change over at the current implementation revision, saying it is complete |
+| `change.made` | `software.change` | merging the current implementation revision into the base branch's tip would change its tree outside .engineering/ |
+| `ci.green` | `software.change` | continuous integration passes for the current implementation revision |
+| `gate.green` | `software.change` | the repository's gate is green for the current implementation revision |
+| `pr.merged` | `software.change` | the pull request for the current implementation revision is merged |
+| `pr.opened` | `software.change` | a pull request is open for the current implementation revision |
+| `finding.cited` | `self.improvement` | the finding is filed with a predicate that parses and a source that exists |
+| `fix.merged` | `self.improvement` | the current candidate revision is merged into the mainline |
+| `scenario.passes_after` | `self.improvement` | the finding's predicate fails on the current candidate revision, observed by another agent run than the one that delivered it |
+| `scenario.reproduced_before` | `self.improvement` | the finding's predicate holds on the baseline revision |
+| `scorecard.no_regression` | `self.improvement` | no scenario of the corpus is worse at the current candidate revision than at the baseline |
+| `loop.change_merged` | `loop.improvement` | the current loop candidate is merged into the mainline |
+| `loop.definition_honest` | `loop.improvement` | the current loop candidate leaves every metric definition unchanged, or reports the previous definition's figures beside the new ones |
+| `loop.metric_below_target` | `loop.improvement` | a loop metric is below its target on the baseline loop definition |
+| `loop.metric_improved` | `loop.improvement` | the metric improved under the current loop candidate, observed by another agent run than the one that delivered it |
 
 ## Actions
 
@@ -111,6 +146,21 @@ Category `action_id`.
 | `change.reject` | `core` | discard a candidate once every keep claim is decided and one is false |
 | `change.propose` | `core` | hand a candidate that leaves the loop's surface to a person as a proposal, applying nothing |
 | `change.apply_outside_surface` | `core` | apply a candidate that leaves the loop's surface, under a capability never granted to a loop |
+| `change.handover` | `software.change` | hand the change over, changing no file, once it is complete and no further edit is needed |
+| `change.read` | `software.change` | read whether merging the implementation revision into the base branch's tip would change its tree outside .engineering/ |
+| `ci.read` | `software.change` | read the continuous integration result for the pull request's head |
+| `gate.run` | `software.change` | run the repository's gate against an implementation revision |
+| `pr.open` | `software.change` | push the implementation revision and open its pull request through the repository's bot route |
+| `binary.promote` | `self.improvement` | build the merged candidate, embed its revision and install it for runs |
+| `candidate.merge` | `self.improvement` | merge a candidate that touches no judge surface |
+| `candidate.merge_judge_surface` | `self.improvement` | merge a candidate that touches a judge surface, under the owner's capability or a revocable delegation of it |
+| `finding.file` | `self.improvement` | file the finding in the planning store with its predicate and its source |
+| `scenario.reproduce` | `self.improvement` | run the finding's predicate with the runtime built from the baseline |
+| `scenario.verify` | `self.improvement` | run the finding's predicate with the runtime built from the candidate |
+| `scorecard.compare` | `self.improvement` | run the scenario corpus at the merged candidate and compare it with the baseline |
+| `loop.compare` | `loop.improvement` | compare the metric with the baseline's once at least three turns ran under the merged candidate |
+| `loop.measure` | `loop.improvement` | compute the loop scorecard over the recorded self-improvement turns |
+| `loop.merge` | `loop.improvement` | merge the loop candidate under the owner's capability or a revocable delegation of it |
 
 ## Obligations
 
@@ -126,6 +176,14 @@ Category `obligation_id`.
 | `health.required` | `core` | the deployment must be observed healthy |
 | `red_first.required` | `software.change` | a bugfix's regression test must fail on its first run, before the implementation is first changed |
 | `security_review.required` | `software.change` | a change that affects a security boundary must be security reviewed by another principal than the implementer |
+| `ci.required` | `software.change` | continuous integration must pass for the current implementation revision |
+| `gate.required` | `software.change` | the repository's gate must be green for the current implementation revision |
+| `merge.required` | `software.change` | the pull request for the current implementation revision must be merged |
+| `regression.required` | `self.improvement` | the scorecard must show no regression at the candidate |
+| `reproduction.required` | `self.improvement` | the finding must be reproduced on the baseline before a candidate counts |
+| `verification.required` | `self.improvement` | the finding must be verified gone on the candidate by another run |
+| `honesty.required` | `loop.improvement` | a loop change never redefines a metric silently |
+| `improvement.required` | `loop.improvement` | a loop change counts only when its metric improved |
 
 ## Outcomes
 
@@ -134,7 +192,7 @@ Category `outcome_id`.
 | Term | Marking | Meaning |
 |---|---|---|
 | `accepted` | `core` | the case closed with its result accepted |
-| `declined` | `core` | the case closed on a decision not to carry out its intent |
+| `declined` | `core` | the case closed without carrying out its intent, on a decision not to or on evidence that its candidate did not achieve it |
 | `rolled_back` | `core` | the case closed with its release returned to a previous one |
 | `superseded` | `core` | the case closed on a decision that another case replaces it |
 | `abandoned` | `core` | the case closed on a decision to stop before it reached any planned outcome |
@@ -145,6 +203,7 @@ Category `outcome_id`.
 | `kept` | `core` | the case closed with its candidate kept |
 | `rejected` | `core` | the case closed with its candidate rejected on a false keep claim |
 | `proposed` | `core` | the case closed with its candidate proposed to a person, because it leaves the loop's surface |
+| `unreproducible` | `self.improvement` | the turn closed because the finding's predicate does not hold on the baseline |
 
 ## Decisions
 
@@ -166,6 +225,7 @@ Category `case_input`.
 | `risk` | `core` | how much proof a case must carry, fixed when it opens; it selects the obligations that apply |
 | `change_kind` | `software.change` | what a change to software is, fixed when its case opens; it selects whether a regression must be reproduced first |
 | `affects_security_boundary` | `core` | whether a change affects a security boundary, fixed when its case opens; one that does needs an independent security review |
+| `surface` | `self.improvement` | whether the candidate's change, base to head, touches a judge surface |
 
 ## Input values
 
@@ -182,6 +242,8 @@ Category `input_value`.
 | `refactor` | `software.change` | a change to the implementation that keeps its behaviour |
 | `true` | `core` | the value of a yes-or-no case input when what it asks holds |
 | `false` | `core` | the value of a yes-or-no case input when what it asks does not hold |
+| `judge` | `self.improvement` | the candidate's change touches a judge surface |
+| `non_judge` | `self.improvement` | the candidate's change touches no judge surface |
 
 ## Independence dimensions
 

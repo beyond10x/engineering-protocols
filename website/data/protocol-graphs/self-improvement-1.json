@@ -1,0 +1,471 @@
+{
+  "case": {
+    "inputs": {
+      "surface": {
+        "description": "whether the candidate's change, base to head, touches a judge surface: every path outside the allow-list held at the baseline revision is one",
+        "values": [
+          "judge",
+          "non_judge"
+        ]
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "action:binary.promote",
+      "kind": "produces",
+      "to": "evidence:promotion_record"
+    },
+    {
+      "from": "action:candidate.merge",
+      "kind": "produces",
+      "to": "evidence:merge_observation"
+    },
+    {
+      "from": "action:candidate.merge_judge_surface",
+      "kind": "produces",
+      "to": "evidence:merge_observation"
+    },
+    {
+      "from": "action:finding.file",
+      "kind": "produces",
+      "to": "evidence:finding_record"
+    },
+    {
+      "from": "action:scenario.reproduce",
+      "kind": "produces",
+      "to": "evidence:scenario_result"
+    },
+    {
+      "from": "action:scenario.verify",
+      "kind": "produces",
+      "to": "evidence:scenario_result"
+    },
+    {
+      "from": "action:scorecard.compare",
+      "kind": "produces",
+      "to": "evidence:scorecard_result"
+    },
+    {
+      "from": "evidence:finding_record",
+      "kind": "establishes",
+      "qualifier": "filed about finding",
+      "to": "claim:finding.cited"
+    },
+    {
+      "from": "evidence:merge_observation",
+      "kind": "establishes",
+      "qualifier": "merged about candidate",
+      "to": "claim:fix.merged"
+    },
+    {
+      "from": "evidence:promotion_record",
+      "kind": "establishes",
+      "qualifier": "promoted about promotion",
+      "to": "claim:promoted"
+    },
+    {
+      "from": "evidence:scenario_result",
+      "kind": "establishes",
+      "qualifier": "not_reproduced about candidate, independent on different_agent_run",
+      "to": "claim:scenario.passes_after"
+    },
+    {
+      "from": "evidence:scenario_result",
+      "kind": "establishes",
+      "qualifier": "reproduced about baseline",
+      "to": "claim:scenario.reproduced_before"
+    },
+    {
+      "from": "evidence:scorecard_result",
+      "kind": "establishes",
+      "qualifier": "no_regression about candidate",
+      "to": "claim:scorecard.no_regression"
+    },
+    {
+      "from": "claim:promoted",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:scenario.passes_after",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:scorecard.no_regression",
+      "kind": "requires",
+      "to": "outcome:accepted"
+    },
+    {
+      "from": "claim:scorecard.no_regression",
+      "kind": "requires",
+      "to": "obligation:regression.required"
+    },
+    {
+      "from": "claim:scenario.reproduced_before",
+      "kind": "requires",
+      "to": "obligation:reproduction.required"
+    },
+    {
+      "from": "claim:scenario.passes_after",
+      "kind": "requires",
+      "to": "obligation:verification.required"
+    },
+    {
+      "from": "claim:fix.merged",
+      "kind": "gates",
+      "to": "action:binary.promote"
+    },
+    {
+      "from": "claim:scorecard.no_regression",
+      "kind": "gates",
+      "to": "action:binary.promote"
+    },
+    {
+      "from": "claim:scenario.passes_after",
+      "kind": "gates",
+      "to": "action:candidate.merge"
+    },
+    {
+      "from": "claim:scenario.passes_after",
+      "kind": "gates",
+      "to": "action:candidate.merge_judge_surface"
+    },
+    {
+      "from": "claim:finding.cited",
+      "kind": "gates",
+      "to": "action:scenario.reproduce"
+    },
+    {
+      "from": "claim:scenario.reproduced_before",
+      "kind": "gates",
+      "to": "action:scenario.verify"
+    },
+    {
+      "from": "claim:fix.merged",
+      "kind": "gates",
+      "to": "action:scorecard.compare"
+    }
+  ],
+  "format": "b10x-protocol-graph/1",
+  "nodes": [
+    {
+      "capabilities": [
+        "takt.promote"
+      ],
+      "description": "build the merged candidate, embed its revision, install it for runs",
+      "effect": "write",
+      "id": "action:binary.promote",
+      "kind": "action",
+      "name": "binary.promote",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "fix.merged"
+            }
+          },
+          {
+            "claim": {
+              "id": "scorecard.no_regression"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "capabilities": [
+        "repository.merge"
+      ],
+      "description": "merge a candidate that touches no judge surface; the planner's grant suffices",
+      "effect": "write",
+      "id": "action:candidate.merge",
+      "kind": "action",
+      "name": "candidate.merge",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "scenario.passes_after"
+            }
+          },
+          {
+            "input": {
+              "id": "surface",
+              "in": [
+                "non_judge"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "capabilities": [
+        "repository.merge.judge_surface"
+      ],
+      "description": "merge a candidate that touches a judge surface; the owner holds this capability, or a role the owner delegated it to by a revocable record, and a revoked delegation grants nothing (story:judge-guard enforces it)",
+      "effect": "write",
+      "id": "action:candidate.merge_judge_surface",
+      "kind": "action",
+      "name": "candidate.merge_judge_surface",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "scenario.passes_after"
+            }
+          },
+          {
+            "input": {
+              "id": "surface",
+              "in": [
+                "judge"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "file the finding in the planning store with its predicate and its source",
+      "effect": "write",
+      "id": "action:finding.file",
+      "kind": "action",
+      "name": "finding.file"
+    },
+    {
+      "description": "run the finding's predicate on its scenario or repository with a takt built from the baseline",
+      "effect": "read",
+      "id": "action:scenario.reproduce",
+      "kind": "action",
+      "name": "scenario.reproduce",
+      "predicate": {
+        "claim": {
+          "id": "finding.cited"
+        }
+      }
+    },
+    {
+      "description": "run the finding's predicate on its scenario or repository with a takt built from the candidate",
+      "effect": "read",
+      "id": "action:scenario.verify",
+      "kind": "action",
+      "name": "scenario.verify",
+      "predicate": {
+        "claim": {
+          "id": "scenario.reproduced_before"
+        }
+      }
+    },
+    {
+      "description": "run the scenario corpus at the merged candidate and compare it with the baseline",
+      "effect": "read",
+      "id": "action:scorecard.compare",
+      "kind": "action",
+      "name": "scorecard.compare",
+      "predicate": {
+        "claim": {
+          "id": "fix.merged"
+        }
+      }
+    },
+    {
+      "description": "the finding as filed: it carries an expected_before predicate that parses and a source path that exists; its result is filed or malformed",
+      "id": "evidence:finding_record",
+      "kind": "evidence",
+      "name": "finding_record"
+    },
+    {
+      "description": "the candidate revision merged into the mainline; its result is merged",
+      "id": "evidence:merge_observation",
+      "kind": "evidence",
+      "name": "merge_observation"
+    },
+    {
+      "description": "the installed binary's embedded revision compared with the merged candidate revision; its result is promoted or mismatch",
+      "id": "evidence:promotion_record",
+      "kind": "evidence",
+      "name": "promotion_record"
+    },
+    {
+      "description": "the finding's predicate run on its scenario, or on its repository at its seed, with a takt built from a revision; its result is reproduced or not_reproduced, or error when the command ended with a status the predicate names neither as the defect's nor as the healthy one, or with the defect's exit but without its output, which makes no claim true",
+      "id": "evidence:scenario_result",
+      "kind": "evidence",
+      "name": "scenario_result"
+    },
+    {
+      "description": "every scenario of the corpus run at the candidate revision and compared with the baseline's record for the same scenario, tokens read from the runs' events only; its result is no_regression or regression",
+      "id": "evidence:scorecard_result",
+      "kind": "evidence",
+      "name": "scorecard_result"
+    },
+    {
+      "description": "the finding is filed with a predicate that parses and a source that exists",
+      "id": "claim:finding.cited",
+      "kind": "claim",
+      "name": "finding.cited",
+      "predicate": {
+        "evidence": {
+          "kind": "finding_record",
+          "result": "filed"
+        }
+      }
+    },
+    {
+      "description": "the current candidate revision is merged into the mainline",
+      "id": "claim:fix.merged",
+      "kind": "claim",
+      "name": "fix.merged",
+      "predicate": {
+        "evidence": {
+          "kind": "merge_observation",
+          "result": "merged"
+        }
+      }
+    },
+    {
+      "description": "the installed takt binary was built from the merged candidate revision",
+      "id": "claim:promoted",
+      "kind": "claim",
+      "name": "promoted",
+      "predicate": {
+        "evidence": {
+          "kind": "promotion_record",
+          "result": "promoted"
+        }
+      }
+    },
+    {
+      "description": "the finding's predicate fails on the current candidate revision, observed by another agent run than the one that delivered the candidate",
+      "id": "claim:scenario.passes_after",
+      "kind": "claim",
+      "name": "scenario.passes_after",
+      "predicate": {
+        "evidence": {
+          "kind": "scenario_result",
+          "result": "not_reproduced"
+        }
+      }
+    },
+    {
+      "description": "the finding's predicate holds on the baseline revision",
+      "id": "claim:scenario.reproduced_before",
+      "kind": "claim",
+      "name": "scenario.reproduced_before",
+      "predicate": {
+        "evidence": {
+          "kind": "scenario_result",
+          "result": "reproduced"
+        }
+      }
+    },
+    {
+      "description": "no scenario of the corpus is worse at the current candidate revision than at the baseline",
+      "id": "claim:scorecard.no_regression",
+      "kind": "claim",
+      "name": "scorecard.no_regression",
+      "predicate": {
+        "evidence": {
+          "kind": "scorecard_result",
+          "result": "no_regression"
+        }
+      }
+    },
+    {
+      "description": "the turn closed because it was explicitly abandoned",
+      "id": "outcome:abandoned",
+      "kind": "outcome",
+      "name": "abandoned"
+    },
+    {
+      "description": "the turn closed with the finding verified gone, no regression and the candidate promoted",
+      "id": "outcome:accepted",
+      "kind": "outcome",
+      "name": "accepted",
+      "predicate": {
+        "all": [
+          {
+            "claim": {
+              "id": "promoted"
+            }
+          },
+          {
+            "claim": {
+              "id": "scenario.passes_after"
+            }
+          },
+          {
+            "claim": {
+              "id": "scorecard.no_regression"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "the turn closed because the candidate did not move the finding's predicate",
+      "id": "outcome:declined",
+      "kind": "outcome",
+      "name": "declined",
+      "predicate": {
+        "evidence": {
+          "kind": "scenario_result",
+          "result": "reproduced"
+        }
+      }
+    },
+    {
+      "description": "the turn closed because the finding's predicate does not hold on the baseline",
+      "id": "outcome:unreproducible",
+      "kind": "outcome",
+      "name": "unreproducible",
+      "predicate": {
+        "evidence": {
+          "kind": "scenario_result",
+          "result": "not_reproduced"
+        }
+      }
+    },
+    {
+      "description": "the scorecard shows no regression at the candidate",
+      "id": "obligation:regression.required",
+      "kind": "obligation",
+      "name": "regression.required",
+      "predicate": {
+        "claim": {
+          "id": "scorecard.no_regression"
+        }
+      }
+    },
+    {
+      "description": "the finding is reproduced on the baseline before a candidate counts",
+      "id": "obligation:reproduction.required",
+      "kind": "obligation",
+      "name": "reproduction.required",
+      "predicate": {
+        "claim": {
+          "id": "scenario.reproduced_before"
+        }
+      }
+    },
+    {
+      "description": "the finding is verified gone on the candidate by another run",
+      "id": "obligation:verification.required",
+      "kind": "obligation",
+      "name": "verification.required",
+      "predicate": {
+        "claim": {
+          "id": "scenario.passes_after"
+        }
+      }
+    }
+  ],
+  "protocol": {
+    "description": "One improvement turn on takt: a finding that names a machine-checkable predicate on a scenario or on a repository at a seed is reproduced on the promoted baseline, a candidate fix is delivered and merged under the authority its surface needs, the finding is verified gone on the candidate by another run than the one that delivered it, the scorecard shows no regression against the baseline, and the candidate's binary is promoted. Accepted once promoted; declined when the candidate still reproduces the finding; unreproducible when the baseline never did. Claims about the baseline and about the candidate are about separate artifacts, so a commit to the candidate leaves the baseline's claims standing.",
+    "id": "self.improvement",
+    "revision": 1,
+    "source": "protocols/self-improvement/1.yaml"
+  }
+}

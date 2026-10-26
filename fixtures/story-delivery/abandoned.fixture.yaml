@@ -1,0 +1,50 @@
+format: els-fixture/1
+id: abandoned
+protocol: protocols/story-delivery/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# A story with no evidence. A decision to abandon it taken at the case's earlier revision c0
+# applies to nothing at c1; the same decision taken at c1 earns `abandoned`.
+case:
+  format: canon-case/1
+  id: SD-106
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+
+states:
+  - id: abandoned-at-c0
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: story-owner
+        case_revision: c0
+    add_evidence: []
+    expect:
+      claims: &all-unknown
+        change.handed_over: unknown
+        change.made: unknown
+        tests.pass: unknown
+        gate.green: unknown
+        pr.opened: unknown
+        ci.green: unknown
+        pr.merged: unknown
+      outcomes:
+        accepted: blocked
+        abandoned: blocked
+
+  - id: abandoned
+    add_decisions:
+      - decision: explicitly_abandoned
+        outcome: abandoned
+        principal: story-owner
+        case_revision: c1
+    add_evidence: []
+    expect:
+      claims: *all-unknown
+      outcomes:
+        accepted: blocked
+        abandoned: legitimate

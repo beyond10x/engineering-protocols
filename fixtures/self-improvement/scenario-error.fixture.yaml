@@ -1,0 +1,76 @@
+format: els-fixture/1
+id: scenario-error
+protocol: protocols/self-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# A scenario run that ends with a status the predicate names neither as the defect's nor as the
+# healthy one makes no claim true. On baseline b1 it leaves `scenario.reproduced_before` false
+# without earning `unreproducible`; on candidate h1, by run-b, it leaves
+# `scenario.passes_after` false without earning `declined`.
+case:
+  format: canon-case/1
+  id: SI-107
+  protocol: self.improvement
+  revision: c1
+  inputs:
+    surface: non_judge
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    finding: {revision: f1}
+    baseline: {revision: b1}
+    candidate: {revision: h1}
+    promotion: {revision: p1}
+
+states:
+  - id: baseline-error
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: finding-f1, kind: finding_record, result: filed,
+                 subject: finding, subject_revision: f1}
+      - observed_at: "2026-10-26T08:10:00Z"
+        record: {format: canon-evidence/1, id: baseline-b1, kind: scenario_result,
+                 result: error, subject: baseline, subject_revision: b1, producer: run-a}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: false
+        scenario.passes_after: unknown
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations: &all-open
+        reproduction.required: open
+        verification.required: open
+        regression.required: open
+      actions: &not-reproduced
+        finding.file: admissible
+        scenario.reproduce: admissible
+        scenario.verify: blocked
+        candidate.merge: blocked
+        candidate.merge_judge_surface: blocked
+        scorecard.compare: blocked
+        binary.promote: blocked
+      outcomes: &none
+        accepted: blocked
+        declined: blocked
+        unreproducible: blocked
+        abandoned: blocked
+
+  - id: candidate-error
+    add_evidence:
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: candidate-h1, kind: scenario_result,
+                 result: error, subject: candidate, subject_revision: h1, producer: run-b}
+    expect:
+      claims:
+        finding.cited: true
+        scenario.reproduced_before: false
+        scenario.passes_after: false
+        fix.merged: unknown
+        scorecard.no_regression: unknown
+        promoted: unknown
+      obligations: *all-open
+      actions: *not-reproduced
+      outcomes: *none

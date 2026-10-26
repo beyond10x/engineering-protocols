@@ -1,0 +1,56 @@
+format: els-fixture/1
+id: declined
+protocol: protocols/loop-improvement/1.yaml
+at: "2026-10-26T12:00:00Z"
+
+# An honest loop candidate lc1 is merged, and run-b's comparison after further turns shows the
+# metric did not improve: `loop.metric_improved` is false and the turn is declined.
+case:
+  format: canon-case/1
+  id: LI-104
+  protocol: loop.improvement
+  revision: c1
+  independence:
+    run-a: []
+    run-b: [different_agent_run]
+  artifacts:
+    loop_baseline: {revision: lb1}
+    loop_candidate: {revision: lc1}
+    loop_finding: {revision: lf1}
+
+states:
+  - id: not-improved
+    add_evidence:
+      - observed_at: "2026-10-26T08:00:00Z"
+        record: {format: canon-evidence/1, id: measurement-lb1, kind: loop_measurement,
+                 result: below_target, subject: loop_baseline, subject_revision: lb1}
+      - observed_at: "2026-10-26T09:00:00Z"
+        record: {format: canon-evidence/1, id: definitions-lc1, kind: definition_check,
+                 result: unchanged, subject: loop_candidate, subject_revision: lc1}
+      - observed_at: "2026-10-26T09:30:00Z"
+        record: {format: canon-evidence/1, id: merge-lc1, kind: merge_observation,
+                 result: merged, subject: loop_candidate, subject_revision: lc1}
+      - observed_at: "2026-10-26T11:00:00Z"
+        record: {format: canon-evidence/1, id: comparison-lc1, kind: loop_comparison,
+                 result: not_improved, subject: loop_candidate, subject_revision: lc1,
+                 producer: run-b}
+    expect:
+      claims:
+        loop.metric_below_target: true
+        loop.definition_honest: true
+        loop.change_merged: true
+        loop.metric_improved: false
+      obligations:
+        honesty.required: discharged
+        improvement.required: open
+      actions:
+        loop.measure: admissible
+        loop.finding.file: admissible
+        loop.change.deliver: admissible
+        loop.definition.check: admissible
+        loop.merge: approval-required
+        loop.compare: admissible
+      outcomes:
+        accepted: blocked
+        declined: legitimate
+        abandoned: blocked
