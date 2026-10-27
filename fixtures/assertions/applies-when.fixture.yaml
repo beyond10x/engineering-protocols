@@ -1,0 +1,58 @@
+format: engineering-gates-fixture/1
+summary: A gate whose applies_when is false reports not_applicable, never pass.
+gates:
+  format: engineering-gates/1
+  language: canon-expr/1
+  gates:
+    - id: release-note
+      text: A consumer-visible change records a release note.
+      applies_when: 'story.has_tag("consumer-visible")'
+      assertions:
+        - 'git.changed("CHANGELOG.md")'
+repository:
+  commits:
+    - files:
+        README.md: "readme\n"
+        CHANGELOG.md: "# Changelog\n"
+    - files:
+        README.md: "readme, edited\n"
+    - files:
+        CHANGELOG.md: "# Changelog\n\n- an entry\n"
+cases:
+  - name: a story without the tag is not applicable even though the changelog is untouched
+    base: 0
+    subject: 1
+    story:
+      id: story-a
+      tags: [internal]
+    expect:
+      result: not_applicable
+      gates:
+        release-note: not_applicable
+  - name: a story with the tag is judged by its assertions and fails without a release note
+    base: 0
+    subject: 1
+    story:
+      id: story-b
+      tags: [consumer-visible]
+    expect:
+      result: fail
+      gates:
+        release-note: fail
+  - name: a story with the tag passes with a release note
+    base: 1
+    subject: 2
+    story:
+      id: story-b
+      tags: [consumer-visible]
+    expect:
+      result: pass
+      gates:
+        release-note: pass
+  - name: no story in the context leaves applicability unknown, not not_applicable
+    base: 1
+    subject: 2
+    expect:
+      result: unknown
+      gates:
+        release-note: unknown

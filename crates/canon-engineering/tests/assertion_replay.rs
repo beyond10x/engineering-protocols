@@ -199,3 +199,213 @@ fn gate_source_cannot_be_replaced_by_evidence_output() {
     );
     assert_eq!(before, fs::read(root.path().join("gates.yaml")).unwrap());
 }
+
+/// A fixture builds a repository from `repository.commits` (each commit writes its `files`), then
+/// runs the gates document for every case with the commits named by index as base and subject. The
+/// result, each gate's result and the exit code must match `expect`, and replaying the retained
+/// evidence must print the same report.
+fn run_fixture(text: &str) {
+    let fixture: Value = serde_yaml_ng::from_str(text).unwrap();
+    assert_eq!(fixture["format"], "engineering-gates-fixture/1");
+    let root = tempfile::tempdir().unwrap();
+    let git = |args: &[&str]| -> String {
+        let output = Command::new("git")
+            .current_dir(root.path())
+            .env("GIT_CONFIG_GLOBAL", "/dev/null")
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .args([
+                "-c",
+                "user.name=fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+            ])
+            .args(["-c", "commit.gpgsign=false"])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap().trim().to_owned()
+    };
+    git(&["init", "-q"]);
+    let mut oids = Vec::new();
+    for commit in fixture["repository"]["commits"].as_array().unwrap() {
+        for (path, content) in commit["files"].as_object().unwrap() {
+            fs::write(root.path().join(path), content.as_str().unwrap()).unwrap();
+        }
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture commit"]);
+        oids.push(git(&["rev-parse", "HEAD"]));
+    }
+    fs::write(
+        root.path().join("gates.yaml"),
+        serde_json::to_vec(&fixture["gates"]).unwrap(),
+    )
+    .unwrap();
+    for case in fixture["cases"].as_array().unwrap() {
+        let name = case["name"].as_str().unwrap();
+        let mut args = vec![
+            "gates".to_owned(),
+            "run".into(),
+            "--file".into(),
+            "gates.yaml".into(),
+            "--now".into(),
+            "1000".into(),
+        ];
+        for role in ["base", "subject"] {
+            if let Some(index) = case[role].as_u64() {
+                args.extend([format!("--{role}"), oids[index as usize].clone()]);
+            }
+        }
+        if let Some(story) = case.get("story") {
+            args.extend(["--story-id".into(), story["id"].as_str().unwrap().into()]);
+            for tag in story["tags"].as_array().unwrap() {
+                args.extend(["--story-tag".into(), tag.as_str().unwrap().into()]);
+            }
+        }
+        let args: Vec<&str> = args.iter().map(String::as_str).collect();
+        let run = cli(root.path(), &args);
+        let report: Value = serde_json::from_slice(&run.stdout)
+            .unwrap_or_else(|e| panic!("{name}: {e}: {}", String::from_utf8_lossy(&run.stderr)));
+        let expect = &case["expect"];
+        assert_eq!(report["result"], expect["result"], "{name}: result");
+        for (id, result) in expect["gates"].as_object().unwrap() {
+            let gate = report["gates"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|g| g["id"] == *id)
+                .unwrap_or_else(|| panic!("{name}: no gate {id}"));
+            assert_eq!(gate["result"], *result, "{name}: gate {id}");
+        }
+        let code = match expect["result"].as_str().unwrap() {
+            "pass" => 0,
+            "fail" => 1,
+            "unknown" => 3,
+            "not_applicable" => 4,
+            other => panic!("{name}: unknown expected result {other}"),
+        };
+        assert_eq!(run.status.code(), Some(code), "{name}: exit code");
+        let replay = cli(
+            root.path(),
+            &[
+                "gates",
+                "evaluate",
+                "--evidence",
+                ".engineering/assertions/evidence.json",
+            ],
+        );
+        assert_eq!(run.stdout, replay.stdout, "{name}: replay");
+    }
+}
+
+#[test]
+fn git_changed_fixture() {
+    run_fixture(include_str!(
+        "../../../fixtures/assertions/git-changed.fixture.yaml"
+    ));
+}
+
+#[test]
+fn applies_when_fixture() {
+    run_fixture(include_str!(
+        "../../../fixtures/assertions/applies-when.fixture.yaml"
+    ));
+}
+
+/// Each case copies `tool` into a directory outside the tree, writes the project with `${TOOLS}`
+/// and `${ROOT}` replaced, and runs the gates. A case either runs (its result, and the program the
+/// evidence records) or is refused at admission with the listed words in the message.
+fn run_program_fixture(text: &str) {
+    let fixture: Value = serde_yaml_ng::from_str(text).unwrap();
+    assert_eq!(fixture["format"], "engineering-gates-program-fixture/1");
+    for case in fixture["cases"].as_array().unwrap() {
+        let name = case["name"].as_str().unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let tools = tempfile::tempdir().unwrap();
+        if let Some(tool) = case["tool"].as_str() {
+            fs::copy(tool, tools.path().join("tool")).unwrap();
+        }
+        let substitute = |text: &str| {
+            text.replace("${TOOLS}", &tools.path().display().to_string())
+                .replace("${ROOT}", &root.path().display().to_string())
+        };
+        fs::write(
+            root.path().join("gates.yaml"),
+            serde_json::to_vec(&fixture["gates"]).unwrap(),
+        )
+        .unwrap();
+        fs::write(
+            root.path().join("project.yaml"),
+            substitute(&serde_json::to_string(&case["project"]).unwrap()),
+        )
+        .unwrap();
+        let run = cli(
+            root.path(),
+            &[
+                "gates",
+                "run",
+                "--file",
+                "gates.yaml",
+                "--project",
+                "project.yaml",
+                "--now",
+                "1000",
+            ],
+        );
+        let expect = &case["expect"];
+        if let Some(words) = expect["refused"].as_array() {
+            assert_eq!(run.status.code(), Some(2), "{name}: refused");
+            let stderr = String::from_utf8_lossy(&run.stderr);
+            for word in words {
+                let word = substitute(word.as_str().unwrap());
+                assert!(stderr.contains(&word), "{name}: {word} not in {stderr}");
+            }
+            assert!(
+                !root
+                    .path()
+                    .join(".engineering/assertions/evidence.json")
+                    .exists(),
+                "{name}: a refused admission retains no evidence"
+            );
+            continue;
+        }
+        let report = good_or_status(&run);
+        assert_eq!(report["result"], expect["result"], "{name}: result");
+        let evidence: Value = serde_json::from_slice(
+            &fs::read(root.path().join(".engineering/assertions/evidence.json")).unwrap(),
+        )
+        .unwrap();
+        let programs = evidence["programs"].as_array().unwrap();
+        let Some(program) = expect.get("program") else {
+            assert!(programs.is_empty(), "{name}: no program was named");
+            continue;
+        };
+        assert_eq!(programs.len(), 1, "{name}");
+        let recorded = &programs[0];
+        assert_eq!(recorded["binding"], program["binding"], "{name}");
+        assert_eq!(recorded["program"], program["program"], "{name}");
+        let path = tools.path().canonicalize().unwrap().join("tool");
+        assert_eq!(recorded["path"], path.display().to_string(), "{name}");
+        assert_eq!(
+            recorded["sha256"],
+            canon_engineering_assertions::digest(&fs::read(&path).unwrap()),
+            "{name}: sha256"
+        );
+    }
+}
+
+fn good_or_status(output: &Output) -> Value {
+    serde_json::from_slice(&output.stdout)
+        .unwrap_or_else(|e| panic!("{e}: {}", String::from_utf8_lossy(&output.stderr)))
+}
+
+#[test]
+fn program_by_name_fixture() {
+    run_program_fixture(include_str!(
+        "../../../fixtures/assertions/program-by-name.fixture.yaml"
+    ));
+}

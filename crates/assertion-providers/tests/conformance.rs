@@ -159,6 +159,7 @@ fn registered_external_namespace_uses_same_collector_and_checks_identity() {
         identity: "example/1".into(),
         sha256: executable_digest(&executable).unwrap(),
         command: CommandBinding {
+            program: None,
             executable,
             args: vec![],
             env: BTreeMap::new(),
@@ -193,6 +194,7 @@ fn process_timeout_output_limit_and_explicit_environment() {
         context.commands.insert(
             binding.into(),
             CommandBinding {
+                program: None,
                 executable: executable.into(),
                 args: argv,
                 env: BTreeMap::new(),
@@ -237,6 +239,7 @@ fn tests_run_reports_conflicting_process_status_as_error() {
     context.commands.insert(
         "suite".into(),
         CommandBinding {
+            program: None,
             executable: "/usr/bin/printf".into(),
             args: vec!["%s".into(), report],
             env: BTreeMap::new(),
@@ -442,6 +445,7 @@ fn success_boolean_and_malformed_external_envelopes_are_checked() {
         context.commands.insert(
             name.into(),
             CommandBinding {
+                program: None,
                 executable: exe.into(),
                 args: vec![],
                 env: BTreeMap::new(),
@@ -495,6 +499,7 @@ fn main() {
                 identity: "bad/1".into(),
                 sha256: executable_digest(&executable).unwrap(),
                 command: CommandBinding {
+                    program: None,
                     executable: executable.clone(),
                     args: vec![],
                     env: BTreeMap::new(),

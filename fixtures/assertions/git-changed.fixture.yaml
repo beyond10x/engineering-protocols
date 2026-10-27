@@ -1,0 +1,53 @@
+format: engineering-gates-fixture/1
+summary: git.changed tests the paths that differ between the base and subject revisions.
+gates:
+  format: engineering-gates/1
+  language: canon-expr/1
+  gates:
+    - id: release-note
+      text: The change records a release note.
+      assertions:
+        - 'git.changed("CHANGELOG.md")'
+repository:
+  commits:
+    - files:
+        README.md: "readme\n"
+        CHANGELOG.md: "# Changelog\n"
+    - files:
+        README.md: "readme, edited\n"
+    - files:
+        CHANGELOG.md: "# Changelog\n\n- an entry\n"
+cases:
+  - name: the subject changed the changelog
+    base: 1
+    subject: 2
+    expect:
+      result: pass
+      gates:
+        release-note: pass
+  - name: the subject did not change the changelog
+    base: 0
+    subject: 1
+    expect:
+      result: fail
+      gates:
+        release-note: fail
+  - name: a change spanning two commits is the union of their paths
+    base: 0
+    subject: 2
+    expect:
+      result: pass
+      gates:
+        release-note: pass
+  - name: no base in the context leaves the gate unknown
+    subject: 2
+    expect:
+      result: unknown
+      gates:
+        release-note: unknown
+  - name: no subject in the context leaves the gate unknown
+    base: 0
+    expect:
+      result: unknown
+      gates:
+        release-note: unknown

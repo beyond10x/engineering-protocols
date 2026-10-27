@@ -6,11 +6,13 @@ mod retention;
 mod snapshot;
 
 use anyhow::{Context, Result, bail, ensure};
+pub use assertion_providers::Change;
 use assertion_providers::{
     Collected, CommandBinding, ExternalProvider, NetworkBinding, ProviderContext,
 };
 use canon_expr::{
-    Bindings, Catalog, EvalContext, Implementation, Observation, Outcome, Plan, Report, Value,
+    Bindings, Catalog, EvalContext, Evaluation, Implementation, Observation, Outcome, Plan, Report,
+    Truth, Value,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -28,7 +30,7 @@ const MAX_DOCUMENT: u64 = 4 * 1024 * 1024;
 #[rustfmt::skip]
 #[allow(dead_code,clippy::derivable_impls)]
 mod contract;
-pub use contract::{Document, Gate};
+pub use contract::{Document, EssPresence, Gate};
 
 /// Project configuration is trusted admission data, not part of the expression language.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,6 +44,10 @@ pub struct Project {
     /// Additional inputs (including ignored build/report files) consumed by external providers.
     #[serde(default)]
     pub inputs: Vec<PathBuf>,
+    /// Absolute directories outside the tree where a command's `program` is looked up, in order.
+    /// Empty means the runtime's default from [`Admission::search_path`].
+    #[serde(default)]
+    pub search_path: Vec<PathBuf>,
     #[serde(default)]
     pub commands: BTreeMap<String, CommandBinding>,
     #[serde(default)]
@@ -71,6 +77,7 @@ impl Default for Project {
             variables: BTreeMap::new(),
             catalogs: vec![],
             inputs: vec![],
+            search_path: vec![],
             commands: BTreeMap::new(),
             providers: BTreeMap::new(),
             networks: BTreeMap::new(),
@@ -79,6 +86,63 @@ impl Default for Project {
             freshness_seconds: default_freshness(),
         }
     }
+}
+
+/// What the runtime knows when it admits a project: the change under test and, for story
+/// delivery, the story it belongs to. Both enter the context identity, so evidence collected for
+/// one change cannot be replayed as evidence for another.
+#[derive(Debug, Clone, Default)]
+pub struct Admission {
+    pub change: Change,
+    /// Where a `program` is looked up when the project gives no `search_path`. Empty means such a
+    /// command is refused at admission; the caller's `PATH` is never used.
+    pub search_path: Vec<PathBuf>,
+}
+
+/// A command's program as resolved at admission and recorded with the run.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdmittedProgram {
+    /// `command:<name>` or `provider:<operation>`.
+    pub binding: String,
+    pub program: String,
+    /// Absolute path outside the tree that the command runs.
+    pub path: PathBuf,
+    /// SHA-256 of the file's bytes at admission; a change before or during collection is refused.
+    pub sha256: String,
+}
+
+/// One gate's result. `NotApplicable` is written only when the gate's `applies_when` evaluated to
+/// false; it is never `Pass`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GateResult {
+    Pass,
+    Fail,
+    Unknown,
+    NotApplicable,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GateOutcome {
+    pub id: String,
+    pub result: GateResult,
+    pub reasons: Vec<String>,
+}
+
+/// The run's report: Canon's per-expression evaluations, each gate's result and the aggregate.
+/// `result` is `fail` when any gate fails, else `unknown` when any is unknown, else `pass` when any
+/// passes, else `not_applicable`. `truth` is Canon's value for the aggregate and is `true` only for
+/// `pass`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GatesReport {
+    pub plan_id: String,
+    pub truth: Truth,
+    pub result: GateResult,
+    pub gates: Vec<GateOutcome>,
+    pub assertions: Vec<Evaluation>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -91,6 +155,9 @@ pub struct Bundle {
     pub context_identity: String,
     pub evaluated_at: i64,
     pub observations: Vec<Observation>,
+    /// Programs resolved from names at admission.
+    #[serde(default)]
+    pub programs: Vec<AdmittedProgram>,
 }
 
 pub fn builtin_catalog() -> Result<Catalog> {
@@ -132,6 +199,7 @@ pub struct Prepared {
     excluded_output: Option<PathBuf>,
     source_inputs: BTreeSet<PathBuf>,
     executable_locks: BTreeMap<PathBuf, String>,
+    pub programs: Vec<AdmittedProgram>,
 }
 
 fn sources(document: &Document) -> Result<Vec<String>> {
@@ -164,17 +232,51 @@ fn sources(document: &Document) -> Result<Vec<String>> {
             "gate {} has no assertions",
             gate.id
         );
+        if let EssPresence::Present(applies_when) = &gate.applies_when {
+            ensure!(
+                !applies_when.trim().is_empty(),
+                "gate {} has an empty applies_when",
+                gate.id
+            );
+            sources.push(applies_when.clone());
+        }
         sources.extend(gate.assertions.iter().cloned());
     }
     Ok(sources)
 }
 
-fn command_paths(project: &mut Project, root: &Path) -> Result<()> {
-    for command in project
+fn command_paths(
+    project: &mut Project,
+    root: &Path,
+    runtime_default: &[PathBuf],
+) -> Result<Vec<AdmittedProgram>> {
+    let search_path = project.search_path.clone();
+    let mut programs = Vec::new();
+    let named = project
         .commands
-        .values_mut()
-        .chain(project.providers.values_mut().map(|p| &mut p.command))
-    {
+        .iter_mut()
+        .map(|(name, command)| (format!("command:{name}"), command))
+        .chain(
+            project
+                .providers
+                .iter_mut()
+                .map(|(operation, p)| (format!("provider:{operation}"), &mut p.command)),
+        );
+    for (name, command) in named {
+        if command.program.is_some() {
+            if let Some(resolved) =
+                assertion_providers::admit_command(command, root, &search_path, runtime_default)
+                    .map_err(|e| anyhow::anyhow!("{name}: {e}"))?
+            {
+                programs.push(AdmittedProgram {
+                    binding: name,
+                    program: resolved.program,
+                    path: resolved.path,
+                    sha256: resolved.sha256,
+                });
+            }
+            continue;
+        }
         ensure!(
             !command.executable.as_os_str().is_empty(),
             "empty executable"
@@ -188,7 +290,7 @@ fn command_paths(project: &mut Project, root: &Path) -> Result<()> {
             .context("resolve admitted executable (PATH lookup is not used)")?;
         ensure!(command.executable.is_file(), "executable is not a file");
     }
-    Ok(())
+    Ok(programs)
 }
 
 /// No observation runs here. Reading configuration and source identity is separate from acquisition.
@@ -197,6 +299,23 @@ pub fn prepare(
     file: &Path,
     project_file: Option<&Path>,
     excluded_output: Option<&Path>,
+) -> Result<Prepared> {
+    prepare_with(
+        root,
+        file,
+        project_file,
+        excluded_output,
+        &Admission::default(),
+    )
+}
+
+/// [`prepare`] with the runtime's admission data: the change under test and its story.
+pub fn prepare_with(
+    root: &Path,
+    file: &Path,
+    project_file: Option<&Path>,
+    excluded_output: Option<&Path>,
+    admission: &Admission,
 ) -> Result<Prepared> {
     let root = root.canonicalize()?;
     ensure!(
@@ -232,7 +351,7 @@ pub fn prepare(
             && project.commands.len() <= 1024,
         "project registration limit exceeded"
     );
-    command_paths(&mut project, &root)?;
+    let programs = command_paths(&mut project, &root, &admission.search_path)?;
     let mut catalog = builtin_catalog()?;
     for path in &project.catalogs {
         let extension: Catalog = read(&root.join(path))?;
@@ -254,11 +373,17 @@ pub fn prepare(
             catalog.functions.insert(name, function);
         }
     }
+    let recorded = |binding: String, executable: &Path| -> Result<String> {
+        match programs.iter().find(|p| p.binding == binding) {
+            Some(program) => Ok(program.sha256.clone()),
+            None => Ok(assertion_providers::executable_digest(executable)?),
+        }
+    };
     let mut executable_locks = BTreeMap::new();
-    for command in project.commands.values() {
+    for (name, command) in &project.commands {
         executable_locks.insert(
             command.executable.clone(),
-            assertion_providers::executable_digest(&command.executable)?,
+            recorded(format!("command:{name}"), &command.executable)?,
         );
     }
     for (operation, provider) in &project.providers {
@@ -266,7 +391,10 @@ pub fn prepare(
             !provider.identity.is_empty(),
             "external provider identity is empty"
         );
-        let actual = assertion_providers::executable_digest(&provider.command.executable)?;
+        let actual = recorded(
+            format!("provider:{operation}"),
+            &provider.command.executable,
+        )?;
         ensure!(
             actual == provider.sha256,
             "external provider {operation} executable digest differs from admission"
@@ -276,10 +404,12 @@ pub fn prepare(
     // The executable includes this catalog and built-in collector code. Explicit bindings and
     // command bytes also enter the identity: a binary replacement cannot reuse prior evidence.
     let implementation = assertion_providers::executable_digest(&std::env::current_exe()?)?;
+    let change = assertion_providers::resolve_change(&root, &admission.change)?;
     let context_identity = digest(&serde_json::to_vec(&(
         &project,
         &executable_locks,
         &implementation,
+        &change,
     ))?);
     for function in catalog.functions.values_mut() {
         if let Implementation::Observation(provider) = &mut function.implementation {
@@ -336,6 +466,7 @@ pub fn prepare(
     let plan = canon_expr::compile(&expressions, &catalog, &bindings)
         .map_err(|e| anyhow::anyhow!("{}: {e:?}", file.display()))?;
     let mut context = ProviderContext::new(&root);
+    context.change = change;
     context.commands = project.commands;
     context.providers = project.providers;
     context.networks = project.networks;
@@ -343,6 +474,12 @@ pub fn prepare(
     context.max_output_bytes = project.max_output_bytes;
     // Refuse missing command/network admission before running any earlier request.
     for request in &plan.requests {
+        if request.operation == "git.changed" {
+            let Some(Value::String(glob)) = request.arguments.get("glob") else {
+                bail!("glob must be a string")
+            };
+            assertion_providers::validate_glob(glob)?;
+        }
         if matches!(
             request.operation.as_str(),
             "process.run" | "process.succeeded" | "ess.run" | "tests.run"
@@ -389,6 +526,7 @@ pub fn prepare(
         excluded_output,
         source_inputs,
         executable_locks,
+        programs,
     })
 }
 
@@ -505,6 +643,7 @@ pub fn collect(prepared: Prepared, now: i64) -> Result<Bundle> {
         context_identity: prepared.bindings.context_identity,
         evaluated_at: now,
         observations,
+        programs: prepared.programs,
     })
 }
 
@@ -519,8 +658,7 @@ fn verify_executables(locks: &BTreeMap<PathBuf, String>) -> Result<()> {
     Ok(())
 }
 
-/// Pure replay. The caller chooses time and identities; this never invokes collectors or reads paths.
-pub fn evaluate(
+fn replay(
     bundle: &Bundle,
     now: i64,
     source_identity: Option<&str>,
@@ -550,4 +688,103 @@ pub fn evaluate(
         "bundle gate source differs from its checked plan"
     );
     Ok(report)
+}
+
+/// Pure replay. The caller chooses time and identities; this never invokes collectors or reads paths.
+/// The report holds each gate's own assertions in gate order, with no `applies_when` expression among
+/// them, so a gate's assertions pair with `bundle.document.gates` whether or not it has one. `truth`
+/// is that of [`evaluate_gates`]: a `not_applicable` gate is neither pass nor fail, and a run in which
+/// nothing applied is not `true`.
+pub fn evaluate(
+    bundle: &Bundle,
+    now: i64,
+    source_identity: Option<&str>,
+    context_identity: Option<&str>,
+) -> Result<Report> {
+    let gated = evaluate_gates(bundle, now, source_identity, context_identity)?;
+    let mut cursor = 0;
+    let mut assertions = Vec::new();
+    for gate in &bundle.document.gates {
+        if matches!(gate.applies_when, EssPresence::Present(_)) {
+            cursor += 1;
+        }
+        assertions.extend_from_slice(&gated.assertions[cursor..cursor + gate.assertions.len()]);
+        cursor += gate.assertions.len();
+    }
+    Ok(Report {
+        plan_id: gated.plan_id,
+        truth: gated.truth,
+        assertions,
+    })
+}
+
+/// Each gate's result. A gate whose `applies_when` is true is judged by its assertions; false makes
+/// it `not_applicable`; unknown makes it `unknown`. Pure replay, like [`evaluate`]. `assertions` is
+/// Canon's evaluation of every expression in document order, `applies_when` included.
+pub fn evaluate_gates(
+    bundle: &Bundle,
+    now: i64,
+    source_identity: Option<&str>,
+    context_identity: Option<&str>,
+) -> Result<GatesReport> {
+    let report = replay(bundle, now, source_identity, context_identity)?;
+    let mut cursor = 0;
+    let mut gates = Vec::new();
+    for gate in &bundle.document.gates {
+        let applicability = match gate.applies_when {
+            EssPresence::Present(_) => {
+                cursor += 1;
+                Some(&report.assertions[cursor - 1])
+            }
+            EssPresence::Absent => None,
+        };
+        let own = &report.assertions[cursor..cursor + gate.assertions.len()];
+        cursor += gate.assertions.len();
+        let (result, reasons) = match applicability.map(|a| a.truth) {
+            Some(Truth::False) => (
+                GateResult::NotApplicable,
+                vec!["applies_when is false".into()],
+            ),
+            Some(Truth::Unknown) => (
+                GateResult::Unknown,
+                applicability.map(|a| a.reasons.clone()).unwrap_or_default(),
+            ),
+            Some(Truth::True) | None => {
+                let reasons = own.iter().flat_map(|a| a.reasons.clone()).collect();
+                if own.iter().any(|a| a.truth == Truth::False) {
+                    (GateResult::Fail, reasons)
+                } else if own.iter().all(|a| a.truth == Truth::True) {
+                    (GateResult::Pass, vec![])
+                } else {
+                    (GateResult::Unknown, reasons)
+                }
+            }
+        };
+        gates.push(GateOutcome {
+            id: gate.id.clone(),
+            result,
+            reasons,
+        });
+    }
+    let has = |wanted| gates.iter().any(|g| g.result == wanted);
+    let result = if has(GateResult::Fail) {
+        GateResult::Fail
+    } else if has(GateResult::Unknown) {
+        GateResult::Unknown
+    } else if has(GateResult::Pass) {
+        GateResult::Pass
+    } else {
+        GateResult::NotApplicable
+    };
+    Ok(GatesReport {
+        plan_id: report.plan_id,
+        truth: match result {
+            GateResult::Pass => Truth::True,
+            GateResult::Fail => Truth::False,
+            GateResult::Unknown | GateResult::NotApplicable => Truth::Unknown,
+        },
+        result,
+        gates,
+        assertions: report.assertions,
+    })
 }
