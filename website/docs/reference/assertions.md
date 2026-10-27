@@ -352,6 +352,9 @@ Options:
       --story-tag <STORY_TAGS>
           A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
 
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
+
   -h, --help
           Print help
 
@@ -390,6 +393,9 @@ Options:
       --story-tag <STORY_TAGS>
           A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
 
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
+
   -h, --help
           Print help
 
@@ -427,6 +433,9 @@ Options:
 
       --story-tag <STORY_TAGS>
           A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
+
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
 
       --out <OUT>
           Evidence output under .engineering/assertions/, relative to root

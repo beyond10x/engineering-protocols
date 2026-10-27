@@ -38,6 +38,10 @@ pub struct Input {
     /// A tag of that story, repeatable; giving none leaves `story.has_tag` unknown.
     #[arg(long = "story-tag")]
     pub story_tags: Vec<String>,
+    /// Directory, repeatable, where a command's `program` is looked up when the project has no
+    /// `search_path`; it must be absolute and outside the tree.
+    #[arg(long = "default-search-path")]
+    pub default_search_path: Vec<PathBuf>,
 }
 impl Default for Input {
     fn default() -> Self {
@@ -49,6 +53,7 @@ impl Default for Input {
             subject: None,
             story_id: None,
             story_tags: Vec::new(),
+            default_search_path: Vec::new(),
         }
     }
 }
@@ -62,6 +67,7 @@ impl Input {
                 story_tags: (self.story_id.is_some() || !self.story_tags.is_empty())
                     .then(|| self.story_tags.clone()),
             },
+            search_path: self.default_search_path.clone(),
         }
     }
 }

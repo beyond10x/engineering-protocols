@@ -1,0 +1,87 @@
+format: engineering-gates-program-fixture/1
+summary: A command names a program that admission resolves on a search_path outside the tree and records with its sha256.
+gates:
+  format: engineering-gates/1
+  language: canon-expr/1
+  gates:
+    - id: typecheck
+      text: The type checker accepts the tree.
+      assertions:
+        - 'process.succeeded("tool")'
+cases:
+  - name: program resolved on the project search_path runs that file and records its path and digest
+    tool: /usr/bin/true
+    project:
+      format: engineering-assertions-project/1
+      search_path: ['${TOOLS}']
+      commands:
+        tool:
+          program: tool
+    expect:
+      result: pass
+      program:
+        binding: 'command:tool'
+        program: tool
+        path: '${TOOLS}/tool'
+  - name: the resolved file is the one that runs
+    tool: /usr/bin/false
+    project:
+      format: engineering-assertions-project/1
+      search_path: ['${TOOLS}']
+      commands:
+        tool:
+          program: tool
+    expect:
+      result: fail
+      program:
+        binding: 'command:tool'
+        program: tool
+        path: '${TOOLS}/tool'
+  - name: an absolute executable still works beside a program
+    tool: /usr/bin/true
+    project:
+      format: engineering-assertions-project/1
+      search_path: ['${TOOLS}']
+      commands:
+        tool:
+          executable: /usr/bin/true
+    expect:
+      result: pass
+  - name: no search_path and no runtime default is refused naming the program
+    tool: /usr/bin/true
+    project:
+      format: engineering-assertions-project/1
+      commands:
+        tool:
+          program: tool
+    expect:
+      refused: [tool]
+  - name: a search_path inside the tree is refused naming the entry
+    tool: /usr/bin/true
+    project:
+      format: engineering-assertions-project/1
+      search_path: ['${ROOT}/bin']
+      commands:
+        tool:
+          program: tool
+    expect:
+      refused: ['${ROOT}/bin']
+  - name: a relative search_path entry is refused
+    tool: /usr/bin/true
+    project:
+      format: engineering-assertions-project/1
+      search_path: [bin]
+      commands:
+        tool:
+          program: tool
+    expect:
+      refused: [bin, absolute]
+  - name: a program missing from the search_path is refused naming both
+    project:
+      format: engineering-assertions-project/1
+      search_path: ['${TOOLS}']
+      commands:
+        tool:
+          program: tool
+    expect:
+      refused: [tool, '${TOOLS}']

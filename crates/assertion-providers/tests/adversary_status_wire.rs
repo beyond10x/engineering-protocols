@@ -74,6 +74,7 @@ fn main() {
             identity: "adv/1".into(),
             sha256: executable_digest(&executable).unwrap(),
             command: CommandBinding {
+                program: None,
                 executable,
                 args: vec![],
                 env: BTreeMap::new(),

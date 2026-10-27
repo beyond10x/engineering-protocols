@@ -145,6 +145,7 @@ fn run(
     context: &ProviderContext,
 ) -> Result<Result<String, String>, ProviderError> {
     let binding = CommandBinding {
+        program: None,
         executable: git.to_owned(),
         args: HARDENING
             .iter()

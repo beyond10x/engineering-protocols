@@ -26,6 +26,7 @@ fn normalized_runtime_models_match_the_ess_field_types() {
                     "Change",
                     "GateOutcome",
                     "GatesReport",
+                    "AdmittedProgram",
                 ]
                 .contains(&name.as_str())
                 {
@@ -39,7 +40,7 @@ fn normalized_runtime_models_match_the_ess_field_types() {
             }
         }
     }
-    assert_eq!(actual.len(), 8, "every native envelope must be compared");
+    assert_eq!(actual.len(), 9, "every native envelope must be compared");
     let mut expected = std::collections::BTreeMap::new();
     for ty in yaml["types"].as_sequence().unwrap() {
         let name = ty["name"].as_str().unwrap();

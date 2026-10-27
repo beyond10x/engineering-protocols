@@ -12,6 +12,9 @@ releases at bare-version tags.
   `applies_when: EssPresence::Absent`; `cli::Input` has four more fields (`Input::default()` fills
   them); `ProviderContext` has a `change` field; `gates run` and `gates evaluate` print a
   `GatesReport` (a superset of Canon's report: `truth` and `assertions` stay).
+- `CommandBinding` has a `program` field (a `CommandBinding { .. }` literal needs `program: None`), its
+  `executable` defaults to empty, `Project` has `search_path`, `Bundle` has `programs`, and
+  `Admission` has `search_path`.
 
 ### Added
 
@@ -22,6 +25,13 @@ releases at bare-version tags.
   `evaluate_gates` returns each gate's result and an aggregate, and `gates run` exits 4 when nothing
   applied. The runtime passes the change through `prepare_with` and `Admission`, or the CLI's
   `--base`, `--subject`, `--story-id` and `--story-tag`; the change enters the context identity.
+- A command in an assertions project can name a `program` instead of an absolute `executable`.
+  Admission resolves the name on the project's `search_path`, else on the default the runtime passes
+  in (`Admission::search_path`, or `--default-search-path`); the caller's `PATH` is never read. The
+  match must be an executable file outside the tree, and every entry must be absolute and outside
+  the tree, or admission refuses and names it. The resolved absolute path and its sha256 are
+  recorded in the evidence (`programs`), and a change of the file before or during collection is
+  refused like any admitted executable. The process is still started with a cleared environment.
 
 ## [0.10.0] - 2026-10-26
 

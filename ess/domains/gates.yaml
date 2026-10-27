@@ -25,6 +25,7 @@ types:
     kind: struct
     fields:
       - {name: executable, type: String}
+      - {name: program, type: Optional<String>}
       - {name: args, type: List<String>}
       - {name: env, type: 'Map<String, String>'}
   - name: engineering.gates.ExternalProvider
@@ -44,6 +45,7 @@ types:
       - {name: variables, type: 'Map<String, engineering.expr.Value>'}
       - {name: catalogs, type: List<String>}
       - {name: inputs, type: List<String>}
+      - {name: search_path, type: List<String>}
       - {name: commands, type: 'Map<String, engineering.gates.CommandBinding>'}
       - {name: providers, type: 'Map<String, engineering.gates.ExternalProvider>'}
       - {name: networks, type: 'Map<String, engineering.gates.NetworkBinding>'}
@@ -60,6 +62,14 @@ types:
       - {name: context_identity, type: String}
       - {name: evaluated_at, type: Integer}
       - {name: observations, type: List<engineering.expr.Observation>}
+      - {name: programs, type: List<engineering.gates.AdmittedProgram>}
+  - name: engineering.gates.AdmittedProgram
+    kind: struct
+    fields:
+      - {name: binding, type: String}
+      - {name: program, type: String}
+      - {name: path, type: String}
+      - {name: sha256, type: String}
   - name: engineering.gates.Change
     kind: struct
     fields:

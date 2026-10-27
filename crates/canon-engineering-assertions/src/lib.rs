@@ -44,6 +44,10 @@ pub struct Project {
     /// Additional inputs (including ignored build/report files) consumed by external providers.
     #[serde(default)]
     pub inputs: Vec<PathBuf>,
+    /// Absolute directories outside the tree where a command's `program` is looked up, in order.
+    /// Empty means the runtime's default from [`Admission::search_path`].
+    #[serde(default)]
+    pub search_path: Vec<PathBuf>,
     #[serde(default)]
     pub commands: BTreeMap<String, CommandBinding>,
     #[serde(default)]
@@ -73,6 +77,7 @@ impl Default for Project {
             variables: BTreeMap::new(),
             catalogs: vec![],
             inputs: vec![],
+            search_path: vec![],
             commands: BTreeMap::new(),
             providers: BTreeMap::new(),
             networks: BTreeMap::new(),
@@ -89,6 +94,22 @@ impl Default for Project {
 #[derive(Debug, Clone, Default)]
 pub struct Admission {
     pub change: Change,
+    /// Where a `program` is looked up when the project gives no `search_path`. Empty means such a
+    /// command is refused at admission; the caller's `PATH` is never used.
+    pub search_path: Vec<PathBuf>,
+}
+
+/// A command's program as resolved at admission and recorded with the run.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdmittedProgram {
+    /// `command:<name>` or `provider:<operation>`.
+    pub binding: String,
+    pub program: String,
+    /// Absolute path outside the tree that the command runs.
+    pub path: PathBuf,
+    /// SHA-256 of the file's bytes at admission; a change before or during collection is refused.
+    pub sha256: String,
 }
 
 /// One gate's result. `NotApplicable` is written only when the gate's `applies_when` evaluated to
@@ -134,6 +155,9 @@ pub struct Bundle {
     pub context_identity: String,
     pub evaluated_at: i64,
     pub observations: Vec<Observation>,
+    /// Programs resolved from names at admission.
+    #[serde(default)]
+    pub programs: Vec<AdmittedProgram>,
 }
 
 pub fn builtin_catalog() -> Result<Catalog> {
@@ -175,6 +199,7 @@ pub struct Prepared {
     excluded_output: Option<PathBuf>,
     source_inputs: BTreeSet<PathBuf>,
     executable_locks: BTreeMap<PathBuf, String>,
+    pub programs: Vec<AdmittedProgram>,
 }
 
 fn sources(document: &Document) -> Result<Vec<String>> {
@@ -220,12 +245,38 @@ fn sources(document: &Document) -> Result<Vec<String>> {
     Ok(sources)
 }
 
-fn command_paths(project: &mut Project, root: &Path) -> Result<()> {
-    for command in project
+fn command_paths(
+    project: &mut Project,
+    root: &Path,
+    runtime_default: &[PathBuf],
+) -> Result<Vec<AdmittedProgram>> {
+    let search_path = project.search_path.clone();
+    let mut programs = Vec::new();
+    let named = project
         .commands
-        .values_mut()
-        .chain(project.providers.values_mut().map(|p| &mut p.command))
-    {
+        .iter_mut()
+        .map(|(name, command)| (format!("command:{name}"), command))
+        .chain(
+            project
+                .providers
+                .iter_mut()
+                .map(|(operation, p)| (format!("provider:{operation}"), &mut p.command)),
+        );
+    for (name, command) in named {
+        if command.program.is_some() {
+            if let Some(resolved) =
+                assertion_providers::admit_command(command, root, &search_path, runtime_default)
+                    .map_err(|e| anyhow::anyhow!("{name}: {e}"))?
+            {
+                programs.push(AdmittedProgram {
+                    binding: name,
+                    program: resolved.program,
+                    path: resolved.path,
+                    sha256: resolved.sha256,
+                });
+            }
+            continue;
+        }
         ensure!(
             !command.executable.as_os_str().is_empty(),
             "empty executable"
@@ -239,7 +290,7 @@ fn command_paths(project: &mut Project, root: &Path) -> Result<()> {
             .context("resolve admitted executable (PATH lookup is not used)")?;
         ensure!(command.executable.is_file(), "executable is not a file");
     }
-    Ok(())
+    Ok(programs)
 }
 
 /// No observation runs here. Reading configuration and source identity is separate from acquisition.
@@ -300,7 +351,7 @@ pub fn prepare_with(
             && project.commands.len() <= 1024,
         "project registration limit exceeded"
     );
-    command_paths(&mut project, &root)?;
+    let programs = command_paths(&mut project, &root, &admission.search_path)?;
     let mut catalog = builtin_catalog()?;
     for path in &project.catalogs {
         let extension: Catalog = read(&root.join(path))?;
@@ -459,6 +510,7 @@ pub fn prepare_with(
         excluded_output,
         source_inputs,
         executable_locks,
+        programs,
     })
 }
 
@@ -575,6 +627,7 @@ pub fn collect(prepared: Prepared, now: i64) -> Result<Bundle> {
         context_identity: prepared.bindings.context_identity,
         evaluated_at: now,
         observations,
+        programs: prepared.programs,
     })
 }
 

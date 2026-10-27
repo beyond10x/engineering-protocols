@@ -3,9 +3,11 @@ use crate::{
     Arguments, Collected, CommandBinding, ProviderContext, ProviderError, arg, executable_digest,
     known,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::{
     io::{Read, Write},
+    path::{Path, PathBuf},
     process::{Command, Stdio},
     thread,
     time::Instant,
@@ -161,9 +163,10 @@ pub(crate) fn run(
 ) -> Result<Option<Output>, ProviderError> {
     use std::os::unix::process::CommandExt;
     if !binding.executable.is_absolute() {
-        return Err(ProviderError::Invalid(
-            "command executable must be an absolute admitted path".into(),
-        ));
+        return Err(ProviderError::Invalid(match &binding.program {
+            Some(program) => format!("program {program} was not resolved at admission"),
+            None => "command executable must be an absolute admitted path".into(),
+        }));
     }
     let mut command = Command::new(&binding.executable);
     command
@@ -243,4 +246,133 @@ pub(crate) fn run(
         }
         thread::sleep(std::time::Duration::from_millis(2));
     }
+}
+
+/// A program name resolved at admission: where it was found and the digest of its bytes then.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ResolvedProgram {
+    pub program: String,
+    pub path: PathBuf,
+    pub sha256: String,
+}
+
+fn refuse<T>(message: String) -> Result<T, ProviderError> {
+    Err(ProviderError::Invalid(message))
+}
+
+/// Resolve a command that names a `program`. The project's own `search_path` is used when it has
+/// entries, otherwise the runtime's default. Neither the caller's `PATH` nor a default of this
+/// library's own is read. A command that names an `executable` is returned as it is.
+pub fn admit_command(
+    binding: &mut CommandBinding,
+    root: &Path,
+    search_path: &[PathBuf],
+    runtime_default: &[PathBuf],
+) -> Result<Option<ResolvedProgram>, ProviderError> {
+    let Some(program) = binding.program.clone() else {
+        return Ok(None);
+    };
+    if !binding.executable.as_os_str().is_empty() {
+        return refuse(format!(
+            "command names both program {program} and an executable"
+        ));
+    }
+    let search_path = if search_path.is_empty() {
+        runtime_default
+    } else {
+        search_path
+    };
+    if search_path.is_empty() {
+        return refuse(format!(
+            "program {program} cannot be resolved: no search_path is admitted, and a relative executable is refused"
+        ));
+    }
+    let resolved = resolve_program(root, &program, search_path)?;
+    binding.executable = resolved.path.clone();
+    Ok(Some(resolved))
+}
+
+/// Find `program` on `search_path`. Every entry must be absolute and outside `root`, whether or not
+/// it holds the program; the match must be an executable file whose real path is outside `root` too.
+pub fn resolve_program(
+    root: &Path,
+    program: &str,
+    search_path: &[PathBuf],
+) -> Result<ResolvedProgram, ProviderError> {
+    if program.is_empty()
+        || program.len() > 255
+        || program == "."
+        || program == ".."
+        || program.contains(['/', '\0'])
+    {
+        return refuse(format!("program must be a bare name, not {program:?}"));
+    }
+    let real_root = root
+        .canonicalize()
+        .map_err(|e| ProviderError::Invalid(format!("repository root: {e}")))?;
+    let mut directories = Vec::new();
+    for entry in search_path {
+        if !entry.is_absolute() {
+            return refuse(format!(
+                "search_path entry {} must be absolute",
+                entry.display()
+            ));
+        }
+        let inside = |path: &Path| path.starts_with(&real_root) || path.starts_with(root);
+        if inside(entry) {
+            return refuse(format!(
+                "search_path entry {} is inside the repository tree",
+                entry.display()
+            ));
+        }
+        match entry.canonicalize() {
+            Ok(real) if inside(&real) => {
+                return refuse(format!(
+                    "search_path entry {} resolves into the repository tree",
+                    entry.display()
+                ));
+            }
+            Ok(real) => directories.push(real),
+            Err(_) => {}
+        }
+    }
+    for directory in directories {
+        let candidate = directory.join(program);
+        let Ok(real) = candidate.canonicalize() else {
+            continue;
+        };
+        if !is_executable_file(&real) {
+            continue;
+        }
+        if real.starts_with(&real_root) || real.starts_with(root) {
+            return refuse(format!(
+                "program {program} at {} resolves into the repository tree",
+                candidate.display()
+            ));
+        }
+        let sha256 = executable_digest(&candidate)?;
+        return Ok(ResolvedProgram {
+            program: program.to_owned(),
+            path: candidate,
+            sha256,
+        });
+    }
+    refuse(format!(
+        "program {program} not found on search_path [{}]",
+        search_path
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    ))
+}
+
+#[cfg(unix)]
+fn is_executable_file(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(path).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+}
+#[cfg(not(unix))]
+fn is_executable_file(path: &Path) -> bool {
+    std::fs::metadata(path).is_ok_and(|m| m.is_file())
 }

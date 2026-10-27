@@ -27,6 +27,7 @@ fn story(tags: &[&str]) -> Admission {
             story_tags: Some(tags.iter().map(|t| (*t).to_owned()).collect()),
             ..Change::default()
         },
+        ..Admission::default()
     }
 }
 
