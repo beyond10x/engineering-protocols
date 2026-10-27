@@ -15,6 +15,15 @@ releases at bare-version tags.
 - `CommandBinding` has a `program` field (a `CommandBinding { .. }` literal needs `program: None`), its
   `executable` defaults to empty, `Project` has `search_path`, `Bundle` has `programs`, and
   `Admission` has `search_path`.
+- `evaluate` (the Canon-shaped replay) no longer counts a `not_applicable` gate as a failure: its
+  `truth` is the aggregate of the gates' results (`true` only for `pass`, `false` for `fail`,
+  otherwise `unknown`, so a run in which nothing applied is not `true`), and its `assertions` are each
+  gate's own assertions in gate order with no `applies_when` expression among them, so they pair with
+  `document.gates` whether or not a gate has one. `evaluate_gates` still returns every expression
+  in `assertions`.
+- `git.changed` globs that can never match a path git reports (a leading `./`, a trailing `/`, an
+  absolute or empty glob, an empty or `.` segment) are refused at admission; they used to be
+  silently false.
 
 ### Added
 
@@ -32,6 +41,26 @@ releases at bare-version tags.
   the tree, or admission refuses and names it. The resolved absolute path and its sha256 are
   recorded in the evidence (`programs`), and a change of the file before or during collection is
   refused like any admitted executable. The process is still started with a cleared environment.
+
+### Changed
+
+- `git.changed` measures the change from the merge base of `base` and `subject` (`base...subject`),
+  so edits the base gained after the subject forked are not credited to the change; a subject that
+  is an ancestor of the base is compared tree to tree. Paths are relative to the gates root, as
+  every other path operation is, so a root in a subdirectory of the repository matches `CHANGELOG.md`
+  against its own file. A path that is not UTF-8 no longer aborts the run.
+- The context identity carries `base` and `subject` as the commit ids they name at admission, so a
+  ref that moved is another context.
+- The CLI's `--story-id` without `--story-tag` leaves `story.has_tag` unknown, as its help says.
+- The sha256 of a program resolved at admission is read once and is the one the run locks.
+
+### Fixed
+
+- A promisor remote in a repository's configuration could make `git.changed` lazily fetch and start
+  `remote.origin.uploadpack` through a shell. Git now runs with `GIT_NO_LAZY_FETCH=1`,
+  `GIT_PROTOCOL_FROM_USER=0` and `protocol.allow=never`.
+- A `search_path` entry inside the tree that is spelled through `..` and does not exist is refused
+  by name instead of skipped.
 
 ## [0.10.0] - 2026-10-26
 

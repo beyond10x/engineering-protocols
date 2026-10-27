@@ -333,6 +333,12 @@ pub fn resolve_program(
                 ));
             }
             Ok(real) => directories.push(real),
+            Err(_) if inside(&settled(entry)) => {
+                return refuse(format!(
+                    "search_path entry {} resolves into the repository tree",
+                    entry.display()
+                ));
+            }
             Err(_) => {}
         }
     }
@@ -365,6 +371,29 @@ pub fn resolve_program(
             .collect::<Vec<_>>()
             .join(", ")
     ))
+}
+
+/// Where an entry that does not exist would be: its deepest existing prefix, resolved, with the
+/// rest appended and any `..` applied, so a spelling through a sibling cannot hide the tree.
+fn settled(entry: &Path) -> PathBuf {
+    let components: Vec<_> = entry.components().collect();
+    for split in (1..=components.len()).rev() {
+        let prefix: PathBuf = components[..split].iter().collect();
+        let Ok(mut real) = prefix.canonicalize() else {
+            continue;
+        };
+        for component in &components[split..] {
+            match component {
+                std::path::Component::ParentDir => {
+                    real.pop();
+                }
+                std::path::Component::Normal(name) => real.push(name),
+                _ => {}
+            }
+        }
+        return real;
+    }
+    entry.to_owned()
 }
 
 #[cfg(unix)]

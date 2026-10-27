@@ -5,6 +5,7 @@ mod git;
 mod network;
 mod process;
 mod reports;
+pub use git::{resolve_change, validate_glob};
 pub use process::{ResolvedProgram, admit_command, resolve_program};
 /// ESS-generated wire contract, shared with external Rust providers.
 #[rustfmt::skip]

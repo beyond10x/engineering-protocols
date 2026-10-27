@@ -373,11 +373,17 @@ pub fn prepare_with(
             catalog.functions.insert(name, function);
         }
     }
+    let recorded = |binding: String, executable: &Path| -> Result<String> {
+        match programs.iter().find(|p| p.binding == binding) {
+            Some(program) => Ok(program.sha256.clone()),
+            None => Ok(assertion_providers::executable_digest(executable)?),
+        }
+    };
     let mut executable_locks = BTreeMap::new();
-    for command in project.commands.values() {
+    for (name, command) in &project.commands {
         executable_locks.insert(
             command.executable.clone(),
-            assertion_providers::executable_digest(&command.executable)?,
+            recorded(format!("command:{name}"), &command.executable)?,
         );
     }
     for (operation, provider) in &project.providers {
@@ -385,7 +391,10 @@ pub fn prepare_with(
             !provider.identity.is_empty(),
             "external provider identity is empty"
         );
-        let actual = assertion_providers::executable_digest(&provider.command.executable)?;
+        let actual = recorded(
+            format!("provider:{operation}"),
+            &provider.command.executable,
+        )?;
         ensure!(
             actual == provider.sha256,
             "external provider {operation} executable digest differs from admission"
@@ -395,11 +404,12 @@ pub fn prepare_with(
     // The executable includes this catalog and built-in collector code. Explicit bindings and
     // command bytes also enter the identity: a binary replacement cannot reuse prior evidence.
     let implementation = assertion_providers::executable_digest(&std::env::current_exe()?)?;
+    let change = assertion_providers::resolve_change(&root, &admission.change)?;
     let context_identity = digest(&serde_json::to_vec(&(
         &project,
         &executable_locks,
         &implementation,
-        &admission.change,
+        &change,
     ))?);
     for function in catalog.functions.values_mut() {
         if let Implementation::Observation(provider) = &mut function.implementation {
@@ -456,7 +466,7 @@ pub fn prepare_with(
     let plan = canon_expr::compile(&expressions, &catalog, &bindings)
         .map_err(|e| anyhow::anyhow!("{}: {e:?}", file.display()))?;
     let mut context = ProviderContext::new(&root);
-    context.change = admission.change.clone();
+    context.change = change;
     context.commands = project.commands;
     context.providers = project.providers;
     context.networks = project.networks;
@@ -464,6 +474,12 @@ pub fn prepare_with(
     context.max_output_bytes = project.max_output_bytes;
     // Refuse missing command/network admission before running any earlier request.
     for request in &plan.requests {
+        if request.operation == "git.changed" {
+            let Some(Value::String(glob)) = request.arguments.get("glob") else {
+                bail!("glob must be a string")
+            };
+            assertion_providers::validate_glob(glob)?;
+        }
         if matches!(
             request.operation.as_str(),
             "process.run" | "process.succeeded" | "ess.run" | "tests.run"
@@ -642,8 +658,7 @@ fn verify_executables(locks: &BTreeMap<PathBuf, String>) -> Result<()> {
     Ok(())
 }
 
-/// Pure replay. The caller chooses time and identities; this never invokes collectors or reads paths.
-pub fn evaluate(
+fn replay(
     bundle: &Bundle,
     now: i64,
     source_identity: Option<&str>,
@@ -675,16 +690,44 @@ pub fn evaluate(
     Ok(report)
 }
 
-/// [`evaluate`] with each gate's result. A gate whose `applies_when` is true is judged by its
-/// assertions; false makes it `not_applicable`; unknown makes it `unknown`. Pure replay, like
-/// [`evaluate`].
+/// Pure replay. The caller chooses time and identities; this never invokes collectors or reads paths.
+/// The report holds each gate's own assertions in gate order, with no `applies_when` expression among
+/// them, so a gate's assertions pair with `bundle.document.gates` whether or not it has one. `truth`
+/// is that of [`evaluate_gates`]: a `not_applicable` gate is neither pass nor fail, and a run in which
+/// nothing applied is not `true`.
+pub fn evaluate(
+    bundle: &Bundle,
+    now: i64,
+    source_identity: Option<&str>,
+    context_identity: Option<&str>,
+) -> Result<Report> {
+    let gated = evaluate_gates(bundle, now, source_identity, context_identity)?;
+    let mut cursor = 0;
+    let mut assertions = Vec::new();
+    for gate in &bundle.document.gates {
+        if matches!(gate.applies_when, EssPresence::Present(_)) {
+            cursor += 1;
+        }
+        assertions.extend_from_slice(&gated.assertions[cursor..cursor + gate.assertions.len()]);
+        cursor += gate.assertions.len();
+    }
+    Ok(Report {
+        plan_id: gated.plan_id,
+        truth: gated.truth,
+        assertions,
+    })
+}
+
+/// Each gate's result. A gate whose `applies_when` is true is judged by its assertions; false makes
+/// it `not_applicable`; unknown makes it `unknown`. Pure replay, like [`evaluate`]. `assertions` is
+/// Canon's evaluation of every expression in document order, `applies_when` included.
 pub fn evaluate_gates(
     bundle: &Bundle,
     now: i64,
     source_identity: Option<&str>,
     context_identity: Option<&str>,
 ) -> Result<GatesReport> {
-    let report = evaluate(bundle, now, source_identity, context_identity)?;
+    let report = replay(bundle, now, source_identity, context_identity)?;
     let mut cursor = 0;
     let mut gates = Vec::new();
     for gate in &bundle.document.gates {

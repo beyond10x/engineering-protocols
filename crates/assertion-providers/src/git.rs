@@ -2,7 +2,8 @@
 //! revisions, and the story the runtime says the change belongs to. Git runs with a fixed argv,
 //! no shell, a cleared environment and revisions that were resolved to object ids first.
 use crate::{
-    Arguments, Collected, CommandBinding, ProviderContext, ProviderError, arg, known, process,
+    Arguments, Change, Collected, CommandBinding, ProviderContext, ProviderError, arg, known,
+    process,
 };
 use std::{collections::BTreeMap, path::PathBuf};
 
@@ -72,11 +73,7 @@ fn changed(glob: &str, context: &ProviderContext) -> Result<Collected, ProviderE
     };
     validate_revision("base", base)?;
     validate_revision("subject", subject)?;
-    let Some(git) = GIT_LOCATIONS
-        .iter()
-        .map(PathBuf::from)
-        .find(|path| path.is_file())
-    else {
+    let Some(git) = find_git() else {
         return Ok(Collected::Unavailable(
             "git was not found at a fixed system location".into(),
         ));
@@ -89,15 +86,28 @@ fn changed(glob: &str, context: &ProviderContext) -> Result<Collected, ProviderE
         Ok(oid) => oid,
         Err(reason) => return Ok(Collected::Unavailable(reason)),
     };
-    let output = match run(
+    // What this change touched is measured from where it forked, so edits the base gained since do
+    // not count. A subject already inside the base has no fork of its own: the two trees are compared.
+    let fork = match run(&git, &["merge-base", &base, &subject], context)? {
+        Ok(stdout) => stdout.trim().to_owned(),
+        Err(reason) => return Ok(Collected::Unavailable(reason)),
+    };
+    if !is_object_id(&fork) {
+        return Ok(Collected::Unavailable(
+            "base and subject have no common ancestor".into(),
+        ));
+    }
+    let left = if fork == subject { &base } else { &fork };
+    let output = match run_bytes(
         &git,
         &[
             "diff-tree",
             "-r",
             "--name-only",
             "--no-renames",
+            "--relative",
             "-z",
-            &base,
+            left,
             &subject,
             "--",
         ],
@@ -108,10 +118,57 @@ fn changed(glob: &str, context: &ProviderContext) -> Result<Collected, ProviderE
     };
     known(
         output
-            .split('\0')
+            .split(|byte| *byte == 0)
             .filter(|path| !path.is_empty())
-            .any(|path| glob_matches(glob, path)),
+            .any(|path| path_matches(glob, path)),
     )
+}
+
+/// A path that is not UTF-8 can only be matched by a pattern that does not name the replacement
+/// character, so it is compared in its lossy form and never aborts the run.
+fn path_matches(glob: &str, path: &[u8]) -> bool {
+    match std::str::from_utf8(path) {
+        Ok(path) => glob_matches(glob, path),
+        Err(_) => !glob.contains('\u{fffd}') && glob_matches(glob, &String::from_utf8_lossy(path)),
+    }
+}
+
+fn is_object_id(text: &str) -> bool {
+    matches!(text.len(), 40 | 64) && text.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+fn find_git() -> Option<PathBuf> {
+    GIT_LOCATIONS
+        .iter()
+        .map(PathBuf::from)
+        .find(|path| path.is_file())
+}
+
+/// The change with `base` and `subject` replaced by the commit ids they name now, so that what is
+/// identified and what is collected is one commit. A revision that cannot be resolved here (no git,
+/// no repository, a shallow clone without it) is left as typed: collection reports it unavailable.
+/// A revision that is malformed is refused.
+pub fn resolve_change(root: &std::path::Path, change: &Change) -> Result<Change, ProviderError> {
+    let mut resolved = change.clone();
+    let context = ProviderContext::new(root);
+    for (role, slot) in [
+        ("base", &mut resolved.base),
+        ("subject", &mut resolved.subject),
+    ] {
+        let Some(revision) = slot.as_deref() else {
+            continue;
+        };
+        validate_revision(role, revision)?;
+        let Some(git) = find_git() else {
+            continue;
+        };
+        match resolve(&git, revision, &context) {
+            Ok(Ok(oid)) => *slot = Some(oid),
+            Ok(Err(_)) | Err(ProviderError::Io(..)) => {}
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(resolved)
 }
 
 /// `Ok(Err(reason))` is environmental (the repository or revision is not there); an `Err` is a
@@ -135,7 +192,7 @@ fn resolve(
     )?;
     Ok(output.and_then(|stdout| {
         let oid = stdout.trim();
-        if matches!(oid.len(), 40 | 64) && oid.bytes().all(|b| b.is_ascii_hexdigit()) {
+        if is_object_id(oid) {
             Ok(oid.to_owned())
         } else {
             Err(format!("revision {revision} did not resolve to a commit"))
@@ -148,6 +205,19 @@ fn run(
     argv: &[&str],
     context: &ProviderContext,
 ) -> Result<Result<String, String>, ProviderError> {
+    match run_bytes(git, argv, context)? {
+        Ok(stdout) => String::from_utf8(stdout)
+            .map(Ok)
+            .map_err(|e| ProviderError::Invalid(format!("git output is not UTF-8: {e}"))),
+        Err(reason) => Ok(Err(reason)),
+    }
+}
+
+fn run_bytes(
+    git: &std::path::Path,
+    argv: &[&str],
+    context: &ProviderContext,
+) -> Result<Result<Vec<u8>, String>, ProviderError> {
     let binding = CommandBinding {
         program: None,
         executable: git.to_owned(),
@@ -180,9 +250,7 @@ fn run(
             reason.chars().take(200).collect::<String>()
         )));
     }
-    String::from_utf8(out.stdout)
-        .map(Ok)
-        .map_err(|e| ProviderError::Invalid(format!("git output is not UTF-8: {e}")))
+    Ok(Ok(out.stdout))
 }
 
 /// A revision is a ref-like name or object id. Anything that git could read as an option, a range,
@@ -204,17 +272,20 @@ pub(crate) fn validate_revision(role: &str, revision: &str) -> Result<(), Provid
     }
 }
 
-fn validate_glob(glob: &str) -> Result<(), ProviderError> {
+/// A glob is matched against paths git reports: relative to the root, no empty, `.` or `..` segment.
+/// One that could never match (`./x`, `dir/`, `/x`, `a//b`) is refused rather than left false.
+pub fn validate_glob(glob: &str) -> Result<(), ProviderError> {
     let ok = !glob.is_empty()
         && glob.len() <= MAX_GLOB
         && !glob.contains('\0')
-        && !glob.starts_with('/')
-        && !glob.split('/').any(|segment| segment == "..");
+        && !glob
+            .split('/')
+            .any(|segment| matches!(segment, "" | "." | ".."));
     if ok {
         Ok(())
     } else {
         Err(ProviderError::Invalid(format!(
-            "glob must be a non-empty relative pattern without `..`: {glob:?}"
+            "glob must be a non-empty relative pattern with no empty, `.` or `..` segment: {glob:?}"
         )))
     }
 }
@@ -317,7 +388,18 @@ mod tests {
 
     #[test]
     fn globs_that_escape_the_tree_are_refused() {
-        for bad in ["", "/etc/passwd", "../x", "a/../b", "a\0b"] {
+        for bad in [
+            "",
+            "/etc/passwd",
+            "../x",
+            "a/../b",
+            "a\0b",
+            "./CHANGELOG.md",
+            "docs/",
+            "a//b",
+            "a/./b",
+            ".",
+        ] {
             assert!(validate_glob(bad).is_err(), "{bad:?}");
         }
         assert!(validate_glob("docs/**/*.md").is_ok());

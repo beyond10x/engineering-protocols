@@ -64,8 +64,7 @@ impl Input {
                 base: self.base.clone(),
                 subject: self.subject.clone(),
                 story_id: self.story_id.clone(),
-                story_tags: (self.story_id.is_some() || !self.story_tags.is_empty())
-                    .then(|| self.story_tags.clone()),
+                story_tags: (!self.story_tags.is_empty()).then(|| self.story_tags.clone()),
             },
             search_path: self.default_search_path.clone(),
         }
