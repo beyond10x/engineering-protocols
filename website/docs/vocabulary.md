@@ -6,7 +6,7 @@ description: "The names the engineering protocols use, each with its category, m
 custom_edit_url: null
 ---
 
-The 171 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
+The 181 names the engineering protocols use, each declared once in [`protocols/vocabulary.yaml`](https://github.com/beyond10x/engineering-protocols/blob/main/protocols/vocabulary.yaml) with its category, its marking and its meaning. The vocabulary holds names and what they mean; what a claim, a piece of evidence or an obligation is, and how one is decided, belongs to Canon.
 
 - **`core`**: not specific to Git, pull requests or code; usable by every engineering protocol.
 - **`software.change`**: only makes sense for Git, pull requests or code.
@@ -77,6 +77,8 @@ Category `evidence_kind`.
 | `definition_check` | `loop.improvement` | a loop candidate's metric definitions compared with the baseline's; unchanged, dual\_reported or redefined |
 | `loop_comparison` | `loop.improvement` | a loop metric over turns under the candidate compared with the same metric under the baseline |
 | `loop_measurement` | `loop.improvement` | the loop scorecard over at least three recorded self-improvement turns at a loop definition revision |
+| `tests_change` | `software.change` | the record that a story's tests were written, moving the implementation to a new revision |
+| `paths_changed` | `software.change` | which paths an implementation revision changes since the base branch's tip, test paths, implementation paths, both or neither |
 
 ## Claims
 
@@ -122,6 +124,8 @@ Category `claim_id`.
 | `loop.definition_honest` | `loop.improvement` | the current loop candidate leaves every metric definition unchanged, or reports the previous definition's figures beside the new ones |
 | `loop.metric_below_target` | `loop.improvement` | a loop metric is below its target on the baseline loop definition |
 | `loop.metric_improved` | `loop.improvement` | the metric improved under the current loop candidate, observed by another agent run than the one that delivered it |
+| `tests.shown_red` | `software.change` | a story's tests failed on their first run, and were written before that run |
+| `change.complete` | `software.change` | the current implementation revision changes both test paths and implementation paths since the base, with its tests and gate green at that same revision |
 
 ## Actions
 
@@ -226,6 +230,8 @@ Category `case_input`.
 | `change_kind` | `software.change` | what a change to software is, fixed when its case opens; it selects whether a regression must be reproduced first |
 | `affects_security_boundary` | `core` | whether a change affects a security boundary, fixed when its case opens; one that does needs an independent security review |
 | `surface` | `self.improvement` | whether the candidate's change, base to head, touches a judge surface |
+| `tests_first` | `software.change` | whether a story's tests must fail before its implementation is edited, fixed when its case opens |
+| `gate_on` | `software.change` | when the repository's gate runs, fixed when a story's case opens |
 
 ## Input values
 
@@ -244,6 +250,10 @@ Category `input_value`.
 | `false` | `core` | the value of a yes-or-no case input when what it asks does not hold |
 | `judge` | `self.improvement` | the candidate's change touches a judge surface |
 | `non_judge` | `self.improvement` | the candidate's change touches no judge surface |
+| `required` | `software.change` | the story's tests must fail on their first run before the implementation is edited |
+| `optional` | `software.change` | the implementation may be edited whatever the tests have done |
+| `after_handover` | `software.change` | the gate runs once, on the revision whose tests pass and whose change is handed over |
+| `each_revision` | `software.change` | the gate runs at every revision, whenever asked |
 
 ## Independence dimensions
 

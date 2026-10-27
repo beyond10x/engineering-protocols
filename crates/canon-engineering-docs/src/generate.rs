@@ -567,7 +567,7 @@ mod tests {
         let files = with(Vec::new()).expect("renders");
         let page = &files["docs/vocabulary.md"];
         let vocabulary = Vocabulary::from_yaml(VOCABULARY).expect("vocabulary");
-        assert_eq!(vocabulary.terms().len(), 171);
+        assert_eq!(vocabulary.terms().len(), 181);
         assert!(
             page.contains("\n## Independence dimensions\n\nCategory `independence_dimension`.")
         );

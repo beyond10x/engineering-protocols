@@ -1,0 +1,105 @@
+format: els-fixture/1
+id: red-first-refuses-implementation-first
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# A story whose case requires its tests first. Nothing is known at first, and the implementation
+# may not be edited. The tests are written, which moves the implementation to h2 and records the
+# change; with no run of them yet, the implementation still may not be edited. Their first run
+# fails at h2: `tests.pass` is false, the red run is shown, and the edit is admissible. The edit
+# moves the implementation to h3: `tests.pass` returns to unknown, but the red run keeps counting,
+# so a second edit is admissible too.
+case:
+  format: canon-case/1
+  id: SD-201
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: each_revision
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims: &unknown
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+      actions: &tests-first-blocked
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: tests-written
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims: *unknown
+      actions: *tests-first-blocked
+
+  - id: red
+    add_evidence:
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-red, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
+        tests.shown_red: true
+      actions: &editable
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: edited
+    set_revisions:
+      implementation: h3
+    add_evidence: []
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: true
+      actions: *editable

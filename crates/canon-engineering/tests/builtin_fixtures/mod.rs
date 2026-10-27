@@ -11,11 +11,17 @@ use crate::support::{self, Compiled, Fixture};
 /// The built-in `protocols/<name>/1.yaml`, validated and compiled by Canon, and the same as
 /// `registry::get(name, 1)` returns.
 pub fn compile(name: &str) -> Compiled {
-    let path = support::protocol_path(name, 1);
+    compile_major(name, 1)
+}
+
+/// The built-in `protocols/<name>/<major>.yaml`, validated and compiled by Canon, and the same as
+/// `registry::get(name, major)` returns.
+pub fn compile_major(name: &str, major: u32) -> Compiled {
+    let path = support::protocol_path(name, u64::from(major));
     let compiled = support::compile_protocol(&path)
         .unwrap_or_else(|error| panic!("{path} validates and compiles: {error}"));
-    let builtin = canon_engineering::registry::get(name, 1)
-        .unwrap_or_else(|error| panic!("registry::get({name}, 1): {error}"));
+    let builtin = canon_engineering::registry::get(name, major)
+        .unwrap_or_else(|error| panic!("registry::get({name}, {major}): {error}"));
     let on_disk = std::fs::read_to_string(support::repo_root().join(&path))
         .unwrap_or_else(|error| panic!("{path}: {error}"));
     assert_eq!(builtin.yaml, on_disk, "{path} is the built-in as released");
@@ -25,12 +31,25 @@ pub fn compile(name: &str) -> Compiled {
 /// The fixture `fixtures/<name>/<id>.fixture.yaml`, loaded and checked: it evaluates the built-in
 /// `name@1` at `at`, and every state is as it expects.
 pub fn fixture(name: &str, id: &str, at: &str, compiled: &Compiled) -> Fixture {
-    let path = format!("fixtures/{name}/{id}.fixture.yaml");
+    fixture_of(name, name, 1, id, at, compiled)
+}
+
+/// The fixture `fixtures/<directory>/<id>.fixture.yaml`, loaded and checked: it evaluates the
+/// built-in `name@major` at `at`, and every state is as it expects.
+pub fn fixture_of(
+    directory: &str,
+    name: &str,
+    major: u32,
+    id: &str,
+    at: &str,
+    compiled: &Compiled,
+) -> Fixture {
+    let path = format!("fixtures/{directory}/{id}.fixture.yaml");
     let fixture = Fixture::load(&path).unwrap_or_else(|error| panic!("{path} loads: {error}"));
     assert_eq!(fixture.at(), at, "{path}: the evaluation instant");
     assert_eq!(
         fixture.protocol_path(),
-        support::protocol_path(name, 1),
+        support::protocol_path(name, u64::from(major)),
         "{path}"
     );
     let own = fixture
@@ -39,7 +58,7 @@ pub fn fixture(name: &str, id: &str, at: &str, compiled: &Compiled) -> Fixture {
     assert_eq!(
         own.canon_ir(),
         compiled.canon_ir(),
-        "{path} evaluates the built-in {name}@1"
+        "{path} evaluates the built-in {name}@{major}"
     );
     if let Err(differences) = fixture.check(compiled) {
         panic!(

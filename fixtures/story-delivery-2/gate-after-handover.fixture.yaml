@@ -1,0 +1,159 @@
+format: els-fixture/1
+id: gate-after-handover
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# A story whose case runs the gate after the handover. The gate may not run at the base, at a
+# revision whose tests failed, or at a red revision that is handed over. At h2 the tests pass, but
+# until the change is handed over at h2 the gate still may not run; handed over at a revision
+# whose tests pass, it may, and it stays admissible once it has passed.
+case:
+  format: canon-case/1
+  id: SD-204
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: optional
+    gate_on: after_handover
+
+states:
+  - id: initial
+    add_evidence: []
+    expect:
+      claims: &unknown
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+      actions: &not-handed-over
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: blocked
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: red-revision
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-red, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
+        tests.shown_red: false
+      actions: *not-handed-over
+
+  - id: red-revision-handed-over
+    add_evidence:
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
+        tests.shown_red: false
+      actions: &handed-over-gate-blocked
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: blocked
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: green-before-handover
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: *not-handed-over
+
+  - id: green-and-handed-over
+    add_evidence:
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: handover-h2, kind: handover,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: &gate-admissible
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: gate-passed
+    add_evidence:
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: gate-h2, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: *gate-admissible
