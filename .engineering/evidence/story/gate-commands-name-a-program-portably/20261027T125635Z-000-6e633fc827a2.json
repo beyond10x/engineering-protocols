@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-27T12:56:35Z",
+  "actor": "human:timo",
+  "artifact": "story:gate-commands-name-a-program-portably",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test process_program program_admission and their adv1/sec1 files at 6bd3072: all passed"
+  }
+}

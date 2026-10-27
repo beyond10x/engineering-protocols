@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:a-gate-sees-the-change-and-may-not-apply
 kind: story
-status: active
+status: implemented
 title: A gate can test paths changed since the base and declare when it applies
 summary: git.changed, applies_when, not_applicable
 tags:
@@ -29,10 +29,11 @@ scope:
   path: fixtures/assertions/applies-when.fixture.yaml
 - confidence: inferred
   path: fixtures/assertions/git-changed.fixture.yaml
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-27T12:56:35Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 # Story: a-gate-sees-the-change-and-may-not-apply
 
@@ -94,3 +95,16 @@ Fixtures 1 and 2 are loaded by explicit path from `crates/canon-engineering/test
 The consumer is takt's `story:the-run-shows-each-repository-obligation`. It is delivered in one workspace with an
 uncommitted `[patch]` path override in takt's `Cargo.toml` to this working tree. The end-to-end check is takt's
 obligations scenario on the patched tree. Then this repository releases and takt takes it as a pin-only hop.
+
+## Status
+
+Implemented on `unit/tr-gates` (e3650f8, review fixes 89ccd56 and 6bd3072), joined into `unit/tr-sd2`.
+
+- `git.changed` measures from the merge base of `base` and `subject`, so edits the base gained after the fork are not
+  credited to the change; a subject that is an ancestor of the base is compared tree to tree. Paths are relative to
+  the gates root.
+- After the review: git runs with lazy fetch and remote protocols off, so repository configuration cannot start a
+  program; a non-UTF-8 path no longer aborts the run; globs that can never match are refused; `evaluate` never counts
+  a `not_applicable` gate as a failure; the context identity holds the resolved commits.
+- Open: a `not_applicable` gate's commands are still collected (skipping them needs a two-phase collection).
+- Tests: `gates_result_values` 8 and `_adv1` 5, `git_changed` 5, `_adv1` 6 and `_sec1` 1, `assertion_replay` 8 passed.

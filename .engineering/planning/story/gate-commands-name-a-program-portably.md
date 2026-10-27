@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gate-commands-name-a-program-portably
 kind: story
-status: active
+status: implemented
 title: A gate command names a program resolved at admission and recorded
 summary: program plus search_path, resolved outside the tree, sha256 recorded
 tags:
@@ -23,10 +23,11 @@ scope:
   path: ess/domains/gates.yaml
 - confidence: inferred
   path: fixtures/assertions/program-by-name.fixture.yaml
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-27T12:14:01Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-10-27T12:14:01Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-10-27T12:56:36Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":2}}}
 ---
 # Story: gate-commands-name-a-program-portably
 
@@ -86,3 +87,13 @@ Each is a named fixture or test run by `task check`.
 The consumer is takt's `story:gate-commands-find-programs-on-a-system-path`. It is delivered in one workspace with an
 uncommitted `[patch]` path override in takt's `Cargo.toml`, then this repository releases, and takt takes it as a
 pin-only hop.
+
+## Status
+
+Implemented on `unit/tr-gates` (bae0a62, review fix 6bd3072), joined into `unit/tr-sd2`.
+
+- A command names a `program`, resolved at admission on the project's `search_path` or the runtime default; the
+  match must be an executable file outside the tree, every entry absolute and outside it. The resolved path and its
+  sha256 are recorded in `programs`, and the run lock is built from that one read.
+- After the review: an entry inside the tree spelled through `..` that does not exist is refused by name.
+- Tests: `process_program` 16, `_adv1` 5 and `_sec1` 2, `program_admission` 4, `assertion_replay` 8 passed.
