@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:a-gate-sees-the-change-and-may-not-apply
 kind: story
-status: draft
+status: active
 title: A gate can test paths changed since the base and declare when it applies
 summary: git.changed, applies_when, not_applicable
 tags:
@@ -29,7 +29,10 @@ scope:
   path: fixtures/assertions/applies-when.fixture.yaml
 - confidence: inferred
   path: fixtures/assertions/git-changed.fixture.yaml
-revision: 4
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "proposed", to: "active", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
 ---
 # Story: a-gate-sees-the-change-and-may-not-apply
 

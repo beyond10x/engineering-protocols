@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gate-commands-name-a-program-portably
 kind: story
-status: draft
+status: active
 title: A gate command names a program resolved at admission and recorded
 summary: program plus search_path, resolved outside the tree, sha256 recorded
 tags:
@@ -23,7 +23,10 @@ scope:
   path: ess/domains/gates.yaml
 - confidence: inferred
   path: fixtures/assertions/program-by-name.fixture.yaml
-revision: 4
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-27T12:14:01Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "proposed", to: "active", at: "2026-10-27T12:14:01Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":2}}}
 ---
 # Story: gate-commands-name-a-program-portably
 

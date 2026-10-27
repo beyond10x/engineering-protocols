@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-with-settings
 kind: story
-status: draft
+status: active
 title: story.delivery/2 declares tests_first and gate_on as case inputs
 summary: red before implementation, gate after handover, as settings
 tags:
@@ -21,7 +21,10 @@ scope:
   path: protocols/vocabulary.yaml
 - confidence: inferred
   path: website/docs/protocols/story-delivery
-revision: 4
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-27T12:13:59Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "proposed", to: "active", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":3}}}
 ---
 # Story: story-delivery-2-with-settings
 
