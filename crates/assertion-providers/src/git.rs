@@ -26,6 +26,10 @@ const HARDENING: &[&str] = &[
     "diff.external=",
     "-c",
     "core.sshCommand=false",
+    "-c",
+    "protocol.allow=never",
+    "-c",
+    "protocol.ext.allow=never",
 ];
 const MAX_REVISION: usize = 256;
 const MAX_GLOB: usize = 1024;
@@ -155,6 +159,8 @@ fn run(
         env: BTreeMap::from([
             ("GIT_CONFIG_NOSYSTEM".into(), "1".into()),
             ("GIT_CONFIG_GLOBAL".into(), "/dev/null".into()),
+            ("GIT_NO_LAZY_FETCH".into(), "1".into()),
+            ("GIT_PROTOCOL_FROM_USER".into(), "0".into()),
             ("GIT_OPTIONAL_LOCKS".into(), "0".into()),
             ("GIT_TERMINAL_PROMPT".into(), "0".into()),
             ("LC_ALL".into(), "C".into()),
