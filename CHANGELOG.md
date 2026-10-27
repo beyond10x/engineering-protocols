@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-27
+
 ### Breaking
 
 - The generated `Gate` has an optional `applies_when` field, so a `Gate { .. }` literal needs
