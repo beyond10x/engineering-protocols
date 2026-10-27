@@ -8,6 +8,8 @@ types:
         type: String
       - name: text
         type: String
+      - name: applies_when
+        type: Optional<String>
       - name: assertions
         type: List<String>
   - name: engineering.gates.Document
@@ -58,3 +60,27 @@ types:
       - {name: context_identity, type: String}
       - {name: evaluated_at, type: Integer}
       - {name: observations, type: List<engineering.expr.Observation>}
+  - name: engineering.gates.Change
+    kind: struct
+    fields:
+      - {name: base, type: Optional<String>}
+      - {name: subject, type: Optional<String>}
+      - {name: story_id, type: Optional<String>}
+      - {name: story_tags, type: 'Optional<List<String>>'}
+  - name: engineering.gates.GateResult
+    kind: enum
+    variants: [pass, fail, unknown, not_applicable]
+  - name: engineering.gates.GateOutcome
+    kind: struct
+    fields:
+      - {name: id, type: String}
+      - {name: result, type: engineering.gates.GateResult}
+      - {name: reasons, type: List<String>}
+  - name: engineering.gates.GatesReport
+    kind: struct
+    fields:
+      - {name: plan_id, type: String}
+      - {name: truth, type: engineering.expr.Truth}
+      - {name: result, type: engineering.gates.GateResult}
+      - {name: gates, type: List<engineering.gates.GateOutcome>}
+      - {name: assertions, type: List<engineering.expr.Evaluation>}

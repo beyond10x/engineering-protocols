@@ -787,6 +787,69 @@
         }
       }
     },
+    "git.changed": {
+      "parameters": [
+        {
+          "name": "glob",
+          "value_type": {
+            "kind": "scalar",
+            "value": "string"
+          },
+          "default": null
+        }
+      ],
+      "returns": {
+        "kind": "scalar",
+        "value": "bool"
+      },
+      "implementation": {
+        "kind": "observation",
+        "value": {
+          "provider": "engineering.builtin/1",
+          "operation": "git.changed",
+          "digest": "locked-at-collection"
+        }
+      }
+    },
+    "story.id": {
+      "parameters": [],
+      "returns": {
+        "kind": "scalar",
+        "value": "string"
+      },
+      "implementation": {
+        "kind": "observation",
+        "value": {
+          "provider": "engineering.builtin/1",
+          "operation": "story.id",
+          "digest": "locked-at-collection"
+        }
+      }
+    },
+    "story.has_tag": {
+      "parameters": [
+        {
+          "name": "tag",
+          "value_type": {
+            "kind": "scalar",
+            "value": "string"
+          },
+          "default": null
+        }
+      ],
+      "returns": {
+        "kind": "scalar",
+        "value": "bool"
+      },
+      "implementation": {
+        "kind": "observation",
+        "value": {
+          "provider": "engineering.builtin/1",
+          "operation": "story.has_tag",
+          "digest": "locked-at-collection"
+        }
+      }
+    },
     "file_exists": {
       "parameters": [
         {

@@ -1,6 +1,7 @@
 //! Engineering observations. Collection has explicit filesystem, command and network context;
 //! expression evaluation belongs to Canon and never calls this crate during offline replay.
 mod files;
+mod git;
 mod network;
 mod process;
 mod reports;
@@ -65,6 +66,20 @@ pub struct ExternalProvider {
 pub struct NetworkBinding {
     pub hosts: BTreeMap<String, std::net::IpAddr>,
 }
+/// What the runtime says about the change under test. Absent fields make the operations that need
+/// them unavailable; none of it is read from the repository or the environment.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Change {
+    #[serde(default)]
+    pub base: Option<String>,
+    #[serde(default)]
+    pub subject: Option<String>,
+    #[serde(default)]
+    pub story_id: Option<String>,
+    #[serde(default)]
+    pub story_tags: Option<Vec<String>>,
+}
 #[derive(Debug, Clone)]
 pub struct ProviderContext {
     pub root: PathBuf,
@@ -72,6 +87,7 @@ pub struct ProviderContext {
     pub providers: BTreeMap<String, ExternalProvider>,
     pub networks: BTreeMap<String, NetworkBinding>,
     pub timeout: Duration,
+    pub change: Change,
     pub max_output_bytes: usize,
 }
 impl ProviderContext {
@@ -83,6 +99,7 @@ impl ProviderContext {
             networks: BTreeMap::new(),
             timeout: Duration::from_secs(10),
             max_output_bytes: 4 * 1024 * 1024,
+            change: Change::default(),
         }
     }
 }
@@ -106,6 +123,9 @@ pub const OPERATIONS: &[&str] = &[
     "ess.run",
     "net.host.resolves",
     "net.tcp.reachable",
+    "git.changed",
+    "story.id",
+    "story.has_tag",
 ];
 pub(crate) fn arg<'a>(args: &'a Arguments, key: &str) -> Result<&'a str, ProviderError> {
     args.get(key)
@@ -162,6 +182,7 @@ fn collect_inner(
         }
         "net.host.resolves" => network::dns(args, context),
         "net.tcp.reachable" => network::tcp(args, context),
+        "git.changed" | "story.id" | "story.has_tag" => git::collect(operation, args, context),
         _ => Err(ProviderError::Invalid(format!(
             "unregistered operation: {operation}"
         ))),

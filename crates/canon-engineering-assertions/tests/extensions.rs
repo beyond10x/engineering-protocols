@@ -1,5 +1,7 @@
 use assertion_providers::{CommandBinding, ExternalProvider};
-use canon_engineering_assertions::{Document, Gate, Project, collect, digest, evaluate, prepare};
+use canon_engineering_assertions::{
+    Document, EssPresence, Gate, Project, collect, digest, evaluate, prepare,
+};
 use canon_expr::{Catalog, Function, Implementation, Provider, Truth, Type};
 use std::{collections::BTreeMap, fs, process::Command};
 
@@ -68,6 +70,7 @@ println!(r#"{{"format":"engineering-provider-response/1","status":"known","value
         gates: vec![Box::new(Gate {
             id: "external".into(),
             text: "The registered provider confirms readiness".into(),
+            applies_when: EssPresence::Absent,
             assertions: vec!["acme.ready()".into()],
         })],
     };
@@ -117,6 +120,7 @@ fn inventory_assertion_detects_removed_tests_and_generated_extra_files() {
         gates: vec![Box::new(Gate {
             id: "complete".into(),
             text: "Both named tests and the generated tree match".into(),
+            applies_when: EssPresence::Absent,
             assertions: vec![
                 "tests.passed(\"tests.json\")".into(),
                 "tests.report(\"tests.json\").inventory == [\"a\", \"b\"]".into(),

@@ -13,9 +13,9 @@ use std::{
 
 #[derive(Debug)]
 pub(crate) struct Output {
-    code: Option<i32>,
-    stdout: Vec<u8>,
-    stderr: Vec<u8>,
+    pub(crate) code: Option<i32>,
+    pub(crate) stdout: Vec<u8>,
+    pub(crate) stderr: Vec<u8>,
 }
 pub(super) fn collect(
     args: &Arguments,
@@ -144,7 +144,7 @@ fn drain(
     Ok(false)
 }
 #[cfg(not(unix))]
-fn run(
+pub(crate) fn run(
     _binding: &CommandBinding,
     _input: &[u8],
     _context: &ProviderContext,
@@ -154,7 +154,7 @@ fn run(
     ))
 }
 #[cfg(unix)]
-fn run(
+pub(crate) fn run(
     binding: &CommandBinding,
     input: &[u8],
     context: &ProviderContext,

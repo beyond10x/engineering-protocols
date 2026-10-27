@@ -41,6 +41,7 @@ gates:
             file: "gates.yaml".into(),
             root: root.path().into(),
             project: Some("project.yaml".into()),
+            ..Input::default()
         },
         out: ".engineering/assertions/evidence.json".into(),
         now: None,

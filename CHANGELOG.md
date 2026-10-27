@@ -6,6 +6,23 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Breaking
+
+- The generated `Gate` has an optional `applies_when` field, so a `Gate { .. }` literal needs
+  `applies_when: EssPresence::Absent`; `cli::Input` has four more fields (`Input::default()` fills
+  them); `ProviderContext` has a `change` field; `gates run` and `gates evaluate` print a
+  `GatesReport` (a superset of Canon's report: `truth` and `assertions` stay).
+
+### Added
+
+- Gates can see the change and may decline to apply. `git.changed(glob)` is true when a path
+  matching `glob` differs between the context's `base` and `subject` revisions (unknown when either
+  is absent); `story.id()` and `story.has_tag(tag)` read the story the runtime names. A gate's
+  optional `applies_when` expression that is false makes the gate `not_applicable`, never `pass`;
+  `evaluate_gates` returns each gate's result and an aggregate, and `gates run` exits 4 when nothing
+  applied. The runtime passes the change through `prepare_with` and `Admission`, or the CLI's
+  `--base`, `--subject`, `--story-id` and `--story-tag`; the change enters the context identity.
+
 ## [0.10.0] - 2026-10-26
 
 ### Breaking

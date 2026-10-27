@@ -6,11 +6,13 @@ mod retention;
 mod snapshot;
 
 use anyhow::{Context, Result, bail, ensure};
+pub use assertion_providers::Change;
 use assertion_providers::{
     Collected, CommandBinding, ExternalProvider, NetworkBinding, ProviderContext,
 };
 use canon_expr::{
-    Bindings, Catalog, EvalContext, Implementation, Observation, Outcome, Plan, Report, Value,
+    Bindings, Catalog, EvalContext, Evaluation, Implementation, Observation, Outcome, Plan, Report,
+    Truth, Value,
 };
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -28,7 +30,7 @@ const MAX_DOCUMENT: u64 = 4 * 1024 * 1024;
 #[rustfmt::skip]
 #[allow(dead_code,clippy::derivable_impls)]
 mod contract;
-pub use contract::{Document, Gate};
+pub use contract::{Document, EssPresence, Gate};
 
 /// Project configuration is trusted admission data, not part of the expression language.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,6 +81,47 @@ impl Default for Project {
             freshness_seconds: default_freshness(),
         }
     }
+}
+
+/// What the runtime knows when it admits a project: the change under test and, for story
+/// delivery, the story it belongs to. Both enter the context identity, so evidence collected for
+/// one change cannot be replayed as evidence for another.
+#[derive(Debug, Clone, Default)]
+pub struct Admission {
+    pub change: Change,
+}
+
+/// One gate's result. `NotApplicable` is written only when the gate's `applies_when` evaluated to
+/// false; it is never `Pass`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum GateResult {
+    Pass,
+    Fail,
+    Unknown,
+    NotApplicable,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GateOutcome {
+    pub id: String,
+    pub result: GateResult,
+    pub reasons: Vec<String>,
+}
+
+/// The run's report: Canon's per-expression evaluations, each gate's result and the aggregate.
+/// `result` is `fail` when any gate fails, else `unknown` when any is unknown, else `pass` when any
+/// passes, else `not_applicable`. `truth` is Canon's value for the aggregate and is `true` only for
+/// `pass`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GatesReport {
+    pub plan_id: String,
+    pub truth: Truth,
+    pub result: GateResult,
+    pub gates: Vec<GateOutcome>,
+    pub assertions: Vec<Evaluation>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -164,6 +207,14 @@ fn sources(document: &Document) -> Result<Vec<String>> {
             "gate {} has no assertions",
             gate.id
         );
+        if let EssPresence::Present(applies_when) = &gate.applies_when {
+            ensure!(
+                !applies_when.trim().is_empty(),
+                "gate {} has an empty applies_when",
+                gate.id
+            );
+            sources.push(applies_when.clone());
+        }
         sources.extend(gate.assertions.iter().cloned());
     }
     Ok(sources)
@@ -197,6 +248,23 @@ pub fn prepare(
     file: &Path,
     project_file: Option<&Path>,
     excluded_output: Option<&Path>,
+) -> Result<Prepared> {
+    prepare_with(
+        root,
+        file,
+        project_file,
+        excluded_output,
+        &Admission::default(),
+    )
+}
+
+/// [`prepare`] with the runtime's admission data: the change under test and its story.
+pub fn prepare_with(
+    root: &Path,
+    file: &Path,
+    project_file: Option<&Path>,
+    excluded_output: Option<&Path>,
+    admission: &Admission,
 ) -> Result<Prepared> {
     let root = root.canonicalize()?;
     ensure!(
@@ -280,6 +348,7 @@ pub fn prepare(
         &project,
         &executable_locks,
         &implementation,
+        &admission.change,
     ))?);
     for function in catalog.functions.values_mut() {
         if let Implementation::Observation(provider) = &mut function.implementation {
@@ -336,6 +405,7 @@ pub fn prepare(
     let plan = canon_expr::compile(&expressions, &catalog, &bindings)
         .map_err(|e| anyhow::anyhow!("{}: {e:?}", file.display()))?;
     let mut context = ProviderContext::new(&root);
+    context.change = admission.change.clone();
     context.commands = project.commands;
     context.providers = project.providers;
     context.networks = project.networks;
@@ -550,4 +620,75 @@ pub fn evaluate(
         "bundle gate source differs from its checked plan"
     );
     Ok(report)
+}
+
+/// [`evaluate`] with each gate's result. A gate whose `applies_when` is true is judged by its
+/// assertions; false makes it `not_applicable`; unknown makes it `unknown`. Pure replay, like
+/// [`evaluate`].
+pub fn evaluate_gates(
+    bundle: &Bundle,
+    now: i64,
+    source_identity: Option<&str>,
+    context_identity: Option<&str>,
+) -> Result<GatesReport> {
+    let report = evaluate(bundle, now, source_identity, context_identity)?;
+    let mut cursor = 0;
+    let mut gates = Vec::new();
+    for gate in &bundle.document.gates {
+        let applicability = match gate.applies_when {
+            EssPresence::Present(_) => {
+                cursor += 1;
+                Some(&report.assertions[cursor - 1])
+            }
+            EssPresence::Absent => None,
+        };
+        let own = &report.assertions[cursor..cursor + gate.assertions.len()];
+        cursor += gate.assertions.len();
+        let (result, reasons) = match applicability.map(|a| a.truth) {
+            Some(Truth::False) => (
+                GateResult::NotApplicable,
+                vec!["applies_when is false".into()],
+            ),
+            Some(Truth::Unknown) => (
+                GateResult::Unknown,
+                applicability.map(|a| a.reasons.clone()).unwrap_or_default(),
+            ),
+            Some(Truth::True) | None => {
+                let reasons = own.iter().flat_map(|a| a.reasons.clone()).collect();
+                if own.iter().any(|a| a.truth == Truth::False) {
+                    (GateResult::Fail, reasons)
+                } else if own.iter().all(|a| a.truth == Truth::True) {
+                    (GateResult::Pass, vec![])
+                } else {
+                    (GateResult::Unknown, reasons)
+                }
+            }
+        };
+        gates.push(GateOutcome {
+            id: gate.id.clone(),
+            result,
+            reasons,
+        });
+    }
+    let has = |wanted| gates.iter().any(|g| g.result == wanted);
+    let result = if has(GateResult::Fail) {
+        GateResult::Fail
+    } else if has(GateResult::Unknown) {
+        GateResult::Unknown
+    } else if has(GateResult::Pass) {
+        GateResult::Pass
+    } else {
+        GateResult::NotApplicable
+    };
+    Ok(GatesReport {
+        plan_id: report.plan_id,
+        truth: match result {
+            GateResult::Pass => Truth::True,
+            GateResult::Fail => Truth::False,
+            GateResult::Unknown | GateResult::NotApplicable => Truth::Unknown,
+        },
+        result,
+        gates,
+        assertions: report.assertions,
+    })
 }

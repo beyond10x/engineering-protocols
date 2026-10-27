@@ -23,6 +23,9 @@ fn normalized_runtime_models_match_the_ess_field_types() {
                     "CommandBinding",
                     "ExternalProvider",
                     "NetworkBinding",
+                    "Change",
+                    "GateOutcome",
+                    "GatesReport",
                 ]
                 .contains(&name.as_str())
                 {
@@ -36,7 +39,7 @@ fn normalized_runtime_models_match_the_ess_field_types() {
             }
         }
     }
-    assert_eq!(actual.len(), 5, "every native envelope must be compared");
+    assert_eq!(actual.len(), 8, "every native envelope must be compared");
     let mut expected = std::collections::BTreeMap::new();
     for ty in yaml["types"].as_sequence().unwrap() {
         let name = ty["name"].as_str().unwrap();
@@ -82,6 +85,9 @@ fn wire_type(ty: &syn::Type) -> String {
         "Vec" => format!("List<{}>", args.join(",")),
         "BTreeMap" => format!("Map<{}>", args.join(",")),
         "Value" => "engineering.expr.Value".into(),
+        "Option" => format!("Optional<{}>", args.join(",")),
+        "Truth" => "engineering.expr.Truth".into(),
+        "Evaluation" => "engineering.expr.Evaluation".into(),
         "Plan" => "engineering.expr.PlanDocument".into(),
         "Observation" => "engineering.expr.Observation".into(),
         _ => format!("engineering.gates.{name}"),
