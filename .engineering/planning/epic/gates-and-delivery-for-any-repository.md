@@ -7,7 +7,7 @@ title: A repository that is not ours states its definition of done and its deliv
 summary: change-aware gates, story.delivery/2 settings, portable gate programs
 relations:
 - serves: vision:governed-autonomy
-revision: 1
+revision: 2
 ---
 # Epic: gates-and-delivery-for-any-repository
 
@@ -39,6 +39,15 @@ Gate commands also need a hand-written absolute executable and `PATH` (`crates/a
 - `story:a-gate-sees-the-change-and-may-not-apply`
 - `story:story-delivery-2-with-settings`
 - `story:gate-commands-name-a-program-portably`
+
+## Acceptance
+
+The epic is done when the three stories' fixtures pass in `task check`, and one fixture repository shows all three
+together:
+- a gates document with a `release-notes` gate (`applies_when` on a tag, assertion `git.changed("CHANGELOG.md")`)
+  whose command names `program: git` on a declared `search_path`;
+- run under `story.delivery/2` with `gate_on: after_handover`, it gives `not_applicable` for an untagged story, `fail`
+  for a tagged story without a changelog change, and `pass` with one.
 
 ## Out of scope
 

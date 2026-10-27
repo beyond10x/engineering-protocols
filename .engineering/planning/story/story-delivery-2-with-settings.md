@@ -12,7 +12,7 @@ relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 scope:
 - confidence: inferred
-  path: crates/canon-engineering
+  path: crates/canon-engineering/tests/story_delivery_2_protocol.rs
 - confidence: inferred
   path: fixtures/story-delivery-2
 - confidence: inferred
@@ -21,7 +21,7 @@ scope:
   path: protocols/vocabulary.yaml
 - confidence: inferred
   path: website/docs/protocols/story-delivery
-revision: 2
+revision: 4
 ---
 # Story: story-delivery-2-with-settings
 
@@ -33,6 +33,11 @@ configuration when the case opens:
   recorded `fail` on a revision `tests.write` produced.
 - `gate_on: [after_handover, each_revision]`. Under `after_handover`, `gate.run` is admissible only when `tests.pass`
   and `change.handed_over` hold, so the gate runs once, on the revision that can be handed over.
+
+It also declares the claim `change.complete`: test paths and implementation paths both changed since the base, with
+tests and gate green at the same revision. `pr.open` requires it in addition to its `story.delivery/1` preconditions, so the pull request
+opens once, on the complete change. This is the protocol half of takt's `story:story-delivery-tests-first`, which
+consumes it.
 
 `story.delivery/1` stays byte for byte.
 
@@ -63,11 +68,17 @@ Each is a named fixture under `fixtures/story-delivery-2/`, run by `task check`.
 5. `gate-each-revision`: under `gate_on: each_revision`, `gate.run` is admissible at every revision, as in `story.delivery/1`.
 6. `an-old-gate-pass-does-not-hold`: a `gate_result` at an earlier implementation revision leaves `gate.green` unknown.
 7. Every `fixtures/story-delivery/` fixture still gives its result on `story.delivery/1`.
+8. `pr-open-needs-change-complete`: with only test paths changed, or only implementation paths, `pr.open` is not
+   admissible, even with tests and gate green. With both changed and both green at one revision, it is admissible.
+
+The fixtures are run from `crates/canon-engineering/tests/story_delivery_2_protocol.rs`, beside today's
+`story_delivery_protocol.rs`. A new protocol file is embedded by `build.rs` with no Rust edit
+(`crates/canon-engineering/src/registry.rs:1-6`).
 
 ## Scope
 
 - `protocols/story-delivery/2.yaml` (new)
-- `crates/canon-engineering/` (the built-in table)
+- `crates/canon-engineering/tests/story_delivery_2_protocol.rs` (new)
 - `fixtures/story-delivery-2/`
 - `protocols/vocabulary.yaml`
 - `website/docs/protocols/story-delivery/` (generated page)

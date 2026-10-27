@@ -14,14 +14,22 @@ scope:
 - confidence: inferred
   path: catalog/engineering.yaml
 - confidence: inferred
-  path: crates/assertion-providers/src
+  path: crates/assertion-providers/src/git.rs
+- confidence: inferred
+  path: crates/assertion-providers/src/lib.rs
 - confidence: inferred
   path: crates/canon-engineering-assertions/src/lib.rs
 - confidence: inferred
+  path: crates/canon-engineering-assertions/tests/gates_result_values.rs
+- confidence: inferred
+  path: crates/canon-engineering/tests/assertion_replay.rs
+- confidence: inferred
   path: ess/domains/gates.yaml
 - confidence: inferred
-  path: fixtures/assertions
-revision: 2
+  path: fixtures/assertions/applies-when.fixture.yaml
+- confidence: inferred
+  path: fixtures/assertions/git-changed.fixture.yaml
+revision: 4
 ---
 # Story: a-gate-sees-the-change-and-may-not-apply
 
@@ -60,17 +68,23 @@ operation, the context fields and the result value first.
    when the subject changed it, false when it did not, and `unknown` when `base` is absent from the context.
 2. `fixtures/assertions/applies-when.fixture.yaml`: a gate with `applies_when: 'story.has_tag("consumer-visible")'` is
    `not_applicable` for a story without the tag and evaluates its assertions for one with it.
-3. `tests/gates_result_values.rs::not_applicable_is_never_pass`: a gates run whose only gate is `not_applicable`
-   reports that value per gate, and the run's aggregate is not `pass`.
+3. `crates/canon-engineering-assertions/tests/gates_result_values.rs::not_applicable_is_never_pass`: a gates run
+   whose only gate is `not_applicable` reports that value per gate, and the run's aggregate is not `pass`.
 4. Every existing gates fixture keeps its result.
+
+Fixtures 1 and 2 are loaded by explicit path from `crates/canon-engineering/tests/assertion_replay.rs`, as
+`fixtures/assertions/gates.yaml` is today.
 
 ## Scope
 
 - `catalog/engineering.yaml`
-- `crates/assertion-providers/src/` (a git provider)
+- `crates/assertion-providers/src/git.rs` (new: the git provider)
+- `crates/assertion-providers/src/lib.rs` (registration)
 - `crates/canon-engineering-assertions/src/lib.rs` (context fields, `applies_when`, result values)
+- `crates/canon-engineering-assertions/tests/gates_result_values.rs`
+- `crates/canon-engineering/tests/assertion_replay.rs`
 - `ess/domains/gates.yaml`
-- `fixtures/assertions/`
+- `fixtures/assertions/git-changed.fixture.yaml`, `fixtures/assertions/applies-when.fixture.yaml`
 
 ## Delivery
 
