@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-with-settings
 kind: story
-status: active
+status: implemented
 title: story.delivery/2 declares tests_first and gate_on as case inputs
 summary: red before implementation, gate after handover, as settings
 tags:
@@ -21,10 +21,11 @@ scope:
   path: protocols/vocabulary.yaml
 - confidence: inferred
   path: website/docs/protocols/story-delivery
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-27T12:13:59Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":3}}}
 - {from: "proposed", to: "active", at: "2026-10-27T12:14:00Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":3}}}
+- {from: "active", to: "implemented", at: "2026-10-27T12:32:24Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":1,"review_outcome":3}}}
 ---
 # Story: story-delivery-2-with-settings
 
@@ -92,3 +93,17 @@ The consumer is takt (`story:story-delivery-tests-first` and `story:takt-ships-d
 delivered in one workspace with an uncommitted `[patch]` path override in takt's `Cargo.toml` to this working tree.
 The end-to-end check is a takt story run with a fake harness on the patched tree: the test is red before the edit, and
 the gate runs once. Then this repository releases and takt takes it as a pin-only hop.
+
+## Status
+
+Implemented on `unit/tr-sd2` (c33e64a, review fix 481a7c3).
+
+- `tests.shown_red` holds when a `tests_change` is recorded and `tests.pass` is false at the current revision. A
+  baseline run at the seed no longer locks the edit out, and a failing run about another revision is excluded as
+  `revision_mismatch` (fixtures `baseline-pass-then-red`, `baseline-fail-then-red`,
+  `a-red-run-about-another-revision-does-not-admit-the-edit`).
+- Known limit: after `implementation.edit` moves the revision, the next edit waits for a test run at the new revision.
+  Canon 0.6.0 has no revision-bound or latest-record order form, so a red run bound to the `tests_change` revision cannot
+  persist across edits; `story:story-delivery-2-red-run-binds-revision` (draft) holds it.
+- Tests: `story_delivery_2_protocol` 10 passed, `story_delivery_2_protocol_adv1` 5 passed; `fixture_harness` 7,
+  `protocol_registry` 1, `vocabulary_yaml` 2, `story_delivery_protocol` 1 passed; docs drift check fresh.
