@@ -1,0 +1,61 @@
+format: els-fixture/1
+id: a-red-run-about-another-revision-does-not-admit-the-edit
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# A story whose case requires its tests first. The tests are written at h2. The only failing run
+# recorded afterwards is about h1, the seed, which carries none of the story's tests (a late result
+# of a run started before the write): it is excluded as `revision_mismatch`, `tests.pass` is
+# unknown and the edit stays refused.
+case:
+  format: canon-case/1
+  id: SD-210
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: each_revision
+
+states:
+  - id: tests-written
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims: &unknown
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+      actions: &edit-refused
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: blocked
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: a-seed-run-fails-late
+    add_evidence:
+      - observed_at: "2026-10-27T10:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-red, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims: *unknown
+      actions: *edit-refused

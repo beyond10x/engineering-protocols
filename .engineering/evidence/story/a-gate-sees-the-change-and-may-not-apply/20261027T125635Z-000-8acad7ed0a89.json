@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-27T12:56:35Z",
+  "actor": "human:timo",
+  "artifact": "story:a-gate-sees-the-change-and-may-not-apply",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test gates_result_values git_changed and their adv1/sec1 files at 6bd3072: all passed"
+  }
+}

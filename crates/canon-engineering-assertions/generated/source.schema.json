@@ -29,6 +29,9 @@
     "engineering.gates.Gate": {
       "additionalProperties": false,
       "properties": {
+        "applies_when": {
+          "type": "string"
+        },
         "assertions": {
           "items": {
             "type": "string"
@@ -55,8 +58,8 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "x-ess-provenance": {
-    "contract_digest": "slice-sha256/2:9073b3e089b79b6efa0eeff8706e781c3d9d47dc32f3d7abcb95d88970c570da",
-    "source_digest": "61181687abd327d242aa5f9927430793128152146bf26830f0ea6ac55af84bac",
+    "contract_digest": "slice-sha256/2:5e96248bc668884d7f443f003b3c5d09a4a8167065eec248a428cc604c60b052",
+    "source_digest": "cee0094c06c50ff302d8fcb41d57f971cc6cd6afbd5178288832f14ef7fa0333",
     "specification_version": "v1",
     "system": "engineering"
   }

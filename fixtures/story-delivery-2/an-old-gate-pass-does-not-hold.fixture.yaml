@@ -1,0 +1,66 @@
+format: els-fixture/1
+id: an-old-gate-pass-does-not-hold
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# The gate passed at h1. A new commit moves the implementation to h2: the pass is about an earlier
+# implementation revision, so it is excluded as `revision_mismatch` and `gate.green` is unknown,
+# not false, as in `story.delivery/1`; the gate may run again.
+case:
+  format: canon-case/1
+  id: SD-206
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: optional
+    gate_on: each_revision
+
+states:
+  - id: gate-passed
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+      actions: &gate-open
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: new-commit
+    set_revisions:
+      implementation: h2
+    add_evidence: []
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+      actions: *gate-open

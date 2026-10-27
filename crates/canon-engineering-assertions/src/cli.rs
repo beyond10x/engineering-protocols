@@ -1,7 +1,6 @@
 //! Clap definitions are public so documentation walks the actual command surface.
-use crate::{Bundle, builtin_catalog, prepare};
+use crate::{Admission, Bundle, Change, GateResult, builtin_catalog, prepare_with};
 use anyhow::{Context, Result, ensure};
-use canon_expr::Truth;
 use clap::{Args, Subcommand};
 use std::{
     fs,
@@ -27,6 +26,49 @@ pub struct Input {
     /// Explicit command/provider/variable registration; omitted means no process admission.
     #[arg(long)]
     pub project: Option<PathBuf>,
+    /// Revision the change is measured from; `git.changed` is unknown without it.
+    #[arg(long)]
+    pub base: Option<String>,
+    /// Revision under test; `git.changed` is unknown without it.
+    #[arg(long)]
+    pub subject: Option<String>,
+    /// The story the change belongs to; `story.id` is unknown without it.
+    #[arg(long)]
+    pub story_id: Option<String>,
+    /// A tag of that story, repeatable; giving none leaves `story.has_tag` unknown.
+    #[arg(long = "story-tag")]
+    pub story_tags: Vec<String>,
+    /// Directory, repeatable, where a command's `program` is looked up when the project has no
+    /// `search_path`; it must be absolute and outside the tree.
+    #[arg(long = "default-search-path")]
+    pub default_search_path: Vec<PathBuf>,
+}
+impl Default for Input {
+    fn default() -> Self {
+        Self {
+            file: PathBuf::from(".engineering/gates.yaml"),
+            root: PathBuf::from("."),
+            project: None,
+            base: None,
+            subject: None,
+            story_id: None,
+            story_tags: Vec::new(),
+            default_search_path: Vec::new(),
+        }
+    }
+}
+impl Input {
+    fn admission(&self) -> Admission {
+        Admission {
+            change: Change {
+                base: self.base.clone(),
+                subject: self.subject.clone(),
+                story_id: self.story_id.clone(),
+                story_tags: (!self.story_tags.is_empty()).then(|| self.story_tags.clone()),
+            },
+            search_path: self.default_search_path.clone(),
+        }
+    }
 }
 #[derive(Debug, Subcommand)]
 pub enum Gates {
@@ -87,7 +129,13 @@ pub fn assertions(command: Assertions) -> Result<(String, u8)> {
 pub fn gates(command: Gates) -> Result<(String, u8)> {
     match command {
         Gates::Validate { input } => {
-            let prepared = prepare(&input.root, &input.file, input.project.as_deref(), None)?;
+            let prepared = prepare_with(
+                &input.root,
+                &input.file,
+                input.project.as_deref(),
+                None,
+                &input.admission(),
+            )?;
             let assertions: usize = prepared
                 .document
                 .gates
@@ -102,7 +150,13 @@ pub fn gates(command: Gates) -> Result<(String, u8)> {
             ))
         }
         Gates::Explain { input } => {
-            let prepared = prepare(&input.root, &input.file, input.project.as_deref(), None)?;
+            let prepared = prepare_with(
+                &input.root,
+                &input.file,
+                input.project.as_deref(),
+                None,
+                &input.admission(),
+            )?;
             Ok((json(&prepared.plan)?, 0))
         }
         Gates::Run { input, out, now } => {
@@ -134,25 +188,26 @@ pub fn gates(command: Gates) -> Result<(String, u8)> {
                 Some(now) => now,
                 None => i64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())?,
             };
-            let prepared = prepare(
+            let prepared = prepare_with(
                 &input.root,
                 &input.file,
                 input.project.as_deref(),
                 Some(&out),
+                &input.admission(),
             )?;
             let mut bundle = crate::collect(prepared, now)?;
             if live_clock {
                 bundle.evaluated_at =
                     i64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())?;
             }
-            let report = crate::evaluate(&bundle, bundle.evaluated_at, None, None)?;
+            let report = crate::evaluate_gates(&bundle, bundle.evaluated_at, None, None)?;
             let encoded = json(&bundle)?;
             ensure!(
                 encoded.len() <= 64 * 1024 * 1024,
                 "evidence exceeds 64 MiB retention limit"
             );
             crate::retention::write(&input.root, &out, encoded.as_bytes())?;
-            let code = truth_exit(report.truth);
+            let code = result_exit(report.result);
             Ok((json(&report)?, code))
         }
         Gates::Evaluate {
@@ -169,21 +224,23 @@ pub fn gates(command: Gates) -> Result<(String, u8)> {
             ensure!(data.len() <= 64 * 1024 * 1024, "evidence exceeds 64 MiB");
             let bundle: Bundle =
                 serde_json::from_slice(&data).context("invalid retained evidence")?;
-            let report = crate::evaluate(
+            let report = crate::evaluate_gates(
                 &bundle,
                 now.unwrap_or(bundle.evaluated_at),
                 source_identity.as_deref(),
                 context_identity.as_deref(),
             )?;
-            let code = truth_exit(report.truth);
+            let code = result_exit(report.result);
             Ok((json(&report)?, code))
         }
     }
 }
-fn truth_exit(truth: Truth) -> u8 {
-    match truth {
-        Truth::True => 0,
-        Truth::False => 1,
-        Truth::Unknown => 3,
+/// 0 pass, 1 fail, 3 unknown, 4 not applicable (never 0: nothing was shown to hold).
+fn result_exit(result: GateResult) -> u8 {
+    match result {
+        GateResult::Pass => 0,
+        GateResult::Fail => 1,
+        GateResult::Unknown => 3,
+        GateResult::NotApplicable => 4,
     }
 }

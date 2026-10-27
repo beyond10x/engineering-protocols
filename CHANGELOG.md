@@ -6,6 +6,68 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Breaking
+
+- The generated `Gate` has an optional `applies_when` field, so a `Gate { .. }` literal needs
+  `applies_when: EssPresence::Absent`; `cli::Input` has four more fields (`Input::default()` fills
+  them); `ProviderContext` has a `change` field; `gates run` and `gates evaluate` print a
+  `GatesReport` (a superset of Canon's report: `truth` and `assertions` stay).
+- `CommandBinding` has a `program` field (a `CommandBinding { .. }` literal needs `program: None`), its
+  `executable` defaults to empty, `Project` has `search_path`, `Bundle` has `programs`, and
+  `Admission` has `search_path`.
+- `evaluate` (the Canon-shaped replay) no longer counts a `not_applicable` gate as a failure: its
+  `truth` is the aggregate of the gates' results (`true` only for `pass`, `false` for `fail`,
+  otherwise `unknown`, so a run in which nothing applied is not `true`), and its `assertions` are each
+  gate's own assertions in gate order with no `applies_when` expression among them, so they pair with
+  `document.gates` whether or not a gate has one. `evaluate_gates` still returns every expression
+  in `assertions`.
+- `git.changed` globs that can never match a path git reports (a leading `./`, a trailing `/`, an
+  absolute or empty glob, an empty or `.` segment) are refused at admission; they used to be
+  silently false.
+
+### Added
+
+- Built-in `story.delivery/2` declares the case inputs `tests_first` (`required`, `optional`) and
+  `gate_on` (`after_handover`, `each_revision`): under `required`, `implementation.edit` waits for
+  the story's tests written and failing at the current revision (`tests.shown_red`); under
+  `after_handover`, `gate.run` waits for passing tests and the handover. The claim
+  `change.complete` (new evidence kind `paths_changed`) is a further precondition of `pr.open`.
+  `story.delivery/1` is unchanged.
+- Gates can see the change and may decline to apply. `git.changed(glob)` is true when a path
+  matching `glob` differs between the context's `base` and `subject` revisions (unknown when either
+  is absent); `story.id()` and `story.has_tag(tag)` read the story the runtime names. A gate's
+  optional `applies_when` expression that is false makes the gate `not_applicable`, never `pass`;
+  `evaluate_gates` returns each gate's result and an aggregate, and `gates run` exits 4 when nothing
+  applied. The runtime passes the change through `prepare_with` and `Admission`, or the CLI's
+  `--base`, `--subject`, `--story-id` and `--story-tag`; the change enters the context identity.
+- A command in an assertions project can name a `program` instead of an absolute `executable`.
+  Admission resolves the name on the project's `search_path`, else on the default the runtime passes
+  in (`Admission::search_path`, or `--default-search-path`); the caller's `PATH` is never read. The
+  match must be an executable file outside the tree, and every entry must be absolute and outside
+  the tree, or admission refuses and names it. The resolved absolute path and its sha256 are
+  recorded in the evidence (`programs`), and a change of the file before or during collection is
+  refused like any admitted executable. The process is still started with a cleared environment.
+
+### Changed
+
+- `git.changed` measures the change from the merge base of `base` and `subject` (`base...subject`),
+  so edits the base gained after the subject forked are not credited to the change; a subject that
+  is an ancestor of the base is compared tree to tree. Paths are relative to the gates root, as
+  every other path operation is, so a root in a subdirectory of the repository matches `CHANGELOG.md`
+  against its own file. A path that is not UTF-8 no longer aborts the run.
+- The context identity carries `base` and `subject` as the commit ids they name at admission, so a
+  ref that moved is another context.
+- The CLI's `--story-id` without `--story-tag` leaves `story.has_tag` unknown, as its help says.
+- The sha256 of a program resolved at admission is read once and is the one the run locks.
+
+### Fixed
+
+- A promisor remote in a repository's configuration could make `git.changed` lazily fetch and start
+  `remote.origin.uploadpack` through a shell. Git now runs with `GIT_NO_LAZY_FETCH=1`,
+  `GIT_PROTOCOL_FROM_USER=0` and `protocol.allow=never`.
+- A `search_path` entry inside the tree that is spelled through `..` and does not exist is refused
+  by name instead of skipped.
+
 ## [0.10.0] - 2026-10-26
 
 ### Breaking

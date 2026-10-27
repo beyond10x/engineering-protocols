@@ -116,6 +116,14 @@ generated.matches(expected: String, actual: String) -> Bool
 
 Collects `generated.matches` through `engineering.builtin/1`. The implementation and bindings are locked into the plan at collection.
 
+## `git.changed`
+
+```text
+git.changed(glob: String) -> Bool
+```
+
+Collects `git.changed` through `engineering.builtin/1`. The implementation and bindings are locked into the plan at collection.
+
 ## `net.dns.lookup`
 
 ```text
@@ -187,6 +195,22 @@ schema.valid(path: String, schema: String) -> Bool
 ```
 
 Collects `document.validates` through `engineering.builtin/1`. The implementation and bindings are locked into the plan at collection.
+
+## `story.has_tag`
+
+```text
+story.has_tag(tag: String) -> Bool
+```
+
+Collects `story.has_tag` through `engineering.builtin/1`. The implementation and bindings are locked into the plan at collection.
+
+## `story.id`
+
+```text
+story.id() -> String
+```
+
+Collects `story.id` through `engineering.builtin/1`. The implementation and bindings are locked into the plan at collection.
 
 ## `tests.passed`
 
@@ -316,6 +340,21 @@ Options:
       --project <PROJECT>
           Explicit command/provider/variable registration; omitted means no process admission
 
+      --base <BASE>
+          Revision the change is measured from; `git.changed` is unknown without it
+
+      --subject <SUBJECT>
+          Revision under test; `git.changed` is unknown without it
+
+      --story-id <STORY_ID>
+          The story the change belongs to; `story.id` is unknown without it
+
+      --story-tag <STORY_TAGS>
+          A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
+
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
+
   -h, --help
           Print help
 
@@ -342,6 +381,21 @@ Options:
       --project <PROJECT>
           Explicit command/provider/variable registration; omitted means no process admission
 
+      --base <BASE>
+          Revision the change is measured from; `git.changed` is unknown without it
+
+      --subject <SUBJECT>
+          Revision under test; `git.changed` is unknown without it
+
+      --story-id <STORY_ID>
+          The story the change belongs to; `story.id` is unknown without it
+
+      --story-tag <STORY_TAGS>
+          A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
+
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
+
   -h, --help
           Print help
 
@@ -367,6 +421,21 @@ Options:
 
       --project <PROJECT>
           Explicit command/provider/variable registration; omitted means no process admission
+
+      --base <BASE>
+          Revision the change is measured from; `git.changed` is unknown without it
+
+      --subject <SUBJECT>
+          Revision under test; `git.changed` is unknown without it
+
+      --story-id <STORY_ID>
+          The story the change belongs to; `story.id` is unknown without it
+
+      --story-tag <STORY_TAGS>
+          A tag of that story, repeatable; giving none leaves `story.has_tag` unknown
+
+      --default-search-path <DEFAULT_SEARCH_PATH>
+          Directory, repeatable, where a command's `program` is looked up when the project has no `search_path`; it must be absolute and outside the tree
 
       --out <OUT>
           Evidence output under .engineering/assertions/, relative to root

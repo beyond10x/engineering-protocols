@@ -8,6 +8,8 @@ types:
         type: String
       - name: text
         type: String
+      - name: applies_when
+        type: Optional<String>
       - name: assertions
         type: List<String>
   - name: engineering.gates.Document
@@ -23,6 +25,7 @@ types:
     kind: struct
     fields:
       - {name: executable, type: String}
+      - {name: program, type: Optional<String>}
       - {name: args, type: List<String>}
       - {name: env, type: 'Map<String, String>'}
   - name: engineering.gates.ExternalProvider
@@ -42,6 +45,7 @@ types:
       - {name: variables, type: 'Map<String, engineering.expr.Value>'}
       - {name: catalogs, type: List<String>}
       - {name: inputs, type: List<String>}
+      - {name: search_path, type: List<String>}
       - {name: commands, type: 'Map<String, engineering.gates.CommandBinding>'}
       - {name: providers, type: 'Map<String, engineering.gates.ExternalProvider>'}
       - {name: networks, type: 'Map<String, engineering.gates.NetworkBinding>'}
@@ -58,3 +62,35 @@ types:
       - {name: context_identity, type: String}
       - {name: evaluated_at, type: Integer}
       - {name: observations, type: List<engineering.expr.Observation>}
+      - {name: programs, type: List<engineering.gates.AdmittedProgram>}
+  - name: engineering.gates.AdmittedProgram
+    kind: struct
+    fields:
+      - {name: binding, type: String}
+      - {name: program, type: String}
+      - {name: path, type: String}
+      - {name: sha256, type: String}
+  - name: engineering.gates.Change
+    kind: struct
+    fields:
+      - {name: base, type: Optional<String>}
+      - {name: subject, type: Optional<String>}
+      - {name: story_id, type: Optional<String>}
+      - {name: story_tags, type: 'Optional<List<String>>'}
+  - name: engineering.gates.GateResult
+    kind: enum
+    variants: [pass, fail, unknown, not_applicable]
+  - name: engineering.gates.GateOutcome
+    kind: struct
+    fields:
+      - {name: id, type: String}
+      - {name: result, type: engineering.gates.GateResult}
+      - {name: reasons, type: List<String>}
+  - name: engineering.gates.GatesReport
+    kind: struct
+    fields:
+      - {name: plan_id, type: String}
+      - {name: truth, type: engineering.expr.Truth}
+      - {name: result, type: engineering.gates.GateResult}
+      - {name: gates, type: List<engineering.gates.GateOutcome>}
+      - {name: assertions, type: List<engineering.expr.Evaluation>}

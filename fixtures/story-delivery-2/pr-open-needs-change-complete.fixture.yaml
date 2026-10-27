@@ -1,0 +1,168 @@
+format: els-fixture/1
+id: pr-open-needs-change-complete
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# At every revision here the change is handed over, a merge would change the base branch, and the
+# tests pass, so what differs is the paths changed and the gate. At h1 only test paths changed,
+# and at h2 only implementation paths, each with the tests and the gate green: `change.complete`
+# is false and the pull request may not be opened. At h3 both changed with the tests and the gate
+# green at h3: the change is complete and the pull request is admissible. At h4 both changed and
+# the tests pass, but the only gate pass is about h3: `gate.green` and `change.complete` are
+# unknown and the pull request may not be opened.
+case:
+  format: canon-case/1
+  id: SD-207
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: optional
+    gate_on: after_handover
+
+states:
+  - id: only-test-paths
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:01:00Z"
+        record: {format: canon-evidence/1, id: tests-h1, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:02:00Z"
+        record: {format: canon-evidence/1, id: gate-h1, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:03:00Z"
+        record: {format: canon-evidence/1, id: change-h1, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:04:00Z"
+        record: {format: canon-evidence/1, id: paths-h1, kind: paths_changed, result: tests_only,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: &pr-blocked
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: only-implementation-paths
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: handover-h2, kind: handover,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:11:00Z"
+        record: {format: canon-evidence/1, id: tests-h2, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:12:00Z"
+        record: {format: canon-evidence/1, id: gate-h2, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:13:00Z"
+        record: {format: canon-evidence/1, id: change-h2, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:14:00Z"
+        record: {format: canon-evidence/1, id: paths-h2, kind: paths_changed,
+                 result: implementation_only, subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: *pr-blocked
+
+  - id: both-paths-complete
+    set_revisions:
+      implementation: h3
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: handover-h3, kind: handover,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:21:00Z"
+        record: {format: canon-evidence/1, id: tests-h3, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:22:00Z"
+        record: {format: canon-evidence/1, id: gate-h3, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:23:00Z"
+        record: {format: canon-evidence/1, id: change-h3, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:24:00Z"
+        record: {format: canon-evidence/1, id: paths-h3, kind: paths_changed, result: both,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: blocked
+        change.read: admissible
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: admissible
+        ci.read: blocked
+        repository.merge: blocked
+
+  - id: gate-pass-about-another-revision
+    set_revisions:
+      implementation: h4
+    add_evidence:
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: handover-h4, kind: handover,
+                 subject: implementation, subject_revision: h4}
+      - observed_at: "2026-10-27T09:31:00Z"
+        record: {format: canon-evidence/1, id: tests-h4, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h4}
+      - observed_at: "2026-10-27T09:33:00Z"
+        record: {format: canon-evidence/1, id: change-h4, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h4}
+      - observed_at: "2026-10-27T09:34:00Z"
+        record: {format: canon-evidence/1, id: paths-h4, kind: paths_changed, result: both,
+                 subject: implementation, subject_revision: h4}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+      actions: *pr-blocked

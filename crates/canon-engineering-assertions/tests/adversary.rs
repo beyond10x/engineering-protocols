@@ -1,6 +1,6 @@
 use assertion_providers::CommandBinding;
 use canon_engineering_assertions::cli::{Gates, Input, gates};
-use canon_engineering_assertions::{Document, Gate, Project, prepare};
+use canon_engineering_assertions::{Document, EssPresence, Gate, Project, prepare};
 use std::{collections::BTreeMap, fs};
 
 fn fixture(root: &std::path::Path, assertions: Vec<String>, project: Project) {
@@ -11,6 +11,7 @@ fn fixture(root: &std::path::Path, assertions: Vec<String>, project: Project) {
         gates: vec![Box::new(Gate {
             id: "checked".into(),
             text: "All observations are checked before acceptance".into(),
+            applies_when: EssPresence::Absent,
             assertions,
         })],
     };
@@ -35,6 +36,7 @@ fn evidence_output_cannot_follow_symlink_created_during_collection() {
     project.commands.insert(
         "make-link".into(),
         CommandBinding {
+            program: None,
             executable: "/usr/bin/ln".into(),
             args: vec![
                 "-s".into(),
@@ -54,6 +56,7 @@ fn evidence_output_cannot_follow_symlink_created_during_collection() {
             file: "gates.yaml".into(),
             root: root.path().into(),
             project: Some("project.yaml".into()),
+            ..Input::default()
         },
         out: ".engineering/assertions/evidence.json".into(),
         now: Some(100),
@@ -96,6 +99,7 @@ fn changed_admitted_command_executable_cannot_reuse_prepared_identity() {
     project.commands.insert(
         "tool".into(),
         CommandBinding {
+            program: None,
             executable: executable.clone(),
             args: vec![],
             env: BTreeMap::new(),

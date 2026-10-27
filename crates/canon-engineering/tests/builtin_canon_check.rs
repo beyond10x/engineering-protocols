@@ -15,10 +15,14 @@ use canon_engineering::registry;
 /// `state-space-bound` refusal names. `self.improvement/1` is at the count Atlas ADR 0094
 /// § Consequences records; splitting it, or a Canon change, is its own story. `ml.experiment/1`
 /// and `software.change/1` were over the bound before ADR 0094 and are measured here as they are.
+/// `story.delivery/2` is over it by its two case inputs, the order form over `tests_change` and
+/// `paths_changed`; `story.delivery/1` stays under it
+/// (`story:story-delivery-2-with-settings`).
 const OVER_BOUND: &[(&str, u32, u128)] = &[
     ("ml-experiment", 1, 4_398_046_511_104),
     ("self-improvement", 1, 5_971_968),
     ("software-change", 1, 10_192_158_720),
+    ("story-delivery", 2, 15_728_640),
 ];
 
 /// Checks the built-in `name@major` and returns what differs from the rule, or from its

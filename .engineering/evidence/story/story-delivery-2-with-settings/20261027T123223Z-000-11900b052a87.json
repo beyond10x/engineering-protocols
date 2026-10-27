@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-27T12:32:23Z",
+  "actor": "human:timo",
+  "artifact": "story:story-delivery-2-with-settings",
+  "kind": "story",
+  "revision": 7,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p b10x-canon-engineering --test story_delivery_2_protocol --test story_delivery_2_protocol_adv1 at 481a7c3: 10 passed, 5 passed"
+  }
+}

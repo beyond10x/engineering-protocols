@@ -685,3 +685,43 @@ terms:
     category: obligation_id
     marking: loop.improvement
     meaning: a loop change counts only when its metric improved
+  - id: tests_change
+    category: evidence_kind
+    marking: software.change
+    meaning: the record that a story's tests were written, moving the implementation to a new revision
+  - id: paths_changed
+    category: evidence_kind
+    marking: software.change
+    meaning: which paths an implementation revision changes since the base branch's tip, test paths, implementation paths, both or neither
+  - id: tests.shown_red
+    category: claim_id
+    marking: software.change
+    meaning: a story's tests were written, and they fail at the current implementation revision
+  - id: change.complete
+    category: claim_id
+    marking: software.change
+    meaning: the current implementation revision changes both test paths and implementation paths since the base, with its tests and gate green at that same revision
+  - id: tests_first
+    category: case_input
+    marking: software.change
+    meaning: whether a story's tests must fail before its implementation is edited, fixed when its case opens
+  - id: required
+    category: input_value
+    marking: software.change
+    meaning: the implementation is edited only while the story's tests, once written, fail at the current revision
+  - id: optional
+    category: input_value
+    marking: software.change
+    meaning: the implementation may be edited whatever the tests have done
+  - id: gate_on
+    category: case_input
+    marking: software.change
+    meaning: when the repository's gate runs, fixed when a story's case opens
+  - id: after_handover
+    category: input_value
+    marking: software.change
+    meaning: the gate runs once, on the revision whose tests pass and whose change is handed over
+  - id: each_revision
+    category: input_value
+    marking: software.change
+    meaning: the gate runs at every revision, whenever asked

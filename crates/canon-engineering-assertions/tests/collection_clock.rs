@@ -26,6 +26,7 @@ gates:
     project.commands.insert(
         "slow".into(),
         CommandBinding {
+            program: None,
             executable: "/usr/bin/sleep".into(),
             args: vec!["2".into()],
             env: BTreeMap::new(),
@@ -41,6 +42,7 @@ gates:
             file: "gates.yaml".into(),
             root: root.path().into(),
             project: Some("project.yaml".into()),
+            ..Input::default()
         },
         out: ".engineering/assertions/evidence.json".into(),
         now: None,
