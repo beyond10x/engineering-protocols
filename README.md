@@ -33,6 +33,7 @@ blocked until evidence for R2 exists.
 | `eval.gated_change/1` | [`protocols/eval-gated-change/1.yaml`](protocols/eval-gated-change/1.yaml) | [eval-gated change](https://beyond10x.github.io/engineering-protocols/docs/protocols/eval-gated-change/1/) | 0.9.0 |
 | `support.triage/1` | [`protocols/support-triage/1.yaml`](protocols/support-triage/1.yaml) | [support triage](https://beyond10x.github.io/engineering-protocols/docs/protocols/support-triage/1/) | 0.2.0 |
 | `story.delivery/1` | [`protocols/story-delivery/1.yaml`](protocols/story-delivery/1.yaml) | [story delivery](https://beyond10x.github.io/engineering-protocols/docs/protocols/story-delivery/1/) | 0.10.0 |
+| `story.delivery/2` | [`protocols/story-delivery/2.yaml`](protocols/story-delivery/2.yaml) | [story delivery 2](https://beyond10x.github.io/engineering-protocols/docs/protocols/story-delivery/2/) | 0.11.0 |
 | `self.improvement/1` | [`protocols/self-improvement/1.yaml`](protocols/self-improvement/1.yaml) | [self-improvement](https://beyond10x.github.io/engineering-protocols/docs/protocols/self-improvement/1/) | 0.10.0 |
 | `loop.improvement/1` | [`protocols/loop-improvement/1.yaml`](protocols/loop-improvement/1.yaml) | [loop improvement](https://beyond10x.github.io/engineering-protocols/docs/protocols/loop-improvement/1/) | 0.10.0 |
 
@@ -45,13 +46,13 @@ As a library (crate `b10x-canon-engineering`, imported as `canon_engineering`):
 
 ```toml
 [dependencies]
-b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.10.0" }
+b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.11.0" }
 ```
 
 As a command:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.10.0 b10x-canon-engineering
+cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.11.0 b10x-canon-engineering
 ```
 
 Nothing is published to crates.io; releases are Git tags.
@@ -70,9 +71,9 @@ fn main() {
 }
 ```
 
-Against tag 0.10.0 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
-`ml-experiment@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1` and
-`support-triage@1`.
+Against tag 0.11.0 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
+`ml-experiment@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1`, `story-delivery@2`
+and `support-triage@1`.
 `registry::get(name, major)` returns one protocol's YAML as released together with Canon's
 validated model of it.
 
@@ -144,7 +145,7 @@ Changing the repository: read [AGENTS.md](AGENTS.md).
 
 ## Status
 
-Latest source release 0.10.0 (2026-10-26), using Canon 0.6.0 and ESS 0.69.2; see [CHANGELOG.md](CHANGELOG.md).
+Latest source release 0.11.0 (2026-10-27), using Canon 0.6.0 and ESS 0.69.2; see [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
