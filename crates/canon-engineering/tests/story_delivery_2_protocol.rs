@@ -22,10 +22,12 @@ const DIRECTORY: &str = "story-delivery-2";
 const MAJOR: u32 = 2;
 const AT: &str = "2026-10-27T12:00:00Z";
 
-/// Every fixture of this protocol, sorted.
-const FIXTURES: [&str; 7] = [
+const FIXTURES: [&str; 10] = [
     "a-first-run-pass-is-not-red",
+    "a-red-run-about-another-revision-does-not-admit-the-edit",
     "an-old-gate-pass-does-not-hold",
+    "baseline-fail-then-red",
+    "baseline-pass-then-red",
     "gate-after-handover",
     "gate-each-revision",
     "pr-open-needs-change-complete",
@@ -111,22 +113,57 @@ fn red_first_refuses_implementation_first() {
     let red = decide(&fixture, &compiled, "red");
     assert_eq!(claims(&red)["tests.shown_red"], "true");
     assert_eq!(actions(&red)["implementation.edit"], "admissible");
-    // The red run is about h2 and counts after the edit moves the implementation to h3.
+    // The run about h2 says nothing at h3: the edit waits for a run there, and a failing one
+    // admits it again.
     let edited = decide(&fixture, &compiled, "edited");
     assert_eq!(claims(&edited)["tests.pass"], "unknown");
-    assert_eq!(claims(&edited)["tests.shown_red"], "true");
-    assert_eq!(actions(&edited)["implementation.edit"], "admissible");
+    assert_eq!(claims(&edited)["tests.shown_red"], "unknown");
+    assert_eq!(actions(&edited)["implementation.edit"], "blocked");
+    let again = decide(&fixture, &compiled, "still-red");
+    assert_eq!(claims(&again)["tests.shown_red"], "true");
+    assert_eq!(actions(&again)["implementation.edit"], "admissible");
+}
+
+#[test]
+fn a_baseline_run_at_the_seed_does_not_lock_the_edit_out() {
+    let compiled = compiled();
+    for id in ["baseline-pass-then-red", "baseline-fail-then-red"] {
+        let fixture = load(id, &compiled);
+        for state in ["baseline", "tests-written"] {
+            assert_eq!(
+                action(&fixture, &compiled, state, "implementation.edit"),
+                "blocked",
+                "{id}: `{state}`"
+            );
+        }
+        let red = decide(&fixture, &compiled, "red");
+        assert_eq!(claims(&red)["tests.shown_red"], "true", "{id}");
+        assert_eq!(actions(&red)["implementation.edit"], "admissible", "{id}");
+    }
+}
+
+#[test]
+fn a_red_run_about_another_revision_does_not_admit_the_edit() {
+    let compiled = compiled();
+    let fixture = load(
+        "a-red-run-about-another-revision-does-not-admit-the-edit",
+        &compiled,
+    );
+    let late = decide(&fixture, &compiled, "a-seed-run-fails-late");
+    assert_eq!(claims(&late)["tests.shown_red"], "unknown");
+    assert_eq!(actions(&late)["implementation.edit"], "blocked");
+    assert!(excluded_only_as(
+        &late,
+        "tests.pass",
+        ExclusionReason::RevisionMismatch
+    ));
 }
 
 #[test]
 fn a_first_run_pass_is_not_red() {
     let compiled = compiled();
     let fixture = load("a-first-run-pass-is-not-red", &compiled);
-    for state in [
-        "tests-written",
-        "first-run-passes",
-        "a-later-red-run-does-not-count",
-    ] {
+    for state in ["tests-written", "first-run-passes"] {
         let decision = decide(&fixture, &compiled, state);
         assert_ne!(claims(&decision)["tests.shown_red"], "true", "`{state}`");
         assert_eq!(
@@ -138,6 +175,10 @@ fn a_first_run_pass_is_not_red() {
     let passed = decide(&fixture, &compiled, "first-run-passes");
     assert_eq!(claims(&passed)["tests.pass"], "true");
     assert_eq!(claims(&passed)["tests.shown_red"], "false");
+    // Tests rewritten to fail are red at the revision they were written at.
+    let rewritten = decide(&fixture, &compiled, "rewritten-tests-red");
+    assert_eq!(claims(&rewritten)["tests.shown_red"], "true");
+    assert_eq!(actions(&rewritten)["implementation.edit"], "admissible");
 }
 
 #[test]

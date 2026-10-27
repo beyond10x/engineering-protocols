@@ -9,10 +9,11 @@ releases at bare-version tags.
 ### Added
 
 - Built-in `story.delivery/2` declares the case inputs `tests_first` (`required`, `optional`) and
-  `gate_on` (`after_handover`, `each_revision`): under `required`, `implementation.edit` waits for a
-  failing first run of the tests written (`tests.shown_red`); under `after_handover`, `gate.run`
-  waits for passing tests and the handover. The claim `change.complete` (new evidence kind
-  `paths_changed`) is a further precondition of `pr.open`. `story.delivery/1` is unchanged.
+  `gate_on` (`after_handover`, `each_revision`): under `required`, `implementation.edit` waits for
+  the story's tests written and failing at the current revision (`tests.shown_red`); under
+  `after_handover`, `gate.run` waits for passing tests and the handover. The claim
+  `change.complete` (new evidence kind `paths_changed`) is a further precondition of `pr.open`.
+  `story.delivery/1` is unchanged.
 
 ## [0.10.0] - 2026-10-26
 

@@ -60,7 +60,7 @@ states:
         pr.merged: unknown
         pr.opened: unknown
         tests.pass: false
-        tests.shown_red: false
+        tests.shown_red: unknown
       actions: *not-handed-over
 
   - id: green-before-handover

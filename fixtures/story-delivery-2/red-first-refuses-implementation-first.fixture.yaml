@@ -7,8 +7,9 @@ at: "2026-10-27T12:00:00Z"
 # may not be edited. The tests are written, which moves the implementation to h2 and records the
 # change; with no run of them yet, the implementation still may not be edited. Their first run
 # fails at h2: `tests.pass` is false, the red run is shown, and the edit is admissible. The edit
-# moves the implementation to h3: `tests.pass` returns to unknown, but the red run keeps counting,
-# so a second edit is admissible too.
+# moves the implementation to h3: the run about h2 says nothing there, `tests.shown_red` returns
+# to unknown and a second edit waits until the tests are run at h3; failing there, it is shown
+# again and the edit is admissible.
 case:
   format: canon-case/1
   id: SD-201
@@ -101,5 +102,23 @@ states:
         pr.merged: unknown
         pr.opened: unknown
         tests.pass: unknown
+        tests.shown_red: unknown
+      actions: *tests-first-blocked
+
+  - id: still-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: tests-h3-red, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
         tests.shown_red: true
       actions: *editable

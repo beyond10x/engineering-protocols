@@ -61,7 +61,7 @@ states:
         pr.merged: unknown
         pr.opened: unknown
         tests.pass: false
-        tests.shown_red: false
+        tests.shown_red: unknown
       actions: *not-handed-over
 
   - id: red-revision-handed-over
@@ -79,7 +79,7 @@ states:
         pr.merged: unknown
         pr.opened: unknown
         tests.pass: false
-        tests.shown_red: false
+        tests.shown_red: unknown
       actions: &handed-over-gate-blocked
         repository.inspect: admissible
         tests.write: admissible

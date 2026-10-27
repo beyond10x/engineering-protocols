@@ -3,10 +3,10 @@ id: a-first-run-pass-is-not-red
 protocol: protocols/story-delivery/2.yaml
 at: "2026-10-27T12:00:00Z"
 
-# A story whose case requires its tests first. The tests are written at h2 and their first run
-# passes: `tests.pass` is true, but the tests were not red, so `tests.shown_red` is false and the
-# implementation may not be edited. Rewritten tests at h3 that fail do not undo the first run: the
-# first run of the tests is the one that counts, so the edit stays refused.
+# A story whose case requires its tests first. The tests are written at h2 and their run passes:
+# `tests.pass` is true, but the tests were not red, so `tests.shown_red` is false and the
+# implementation may not be edited. Rewritten tests at h3 that fail are red at the current
+# revision: the edit becomes admissible.
 case:
   format: canon-case/1
   id: SD-202
@@ -69,7 +69,7 @@ states:
         tests.shown_red: false
       actions: *edit-refused
 
-  - id: a-later-red-run-does-not-count
+  - id: rewritten-tests-red
     set_revisions:
       implementation: h3
     add_evidence:
@@ -89,5 +89,15 @@ states:
         pr.merged: unknown
         pr.opened: unknown
         tests.pass: false
-        tests.shown_red: false
-      actions: *edit-refused
+        tests.shown_red: true
+      actions:
+        repository.inspect: admissible
+        tests.write: admissible
+        implementation.edit: admissible
+        change.handover: admissible
+        change.read: blocked
+        tests.run: admissible
+        gate.run: admissible
+        pr.open: blocked
+        ci.read: blocked
+        repository.merge: blocked

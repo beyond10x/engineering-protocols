@@ -9,7 +9,7 @@
         ]
       },
       "tests_first": {
-        "description": "whether the story's tests must fail before the implementation is edited; under required, the implementation is edited only after the first run of the tests failed on a revision whose tests were written, and the failing run keeps counting once an edit moves the implementation to a new revision",
+        "description": "whether the story's tests must fail before the implementation is edited; under required, the implementation is edited only while the tests, once written, fail at the current revision",
         "values": [
           "optional",
           "required"
@@ -122,21 +122,15 @@
       "to": "claim:tests.pass"
     },
     {
+      "from": "claim:tests.pass",
+      "kind": "supports",
+      "qualifier": "false",
+      "to": "claim:tests.shown_red"
+    },
+    {
       "from": "evidence:tests_change",
       "kind": "establishes",
-      "qualifier": "before test_result about implementation",
-      "to": "claim:tests.shown_red"
-    },
-    {
-      "from": "evidence:test_result",
-      "kind": "establishes",
-      "qualifier": "after tests_change about implementation",
-      "to": "claim:tests.shown_red"
-    },
-    {
-      "from": "evidence:test_result",
-      "kind": "establishes",
-      "qualifier": "first fail about implementation",
+      "qualifier": "not first none about implementation",
       "to": "claim:tests.shown_red"
     },
     {
@@ -304,7 +298,7 @@
       }
     },
     {
-      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests to have failed on their first run",
+      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests written and failing at the current revision",
       "effect": "write",
       "id": "action:implementation.edit",
       "kind": "action",
@@ -572,24 +566,25 @@
       }
     },
     {
-      "description": "the story's tests failed on their first run, and the tests were written before that run; the failing run is about the revision the tests were written at and keeps counting after an edit moves the implementation to a new revision",
+      "description": "the story's tests were written, and they fail at the current implementation revision; a run about an earlier revision, and a run before the tests were written, say nothing, and an edit that moves the implementation to a new revision returns the claim to unknown until the tests are run there. The order form over tests_change with a result no such record has reads whether any tests_change was recorded, at any revision",
       "id": "claim:tests.shown_red",
       "kind": "claim",
       "name": "tests.shown_red",
       "predicate": {
         "all": [
           {
-            "before": {
-              "first": "tests_change",
-              "subject": "implementation",
-              "then": "test_result"
+            "claim": {
+              "id": "tests.pass",
+              "is": "false"
             }
           },
           {
-            "first": {
-              "kind": "test_result",
-              "result": "fail",
-              "subject": "implementation"
+            "not": {
+              "first": {
+                "kind": "tests_change",
+                "result": "none",
+                "subject": "implementation"
+              }
             }
           }
         ]

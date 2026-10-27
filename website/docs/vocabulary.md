@@ -124,7 +124,7 @@ Category `claim_id`.
 | `loop.definition_honest` | `loop.improvement` | the current loop candidate leaves every metric definition unchanged, or reports the previous definition's figures beside the new ones |
 | `loop.metric_below_target` | `loop.improvement` | a loop metric is below its target on the baseline loop definition |
 | `loop.metric_improved` | `loop.improvement` | the metric improved under the current loop candidate, observed by another agent run than the one that delivered it |
-| `tests.shown_red` | `software.change` | a story's tests failed on their first run, and were written before that run |
+| `tests.shown_red` | `software.change` | a story's tests were written, and they fail at the current implementation revision |
 | `change.complete` | `software.change` | the current implementation revision changes both test paths and implementation paths since the base, with its tests and gate green at that same revision |
 
 ## Actions
@@ -250,7 +250,7 @@ Category `input_value`.
 | `false` | `core` | the value of a yes-or-no case input when what it asks does not hold |
 | `judge` | `self.improvement` | the candidate's change touches a judge surface |
 | `non_judge` | `self.improvement` | the candidate's change touches no judge surface |
-| `required` | `software.change` | the story's tests must fail on their first run before the implementation is edited |
+| `required` | `software.change` | the implementation is edited only while the story's tests, once written, fail at the current revision |
 | `optional` | `software.change` | the implementation may be edited whatever the tests have done |
 | `after_handover` | `software.change` | the gate runs once, on the revision whose tests pass and whose change is handed over |
 | `each_revision` | `software.change` | the gate runs at every revision, whenever asked |
