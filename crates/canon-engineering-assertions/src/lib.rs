@@ -284,11 +284,14 @@ fn command_paths(
         if command.executable.is_relative() {
             command.executable = root.join(&command.executable);
         }
-        command.executable = command
+        // The command runs under the path it was admitted under, as a `program` does, so a link
+        // to a multiplexing binary (rustup's `cargo`) keeps its name as `argv[0]`. The link is
+        // resolved for the check, and the executable lock digests the bytes it reaches.
+        let resolved = command
             .executable
             .canonicalize()
             .context("resolve admitted executable (PATH lookup is not used)")?;
-        ensure!(command.executable.is_file(), "executable is not a file");
+        ensure!(resolved.is_file(), "executable is not a file");
     }
     Ok(programs)
 }
