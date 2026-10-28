@@ -1,0 +1,59 @@
+format: els-fixture/1
+id: adv1-a-red-gate-at-a-handed-over-seed
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case. Tests first required, the gate only after the handover. No test is written: the
+# existing tests pass at the seed h1, the change is handed over there (`change.handover` needs only
+# that no handover is recorded at the revision), so `gate.run` is admissible, and the gate fails at
+# h1. No tests_change exists; the red gate must not admit the edit.
+case:
+  format: canon-case/1
+  id: SD-ADV1-3
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: after_handover
+
+states:
+  - id: seed-green-and-handed-over
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: seed-gate-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1-fail, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: false
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false

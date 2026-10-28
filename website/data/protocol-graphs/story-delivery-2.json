@@ -9,7 +9,7 @@
         ]
       },
       "tests_first": {
-        "description": "whether the story's tests must fail before the implementation is edited; under required, the implementation is edited only while the tests, once written, fail at the current revision",
+        "description": "whether the story's tests must fail before the implementation is edited; under required, the implementation is edited only while the tests, once written, fail at the current revision, or while they pass and the gate fails there",
         "values": [
           "optional",
           "required"
@@ -185,6 +185,17 @@
       "to": "action:gate.run"
     },
     {
+      "from": "claim:gate.green",
+      "kind": "gates",
+      "qualifier": "false",
+      "to": "action:implementation.edit"
+    },
+    {
+      "from": "claim:tests.pass",
+      "kind": "gates",
+      "to": "action:implementation.edit"
+    },
+    {
       "from": "claim:tests.shown_red",
       "kind": "gates",
       "to": "action:implementation.edit"
@@ -298,13 +309,37 @@
       }
     },
     {
-      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests written and failing at the current revision",
+      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests written and failing at the current revision, or written, passing and the gate failed there, so a failure no test reads (formatting, lint) can be fixed",
       "effect": "write",
       "id": "action:implementation.edit",
       "kind": "action",
       "name": "implementation.edit",
       "predicate": {
         "any": [
+          {
+            "all": [
+              {
+                "claim": {
+                  "id": "gate.green",
+                  "is": "false"
+                }
+              },
+              {
+                "claim": {
+                  "id": "tests.pass"
+                }
+              },
+              {
+                "not": {
+                  "first": {
+                    "kind": "tests_change",
+                    "result": "none",
+                    "subject": "implementation"
+                  }
+                }
+              }
+            ]
+          },
           {
             "claim": {
               "id": "tests.shown_red"

@@ -1,0 +1,50 @@
+format: els-fixture/1
+id: adv1-a-red-gate-at-the-seed-before-any-test
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case. A story whose case requires its tests first and runs the gate at every revision.
+# No test is written. The gate runs at the seed h1 and fails there (a base that is red on the gate,
+# or a gate that fails on an empty change). Then the implementation is edited to h2, and the gate
+# fails there too (the edit is not formatted yet). No tests_change exists in either state, so
+# `tests_first=required` says the implementation may not be edited; the red gate must not admit it.
+case:
+  format: canon-case/1
+  id: SD-ADV1-1
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: each_revision
+
+states:
+  - id: seed-gate-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: gate-h1-fail, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims: &red-gate-no-tests
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: false
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: unknown
+        tests.shown_red: unknown
+
+  - id: implementation-edited-gate-red-again
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: gate-h2-fail, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims: *red-gate-no-tests
