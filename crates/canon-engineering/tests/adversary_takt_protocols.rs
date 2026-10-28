@@ -4,8 +4,8 @@
 //! edit of a committed protocol is red for that reason alone. These cases ask the question the
 //! byte check cannot: do the fixtures under `fixtures/<name>/` pin each rule of the protocol? Each
 //! mutant below is one rule changed (a precondition dropped, an `independent_on` dropped, a result
-//! value swapped, a `requires: capability` dropped); it is written to cargo's per-target scratch
-//! directory, compiled by Canon through the harness, and every fixture of the protocol is checked
+//! value swapped, a `requires: capability` dropped); it is compiled from its text through the
+//! harness, with no file written, and every fixture of the protocol is checked
 //! against it. A mutant every fixture still agrees with is a rule no fixture exercises.
 //!
 //! The last case holds the O1 line of `AGENTS.md` § Serves for every built-in.
@@ -26,13 +26,6 @@ fn survivors(name: &str, mutants: &[Mutant]) -> Vec<String> {
     let root = support::repo_root();
     let original = std::fs::read_to_string(root.join(support::protocol_path(name, 1)))
         .unwrap_or_else(|error| panic!("{name}: {error}"));
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
-        .join("adversary-takt-mutants")
-        .join(name);
-    std::fs::create_dir_all(&scratch).unwrap_or_else(|error| panic!("{scratch:?}: {error}"));
-    let scratch = scratch
-        .canonicalize()
-        .unwrap_or_else(|error| panic!("{scratch:?}: {error}"));
     let fixtures_dir = root.join("fixtures").join(name);
     let mut fixture_paths: Vec<String> = std::fs::read_dir(&fixtures_dir)
         .unwrap_or_else(|error| panic!("{fixtures_dir:?}: {error}"))
@@ -58,21 +51,14 @@ fn survivors(name: &str, mutants: &[Mutant]) -> Vec<String> {
         );
     }
     let mut alive = Vec::new();
-    for (index, (label, from, to)) in mutants.iter().enumerate() {
+    for (label, from, to) in mutants {
         assert_eq!(
             original.matches(from).count(),
             1,
             "{name} mutant `{label}`: the text it replaces occurs exactly once"
         );
         let mutated = original.replacen(from, to, 1);
-        let file = scratch.join(format!("{index:02}.yaml"));
-        std::fs::write(&file, &mutated).unwrap_or_else(|error| panic!("{file:?}: {error}"));
-        let relative = file
-            .strip_prefix(&root)
-            .unwrap_or_else(|_| panic!("{file:?} is inside the repository {root:?}"))
-            .to_string_lossy()
-            .into_owned();
-        let compiled = support::compile_protocol(&relative)
+        let compiled = support::compile_protocol_text(&mutated)
             .unwrap_or_else(|error| panic!("{name} mutant `{label}` compiles: {error}"));
         if fixtures
             .iter()

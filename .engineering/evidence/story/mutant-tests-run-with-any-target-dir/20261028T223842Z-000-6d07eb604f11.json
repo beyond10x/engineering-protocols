@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-28T22:38:42Z",
+  "actor": "human:timo",
+  "artifact": "story:mutant-tests-run-with-any-target-dir",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": ".engineering/evidence/story/mutant-tests-run-with-any-target-dir/green-outside-target.txt"
+  }
+}
