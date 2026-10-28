@@ -1,5 +1,8 @@
 #![cfg(unix)]
 
+#[path = "support/argv0.rs"]
+mod argv0;
+
 use assertion_providers::CommandBinding;
 use canon_engineering_assertions::{
     Admission, GateResult, Prepared, Project, collect, evaluate_gates, prepare_with,
@@ -39,6 +42,7 @@ fn fixture(root: &Path, executable: &Path, expression: &str) {
             CommandBinding {
                 executable: executable.to_owned(),
                 program: None,
+                argv0: None,
                 args: vec![],
                 env: BTreeMap::new(),
             },
@@ -87,7 +91,6 @@ fn point(link: &Path, target: &Path) {
 /// the spawn resolves the link a third time. A swap that is undone between those three reads
 /// runs a program whose bytes admission never digested, and the bundle certifies its result.
 #[test]
-#[ignore = "story:gate-executable-identity-bound-to-spawn: the spawn re-resolves the link admission digested"]
 fn a_link_swapped_between_its_checks_runs_a_program_admission_never_digested() {
     let honest = PathBuf::from("/usr/bin/false");
     let forged = PathBuf::from("/usr/bin/true");
@@ -160,7 +163,7 @@ fn a_link_chain_runs_under_the_first_links_name() {
     let tools = tempfile::tempdir().unwrap();
     let tools = tools.path().canonicalize().unwrap();
     let target = tools.join("multiplexer");
-    script(&target, "printf '%s' \"$0\"");
+    argv0::argv0_printer(&target);
     let middle = tools.join("middle");
     symlink(&target, &middle).unwrap();
     let first = tools.join("first");
@@ -174,7 +177,7 @@ fn a_relative_link_in_the_tree_runs_under_its_tree_path() {
     let root = tempfile::tempdir().unwrap();
     let tools = tempfile::tempdir().unwrap();
     let target = tools.path().canonicalize().unwrap().join("multiplexer");
-    script(&target, "printf '%s' \"$0\"");
+    argv0::argv0_printer(&target);
     let real_root = root.path().canonicalize().unwrap();
     fs::create_dir(real_root.join("bin")).unwrap();
     symlink(&target, real_root.join("bin/tool")).unwrap();
@@ -192,7 +195,7 @@ fn a_relative_executable_with_a_parent_component_runs_as_written() {
     let real_root = root.path().canonicalize().unwrap();
     fs::create_dir(real_root.join("sub")).unwrap();
     fs::create_dir(real_root.join("bin")).unwrap();
-    script(&real_root.join("bin/tool"), "printf '%s' \"$0\"");
+    argv0::argv0_printer(&real_root.join("bin/tool"));
     argv0_fixture(
         root.path(),
         Path::new("sub/../bin/tool"),

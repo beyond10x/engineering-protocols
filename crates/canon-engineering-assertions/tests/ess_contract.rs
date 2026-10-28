@@ -30,9 +30,11 @@ fn normalized_runtime_models_match_the_ess_field_types() {
                 ]
                 .contains(&name.as_str())
                 {
+                    // A `#[serde(skip)]` field never reaches the wire, so the contract has none.
                     let fields = item
                         .fields
                         .iter()
+                        .filter(|f| !serde_skipped(f))
                         .map(|f| (f.ident.as_ref().unwrap().to_string(), wire_type(&f.ty)))
                         .collect::<std::collections::BTreeMap<_, _>>();
                     actual.insert(format!("engineering.gates.{name}"), fields);
@@ -62,6 +64,21 @@ fn normalized_runtime_models_match_the_ess_field_types() {
         }
     }
     assert_eq!(actual, expected);
+}
+fn serde_skipped(field: &syn::Field) -> bool {
+    field.attrs.iter().any(|attr| {
+        let mut skipped = false;
+        if attr.path().is_ident("serde") {
+            let _ = attr.parse_nested_meta(|meta| {
+                skipped |= meta.path.is_ident("skip");
+                if meta.input.peek(syn::Token![=]) {
+                    meta.value()?.parse::<syn::Expr>()?;
+                }
+                Ok(())
+            });
+        }
+        skipped
+    })
 }
 fn wire_type(ty: &syn::Type) -> String {
     let syn::Type::Path(path) = ty else {

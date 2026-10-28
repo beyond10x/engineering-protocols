@@ -27,6 +27,7 @@ gates:
         "slow".into(),
         CommandBinding {
             program: None,
+            argv0: None,
             executable: "/usr/bin/sleep".into(),
             args: vec!["2".into()],
             env: BTreeMap::new(),

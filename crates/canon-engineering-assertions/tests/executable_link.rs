@@ -1,5 +1,8 @@
 #![cfg(unix)]
 
+#[path = "support/argv0.rs"]
+mod argv0;
+
 use assertion_providers::CommandBinding;
 use canon_engineering_assertions::{
     Admission, GateResult, Project, collect, evaluate_gates, prepare_with,
@@ -34,6 +37,7 @@ fn fixture(root: &Path, link: &Path) {
             CommandBinding {
                 executable: link.to_owned(),
                 program: None,
+                argv0: None,
                 args: vec![],
                 env: BTreeMap::new(),
             },
@@ -63,7 +67,7 @@ fn an_executable_link_runs_under_its_own_name() {
     let tools = tempfile::tempdir().unwrap();
     let tools = tools.path().canonicalize().unwrap();
     let multiplexer = tools.join("multiplexer");
-    script(&multiplexer, "printf '%s' \"$0\"");
+    argv0::argv0_printer(&multiplexer);
     let link = tools.join("tool");
     symlink(&multiplexer, &link).unwrap();
     fixture(root.path(), &link);

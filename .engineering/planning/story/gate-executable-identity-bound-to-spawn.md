@@ -2,39 +2,35 @@
 format: aep.planning-md/3
 id: story:gate-executable-identity-bound-to-spawn
 kind: story
-status: draft
+status: active
 title: A gate command spawns the bytes admission digested
-summary: a link or program re-resolved between digest and spawn can run unadmitted bytes
+summary: a link resolved again at spawn could run bytes admission never digested
 relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 2
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-28T14:19:31Z", actor: "human:timo", revision: 5}
+- {from: "proposed", to: "active", at: "2026-10-28T14:19:31Z", actor: "human:timo", revision: 6}
 ---
 # Story: A gate command spawns the bytes admission digested
 
 ## Outcome
 
-A repository owner whose gate command names a link (`executable:`) or a bare program (`program:`) gets a pass only from the bytes admission digested: a link retargeted between the digest and the spawn cannot run a program the bundle never locked.
+A repository owner whose gate command names an executable link gets a pass only from the bytes admission digested: a link swapped between the digest and the spawn cannot run a program the bundle never locked.
 
 ## Context
 
-The adversary pass on `story:gate-executable-link-keeps-its-name` found that the link is resolved three times: at admission (digest), in `verify_executables` before and after the request, and by the kernel at spawn. A swap that is undone between those reads runs bytes admission never digested, and the bundle certifies their result. A `program:` binding has had the same gap since it shipped. Exploiting it needs a process of the gate's own user that rewrites the link during collection, so it is a hardening item, not a release blocker.
+The adversary pass on `story:gate-executable-link-keeps-its-name` (release 0.11.1) found that the link was resolved three times: at admission (digest), in `verify_executables` before and after the request, and by the kernel at spawn. A swap undone between those reads ran bytes admission never digested, and the bundle certified their result.
 
-The same pass also found:
-
-- `executable_digest` reads its file to the end with no bound, so an admitted path that reaches `/dev/zero` or a FIFO never returns (`crates/assertion-providers/src/lib.rs`, `executable_digest`).
-- The bundle's identity names the admitted link, not the file it reached, so two collections through one link to different targets carry the same executable name and differ only in the digest.
+Admission now resolves the link once (`command_paths`): `executable` becomes the file it reached, which is what is digested and what runs, and the admitted path is kept in `CommandBinding::argv0`, which `process::run` passes as `argv[0]`. A link retargeted after planning still refuses collection, and the links enter the context identity.
 
 ## Acceptance
 
-- `a_link_swapped_between_its_checks_runs_a_program_admission_never_digested` (`crates/canon-engineering-assertions/tests/executable_link_adv1.rs`) passes without `#[ignore]`: the spawn runs the resolved file admission digested, with the admitted name as `argv[0]`, so a link swapped during collection cannot produce a pass.
-- A `program:` binding resolved to a link gets the same guarantee, by a test of its own.
-- Admitting an executable that is not a regular file of bounded size is refused at admission, before any digest is read.
+- `a_link_swapped_between_its_checks_runs_a_program_admission_never_digested` (`crates/canon-engineering-assertions/tests/executable_link_adv1.rs`) passes without `#[ignore]`.
+- `an_executable_link_runs_under_its_own_name` still passes, with a compiled program that prints its `argv[0]` (a shell script's `$0` names the file executed, not `argv[0]`).
 
 ## Out of Scope
 
-- A hostile process of the gate's own user that rewrites the resolved file itself; the file's owner is trusted by admission.
-
-## Ambiguities
-
-- Whether the spawn path joins `CommandBinding` as a field (a public API change for every struct literal) or stays private to collection: inferable from the release plan, decided by whoever implements it.
+- The same gap for a `program:` binding and the unbounded digest read: `story:gate-program-identity-bound-to-spawn`.
+- A hostile process of the gate's own user that rewrites the resolved file itself.

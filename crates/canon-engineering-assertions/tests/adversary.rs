@@ -37,6 +37,7 @@ fn evidence_output_cannot_follow_symlink_created_during_collection() {
         "make-link".into(),
         CommandBinding {
             program: None,
+            argv0: None,
             executable: "/usr/bin/ln".into(),
             args: vec![
                 "-s".into(),
@@ -100,6 +101,7 @@ fn changed_admitted_command_executable_cannot_reuse_prepared_identity() {
         "tool".into(),
         CommandBinding {
             program: None,
+            argv0: None,
             executable: executable.clone(),
             args: vec![],
             env: BTreeMap::new(),

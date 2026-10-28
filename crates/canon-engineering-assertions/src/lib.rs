@@ -199,6 +199,7 @@ pub struct Prepared {
     excluded_output: Option<PathBuf>,
     source_inputs: BTreeSet<PathBuf>,
     executable_locks: BTreeMap<PathBuf, String>,
+    executable_links: BTreeMap<PathBuf, PathBuf>,
     pub programs: Vec<AdmittedProgram>,
 }
 
@@ -284,14 +285,17 @@ fn command_paths(
         if command.executable.is_relative() {
             command.executable = root.join(&command.executable);
         }
-        // The command runs under the path it was admitted under, as a `program` does, so a link
-        // to a multiplexing binary (rustup's `cargo`) keeps its name as `argv[0]`. The link is
-        // resolved for the check, and the executable lock digests the bytes it reaches.
+        // The link is resolved once, here: the file it reaches is what is digested and what runs,
+        // so a link swapped during collection cannot run other bytes. The admitted path stays the
+        // command's `argv[0]`, so a multiplexing binary (rustup's `cargo`) keeps its name.
         let resolved = command
             .executable
             .canonicalize()
             .context("resolve admitted executable (PATH lookup is not used)")?;
         ensure!(resolved.is_file(), "executable is not a file");
+        if resolved != command.executable {
+            command.argv0 = Some(std::mem::replace(&mut command.executable, resolved));
+        }
     }
     Ok(programs)
 }
@@ -404,16 +408,36 @@ pub fn prepare_with(
         );
         executable_locks.insert(provider.command.executable.clone(), actual);
     }
+    // A link admitted as an executable must still reach the file that runs: a retargeted link
+    // is a changed admission, though what runs is the file admission resolved.
+    let executable_links: BTreeMap<PathBuf, PathBuf> = project
+        .commands
+        .values()
+        .chain(project.providers.values().map(|p| &p.command))
+        .filter_map(|c| c.argv0.clone().map(|link| (link, c.executable.clone())))
+        .collect();
     // The executable includes this catalog and built-in collector code. Explicit bindings and
     // command bytes also enter the identity: a binary replacement cannot reuse prior evidence.
     let implementation = assertion_providers::executable_digest(&std::env::current_exe()?)?;
     let change = assertion_providers::resolve_change(&root, &admission.change)?;
-    let context_identity = digest(&serde_json::to_vec(&(
-        &project,
-        &executable_locks,
-        &implementation,
-        &change,
-    ))?);
+    // The name a link runs under can change what a multiplexing binary does, so the links enter
+    // the identity too; a project without one keeps the identity it had before links ran by name.
+    let context_identity = if executable_links.is_empty() {
+        digest(&serde_json::to_vec(&(
+            &project,
+            &executable_locks,
+            &implementation,
+            &change,
+        ))?)
+    } else {
+        digest(&serde_json::to_vec(&(
+            &project,
+            &executable_locks,
+            &implementation,
+            &change,
+            &executable_links,
+        ))?)
+    };
     for function in catalog.functions.values_mut() {
         if let Implementation::Observation(provider) = &mut function.implementation {
             if provider.provider == "engineering.builtin/1" {
@@ -529,6 +553,7 @@ pub fn prepare_with(
         excluded_output,
         source_inputs,
         executable_locks,
+        executable_links,
         programs,
     })
 }
@@ -582,7 +607,7 @@ pub fn collect(prepared: Prepared, now: i64) -> Result<Bundle> {
             started.elapsed() < Duration::from_secs(300),
             "total collection budget (300 seconds) exceeded"
         );
-        verify_executables(&prepared.executable_locks)?;
+        verify_executables(&prepared.executable_locks, &prepared.executable_links)?;
         let args = request
             .arguments
             .iter()
@@ -598,7 +623,7 @@ pub fn collect(prepared: Prepared, now: i64) -> Result<Bundle> {
             "total collection budget exceeded"
         );
         let collected = assertion_providers::collect(&request.operation, &args, &context)?;
-        verify_executables(&prepared.executable_locks)?;
+        verify_executables(&prepared.executable_locks, &prepared.executable_links)?;
         let mut lifetime = prepared.freshness_seconds;
         let outcome = match collected {
             Collected::Known(value) => {
@@ -650,7 +675,17 @@ pub fn collect(prepared: Prepared, now: i64) -> Result<Bundle> {
     })
 }
 
-fn verify_executables(locks: &BTreeMap<PathBuf, String>) -> Result<()> {
+fn verify_executables(
+    locks: &BTreeMap<PathBuf, String>,
+    links: &BTreeMap<PathBuf, PathBuf>,
+) -> Result<()> {
+    for (link, reached) in links {
+        ensure!(
+            link.canonicalize().ok().as_ref() == Some(reached),
+            "admitted executable changed after planning: the link {} was retargeted",
+            link.display()
+        );
+    }
     for (path, expected) in locks {
         ensure!(
             &assertion_providers::executable_digest(path)? == expected,

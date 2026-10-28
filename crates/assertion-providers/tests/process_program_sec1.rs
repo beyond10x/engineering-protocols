@@ -6,6 +6,7 @@ fn program(name: &str) -> CommandBinding {
     CommandBinding {
         executable: PathBuf::new(),
         program: Some(name.into()),
+        argv0: None,
         args: vec![],
         env: BTreeMap::new(),
     }

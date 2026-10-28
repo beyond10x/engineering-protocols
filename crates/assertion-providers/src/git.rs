@@ -220,6 +220,7 @@ fn run_bytes(
 ) -> Result<Result<Vec<u8>, String>, ProviderError> {
     let binding = CommandBinding {
         program: None,
+        argv0: None,
         executable: git.to_owned(),
         args: HARDENING
             .iter()
