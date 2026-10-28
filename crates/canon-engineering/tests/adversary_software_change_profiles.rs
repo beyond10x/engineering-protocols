@@ -9,7 +9,6 @@
 mod support;
 
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use b10x_canon::eval;
 use b10x_canon::model::{Decision, EvidenceRecord, Json};
@@ -363,9 +362,6 @@ fn some_fixture_notices_an_obligation_discharged_by_the_wrong_claim() {
             Fixture::load(&path).unwrap_or_else(|error| panic!("{path}: {error}"))
         })
         .collect();
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"));
-    std::fs::create_dir_all(scratch).expect("the test scratch directory");
-    let root = support::repo_root();
     let mut survivors = Vec::new();
     for (obligation, from, to) in [
         (
@@ -404,16 +400,7 @@ fn some_fixture_notices_an_obligation_discharged_by_the_wrong_claim() {
             1,
             "the mutation site of `{obligation}`"
         );
-        let file = scratch.join(format!("adversary-profiles-{obligation}.yaml"));
-        std::fs::write(&file, text.replacen(from, to, 1)).expect("writes the mutant");
-        let relative = file
-            .canonicalize()
-            .expect("the mutant resolves")
-            .strip_prefix(&root)
-            .expect("the scratch directory is inside the repository")
-            .to_string_lossy()
-            .into_owned();
-        let mutant = support::compile_protocol(&relative)
+        let mutant = support::compile_protocol_text(&text.replacen(from, to, 1))
             .unwrap_or_else(|error| panic!("the `{obligation}` mutant compiles: {error}"));
         if fixtures
             .iter()

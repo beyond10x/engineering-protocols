@@ -22,8 +22,9 @@ const DIRECTORY: &str = "story-delivery-2";
 const MAJOR: u32 = 2;
 const AT: &str = "2026-10-27T12:00:00Z";
 
-const FIXTURES: [&str; 11] = [
+const FIXTURES: [&str; 12] = [
     "a-first-run-pass-is-not-red",
+    "a-red-ci-admits-the-edit",
     "a-red-gate-admits-the-edit",
     "a-red-run-about-another-revision-does-not-admit-the-edit",
     "an-old-gate-pass-does-not-hold",
@@ -298,4 +299,26 @@ fn a_red_gate_admits_the_edit() {
     assert_eq!(claims(&fixed)["gate.green"], "unknown");
     assert_eq!(actions(&fixed)["implementation.edit"], "blocked");
     assert_eq!(actions(&fixed)["change.handover"], "admissible");
+}
+
+#[test]
+fn a_red_ci_admits_the_edit() {
+    let compiled = compiled();
+    let fixture = load("a-red-ci-admits-the-edit", &compiled);
+    // Green tests and gate, handed over, pull request open, CI not yet read: nothing is red.
+    let opened = decide(&fixture, &compiled, "green-gated-and-opened");
+    assert_eq!(claims(&opened)["gate.green"], "true");
+    assert_eq!(actions(&opened)["implementation.edit"], "blocked");
+    // CI fails at that revision on something neither the tests nor the gate read: the edit is
+    // admissible, or such a failure under `tests_first=required` could never be fixed.
+    let red = decide(&fixture, &compiled, "ci-red");
+    assert_eq!(claims(&red)["tests.pass"], "true");
+    assert_eq!(claims(&red)["gate.green"], "true");
+    assert_eq!(claims(&red)["ci.green"], "false");
+    assert_eq!(actions(&red)["implementation.edit"], "admissible");
+    assert_eq!(actions(&red)["repository.merge"], "blocked");
+    // The fix moves the revision; the red CI was about h3 and admits nothing at h4.
+    let fixed = decide(&fixture, &compiled, "fixed-not-yet-tested");
+    assert_eq!(claims(&fixed)["ci.green"], "unknown");
+    assert_eq!(actions(&fixed)["implementation.edit"], "blocked");
 }

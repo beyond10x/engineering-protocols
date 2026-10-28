@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-28T23:05:52Z",
+  "actor": "human:timo",
+  "artifact": "story:story-delivery-2-edit-after-a-red-ci",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": ".engineering/evidence/story/story-delivery-2-edit-after-a-red-ci/adversary.txt"
+  }
+}

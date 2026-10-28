@@ -2,13 +2,11 @@
 //! evidence match's subject or kind swapped, a capability swapped for another the fixtures also
 //! grant, `all` and `any` swapped, a precondition swapped for another claim, an `independent_on`
 //! added where the protocol has none, an outcome's result swapped for `error`). Same mechanism as
-//! `adversary_takt_protocols.rs`: each mutant is written to cargo's per-target scratch directory,
-//! compiled through the harness, and every fixture of the protocol is checked against it.
+//! `adversary_takt_protocols.rs`: each mutant is compiled from its text through the harness, with
+//! no file written, and every fixture of the protocol is checked against it.
 
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
 mod support;
-
-use std::path::Path;
 
 use support::Fixture;
 
@@ -21,13 +19,6 @@ fn survivors(name: &str, mutants: &[Mutant]) -> Vec<String> {
     let root = support::repo_root();
     let original = std::fs::read_to_string(root.join(support::protocol_path(name, 1)))
         .unwrap_or_else(|error| panic!("{name}: {error}"));
-    let scratch = Path::new(env!("CARGO_TARGET_TMPDIR"))
-        .join("adversary2-takt-mutants")
-        .join(name);
-    std::fs::create_dir_all(&scratch).unwrap_or_else(|error| panic!("{scratch:?}: {error}"));
-    let scratch = scratch
-        .canonicalize()
-        .unwrap_or_else(|error| panic!("{scratch:?}: {error}"));
     let fixtures_dir = root.join("fixtures").join(name);
     let mut fixture_paths: Vec<String> = std::fs::read_dir(&fixtures_dir)
         .unwrap_or_else(|error| panic!("{fixtures_dir:?}: {error}"))
@@ -53,21 +44,14 @@ fn survivors(name: &str, mutants: &[Mutant]) -> Vec<String> {
         );
     }
     let mut alive = Vec::new();
-    for (index, (label, from, to)) in mutants.iter().enumerate() {
+    for (label, from, to) in mutants {
         assert_eq!(
             original.matches(from).count(),
             1,
             "{name} mutant `{label}`: the text it replaces occurs exactly once"
         );
         let mutated = original.replacen(from, to, 1);
-        let file = scratch.join(format!("{index:02}.yaml"));
-        std::fs::write(&file, &mutated).unwrap_or_else(|error| panic!("{file:?}: {error}"));
-        let relative = file
-            .strip_prefix(&root)
-            .unwrap_or_else(|_| panic!("{file:?} is inside the repository {root:?}"))
-            .to_string_lossy()
-            .into_owned();
-        let compiled = support::compile_protocol(&relative)
+        let compiled = support::compile_protocol_text(&mutated)
             .unwrap_or_else(|error| panic!("{name} mutant `{label}` compiles: {error}"));
         if fixtures
             .iter()

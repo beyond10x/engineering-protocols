@@ -239,7 +239,15 @@ impl Compiled {
 /// Validates and compiles the `protocol/1` document at `path`, relative to the repository root.
 pub fn compile_protocol(path: &str) -> Result<Compiled, CompileError> {
     let (_, text) = read_confined(path, "protocol path").map_err(CompileError::Unreadable)?;
-    let protocol = b10x_canon::model::parse(&text).map_err(CompileError::Parse)?;
+    compile_protocol_text(&text)
+}
+
+/// Validates and compiles a `protocol/1` document given as text, as `compile_protocol` does a
+/// file's: a mutant needs no file, so a test that compiles one does not depend on where the
+/// target directory is.
+#[allow(dead_code)] // used by the mutant tests only
+pub fn compile_protocol_text(text: &str) -> Result<Compiled, CompileError> {
+    let protocol = b10x_canon::model::parse(text).map_err(CompileError::Parse)?;
     b10x_canon::validate::validate(&protocol).map_err(CompileError::Invalid)?;
     let ir = b10x_canon::ir::compile(&protocol).map_err(CompileError::Invalid)?;
     let canon_ir = ir.canonical_json();
