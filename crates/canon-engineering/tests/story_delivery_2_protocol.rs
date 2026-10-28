@@ -22,8 +22,9 @@ const DIRECTORY: &str = "story-delivery-2";
 const MAJOR: u32 = 2;
 const AT: &str = "2026-10-27T12:00:00Z";
 
-const FIXTURES: [&str; 10] = [
+const FIXTURES: [&str; 11] = [
     "a-first-run-pass-is-not-red",
+    "a-red-gate-admits-the-edit",
     "a-red-run-about-another-revision-does-not-admit-the-edit",
     "an-old-gate-pass-does-not-hold",
     "baseline-fail-then-red",
@@ -275,4 +276,26 @@ fn pr_open_needs_change_complete() {
     assert_eq!(claims(&moved)["tests.pass"], "true");
     assert_eq!(claims(&moved)["change.complete"], "unknown");
     assert_eq!(actions(&moved)["pr.open"], "blocked");
+}
+
+#[test]
+fn a_red_gate_admits_the_edit() {
+    let compiled = compiled();
+    let fixture = load("a-red-gate-admits-the-edit", &compiled);
+    // Green tests, handed over, gate not yet run: nothing is red, so the edit waits for the gate.
+    let handed = decide(&fixture, &compiled, "green-and-handed-over");
+    assert_eq!(claims(&handed)["tests.shown_red"], "false");
+    assert_eq!(actions(&handed)["implementation.edit"], "blocked");
+    // The first gate fails at that revision on something no test reads: the edit is admissible,
+    // or a format, lint or citation failure under `tests_first=required` could never be fixed.
+    let red = decide(&fixture, &compiled, "gate-red");
+    assert_eq!(claims(&red)["tests.pass"], "true");
+    assert_eq!(claims(&red)["gate.green"], "false");
+    assert_eq!(actions(&red)["implementation.edit"], "admissible");
+    assert_eq!(actions(&red)["change.handover"], "blocked");
+    // The fix moves the revision; the red gate was about h3 and admits nothing at h4.
+    let fixed = decide(&fixture, &compiled, "fixed-not-yet-gated");
+    assert_eq!(claims(&fixed)["gate.green"], "unknown");
+    assert_eq!(actions(&fixed)["implementation.edit"], "blocked");
+    assert_eq!(actions(&fixed)["change.handover"], "admissible");
 }
