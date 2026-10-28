@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-28T19:45:50Z",
+  "actor": "human:timo",
+  "artifact": "story:story-delivery-2-edit-after-a-red-gate",
+  "kind": "story",
+  "revision": 5,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test --workspace --locked --no-fail-fast after adversary pass 1: 93 results, 382 passed, 0 failed, 0 ignored; a_red_gate_admits_the_edit and 3 of 4 adversary cases pass, the fourth parked under story:story-delivery-2-red-gate-needs-red-tests"
+  }
+}

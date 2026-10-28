@@ -1,0 +1,62 @@
+format: els-fixture/1
+id: adv1-a-red-gate-before-the-tests-were-red
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case. The history of `a-first-run-pass-is-not-red`: tests first required, the gate at
+# every revision, the tests written at h2 and their first run passing, so they were never red and
+# the implementation may not be edited. Then the gate runs at h2 and fails on something no test
+# reads, such as the new test file's formatting. The tests were still never red; the red gate must
+# not admit the edit, or any story can skip red-first by running the gate on unformatted tests.
+case:
+  format: canon-case/1
+  id: SD-ADV1-2
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: each_revision
+
+states:
+  - id: tests-written-first-run-passes
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: gate-red-on-the-tests-formatting
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h2-fail, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: false
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: true
+        tests.shown_red: false
