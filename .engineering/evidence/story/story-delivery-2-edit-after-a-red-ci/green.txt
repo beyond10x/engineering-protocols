@@ -1,0 +1,24 @@
+test every_builtin_checks_clean_under_the_bound has been running for over 60 seconds
+test every_builtin_checks_clean_under_the_bound ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 147.95s
+test harness_refuses_a_fixture_without_states ... ok
+test harness_refuses_a_fixture_it_cannot_evaluate_as_written ... ok
+test harness_refuses_a_state_instant_it_cannot_evaluate_at ... ok
+test harness_compiles_and_evaluates_smoke_fixture ... ok
+test harness_reports_a_claim_the_expectation_does_not_list ... ok
+test harness_reports_a_state_whose_decision_differs_from_its_expectation ... ok
+test harness_evaluates_each_state_at_its_own_instant ... ok
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+test story_delivery_2_declares_its_settings_and_its_fixtures ... ok
+test an_old_gate_pass_does_not_hold ... ok
+test pr_open_needs_change_complete ... ok
+test a_red_run_about_another_revision_does_not_admit_the_edit ... ok
+test tests_optional_keeps_the_old_order ... ok
+test a_first_run_pass_is_not_red ... ok
+test gate_each_revision ... ok
+test a_red_gate_admits_the_edit ... ok
+test a_red_ci_admits_the_edit ... ok
+test gate_after_handover ... ok
+test red_first_refuses_implementation_first ... ok
+test a_baseline_run_at_the_seed_does_not_lock_the_edit_out ... ok
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
