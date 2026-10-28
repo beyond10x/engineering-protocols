@@ -6,6 +6,19 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-10-28
+
+### Fixed
+
+- `story.delivery/2` with `tests_first=required` admits `implementation.edit` while the gate is red
+  at the current revision and the story's tests are written and pass there. In 0.12.0 the edit
+  needed the tests red, so a gate failure no test reads (formatting, lint, citations) after a
+  green, handed-over change could never be fixed and the case could only decline. A red gate with
+  no test written admits nothing, and once the edit moves the revision the edit is refused again
+  until something is red there (fixture `a-red-gate-admits-the-edit`). Tests that passed on their
+  first run can still reach the edit through a red gate; the order forms cannot yet say otherwise
+  (story:story-delivery-2-red-gate-needs-red-tests).
+
 ## [0.12.0] - 2026-10-28
 
 ### Breaking
