@@ -6,6 +6,21 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-28
+
+### Breaking
+
+- `CommandBinding` has an `argv0` field (a `CommandBinding { .. }` literal needs `argv0: None`). It
+  is never read from or written to YAML; admission sets it.
+
+### Fixed
+
+- An executable link is resolved once, at admission: the file it reaches is what is digested and
+  what runs, and the admitted path is the command's `argv[0]`. In 0.11.1 the spawn resolved the link
+  again, so a link swapped during collection could run bytes admission never digested. A link
+  retargeted after planning still refuses collection, and a project's links enter its context
+  identity.
+
 ## [0.11.1] - 2026-10-28
 
 ### Changed
