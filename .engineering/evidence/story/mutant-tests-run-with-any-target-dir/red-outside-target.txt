@@ -1,0 +1,26 @@
+     Running tests/adversary2_takt_protocols.rs (<outside-target>/debug/deps/adversary2_takt_protocols-dc5b85c050364ad3)
+test adversary2_loop_improvement_fixtures_kill_every_new_mutant_class ... FAILED
+test adversary2_story_delivery_fixtures_kill_every_new_mutant_class ... FAILED
+test adversary2_self_improvement_fixtures_kill_every_new_mutant_class ... FAILED
+"<outside-target>/tmp/adversary2-takt-mutants/loop-improvement/00.yaml" is inside the repository "<repository>"
+"<outside-target>/tmp/adversary2-takt-mutants/story-delivery/00.yaml" is inside the repository "<repository>"
+"<outside-target>/tmp/adversary2-takt-mutants/self-improvement/00.yaml" is inside the repository "<repository>"
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+     Running tests/adversary_software_change_profiles.rs (<outside-target>/debug/deps/adversary_software_change_profiles-34767ca1be8eecf7)
+test profiles_discharged_holds ... ok
+test a_bugfix_green_then_red_on_one_revision_may_edit_once_its_regression_test_ran_red ... ok
+test a_case_outside_the_declared_inputs_is_refused ... ok
+test obligations_discharge_inside_their_profile_and_are_not_applicable_outside_it ... ok
+test some_fixture_notices_an_obligation_discharged_by_the_wrong_claim ... FAILED
+test a_bugfix_edit_needs_a_failing_test_about_the_current_implementation_revision ... ok
+the scratch directory is inside the repository: StripPrefixError(())
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+     Running tests/adversary_takt_protocols.rs (<outside-target>/debug/deps/adversary_takt_protocols-a5e9bddd02cf21fb)
+test adversary_every_builtin_write_action_names_its_capability ... ok
+test adversary_loop_improvement_fixtures_kill_every_rule_mutant ... FAILED
+test adversary_story_delivery_fixtures_kill_every_rule_mutant ... FAILED
+test adversary_self_improvement_fixtures_kill_every_rule_mutant ... FAILED
+"<outside-target>/tmp/adversary-takt-mutants/loop-improvement/00.yaml" is inside the repository "<repository>"
+"<outside-target>/tmp/adversary-takt-mutants/story-delivery/00.yaml" is inside the repository "<repository>"
+"<outside-target>/tmp/adversary-takt-mutants/self-improvement/00.yaml" is inside the repository "<repository>"
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
