@@ -169,6 +169,9 @@ pub(crate) fn run(
         }));
     }
     let mut command = Command::new(&binding.executable);
+    if let Some(name) = &binding.argv0 {
+        command.arg0(name);
+    }
     command
         .args(&binding.args)
         .env_clear()

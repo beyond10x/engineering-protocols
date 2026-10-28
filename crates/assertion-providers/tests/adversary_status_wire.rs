@@ -75,6 +75,7 @@ fn main() {
             sha256: executable_digest(&executable).unwrap(),
             command: CommandBinding {
                 program: None,
+                argv0: None,
                 executable,
                 args: vec![],
                 env: BTreeMap::new(),

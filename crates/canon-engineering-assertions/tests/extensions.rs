@@ -54,6 +54,7 @@ println!(r#"{{"format":"engineering-provider-response/1","status":"known","value
             sha256: sha,
             command: CommandBinding {
                 program: None,
+                argv0: None,
                 executable: "provider".into(),
                 args: vec![],
                 env: BTreeMap::new(),

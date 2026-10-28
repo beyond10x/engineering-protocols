@@ -55,6 +55,11 @@ pub struct CommandBinding {
     /// A bare program name, resolved at admission on a `search_path` outside the tree.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub program: Option<String>,
+    /// The name the command runs under (`argv[0]`) when it differs from `executable`. Admission
+    /// sets it to the admitted path of an executable link and runs the file the link reached, so
+    /// rustup's `cargo` proxy runs as `cargo` and a link retargeted later cannot change what runs.
+    #[serde(skip)]
+    pub argv0: Option<PathBuf>,
     #[serde(default)]
     pub args: Vec<String>,
     #[serde(default)]

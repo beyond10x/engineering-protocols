@@ -20,6 +20,7 @@ fn project(root: &Path, search_path: Vec<std::path::PathBuf>) {
             CommandBinding {
                 executable: Default::default(),
                 program: Some("tool".into()),
+                argv0: None,
                 args: vec![],
                 env: BTreeMap::new(),
             },

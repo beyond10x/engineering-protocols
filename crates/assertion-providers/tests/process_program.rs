@@ -21,6 +21,7 @@ fn program(name: &str) -> CommandBinding {
     CommandBinding {
         executable: PathBuf::new(),
         program: Some(name.into()),
+        argv0: None,
         args: vec!["ran".into()],
         env: BTreeMap::new(),
     }
@@ -327,6 +328,7 @@ fn executable_still_works() {
     let mut binding = CommandBinding {
         executable: "/usr/bin/printf".into(),
         program: None,
+        argv0: None,
         args: vec!["absolute".into()],
         env: BTreeMap::new(),
     };
@@ -343,6 +345,7 @@ fn executable_still_works() {
     let relative = CommandBinding {
         executable: "printf".into(),
         program: None,
+        argv0: None,
         args: vec![],
         env: BTreeMap::new(),
     };
