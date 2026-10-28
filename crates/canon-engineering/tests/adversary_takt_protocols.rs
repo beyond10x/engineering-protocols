@@ -13,8 +13,6 @@
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
 mod support;
 
-use std::path::Path;
-
 use support::Fixture;
 
 /// One mutant: what it changes, the text it replaces (exactly once) and the replacement.
