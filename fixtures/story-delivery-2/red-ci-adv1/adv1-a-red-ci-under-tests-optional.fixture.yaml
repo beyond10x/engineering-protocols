@@ -1,0 +1,65 @@
+format: els-fixture/1
+id: adv1-a-red-ci-under-tests-optional
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case. Tests first optional, the gate after the handover. No test is written; the
+# existing tests pass at the seed, it is handed over, gated green and opened, and CI fails there.
+# Under `optional` the edit is admissible before and after the red CI: the new branch changes
+# nothing here.
+case:
+  format: canon-case/1
+  id: SD-ADV1-CI-6
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: optional
+    gate_on: after_handover
+
+states:
+  - id: seed-gated-and-opened
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: gate-h1-pass, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: ci-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: ci-h1-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: false
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false

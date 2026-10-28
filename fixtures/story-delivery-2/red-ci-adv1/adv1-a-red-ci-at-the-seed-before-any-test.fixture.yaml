@@ -1,0 +1,65 @@
+format: els-fixture/1
+id: adv1-a-red-ci-at-the-seed-before-any-test
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case, a constructed state. Tests first required, the gate after the handover. No test
+# is written: the existing tests pass at the seed h1, the seed is handed over, a pull request is
+# recorded open at h1 and its CI fails there. Then the gate fails at h1 too, so a red CI and a red
+# gate stand together. No tests_change exists; neither must admit the edit.
+case:
+  format: canon-case/1
+  id: SD-ADV1-CI-2
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: after_handover
+
+states:
+  - id: seed-opened-ci-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: handover-h1, kind: handover,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: ci-h1-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: unknown
+        change.handed_over: true
+        change.made: unknown
+        ci.green: false
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: seed-gate-red-too
+    add_evidence:
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: gate-h1-fail, kind: gate_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: true
+        change.made: unknown
+        ci.green: false
+        gate.green: false
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false

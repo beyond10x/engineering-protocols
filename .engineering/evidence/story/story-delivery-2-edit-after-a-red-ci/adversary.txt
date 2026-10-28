@@ -1,0 +1,20 @@
+test story_delivery_2_declares_its_settings_and_its_fixtures ... ok
+test an_old_gate_pass_does_not_hold ... ok
+test a_red_run_about_another_revision_does_not_admit_the_edit ... ok
+test tests_optional_keeps_the_old_order ... ok
+test a_first_run_pass_is_not_red ... ok
+test a_red_ci_admits_the_edit ... ok
+test gate_each_revision ... ok
+test a_red_gate_admits_the_edit ... ok
+test pr_open_needs_change_complete ... ok
+test red_first_refuses_implementation_first ... ok
+test gate_after_handover ... ok
+test a_baseline_run_at_the_seed_does_not_lock_the_edit_out ... ok
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+test a_red_ci_at_the_seed_does_not_admit_the_edit_before_any_test ... ok
+test a_red_ci_under_tests_optional_changes_nothing ... ok
+test a_red_ci_while_the_tests_fail ... ok
+test a_late_red_ci_about_another_revision_does_not_admit_the_edit ... ok
+test ci_records_that_disagree_admit_neither_the_edit_nor_the_merge ... ok
+test the_fix_loop_at_each_revision ... ok
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s

@@ -1,0 +1,88 @@
+format: els-fixture/1
+id: adv1-a-red-ci-while-the-tests-fail
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case, constructed states. Tests first required, the gate at every revision. At the
+# seed h1 no test is written, the existing tests fail, and a CI failure is recorded there: the
+# CI branch needs the tests passing, and no tests_change exists, so the edit stays refused. Then
+# the tests are written at h2 and fail there (red, the edit admissible on its own), and a CI
+# failure is recorded at h2 as well: the edit stays admissible and the merge refused.
+case:
+  format: canon-case/1
+  id: SD-ADV1-CI-3
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: each_revision
+
+states:
+  - id: seed-tests-fail-ci-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-h1-fail, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: pr-h1, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h1}
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: ci-h1-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h1}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: false
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: false
+        tests.shown_red: unknown
+
+  - id: tests-written-red
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-fail, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
+        tests.shown_red: true
+
+  - id: tests-red-and-ci-red
+    add_evidence:
+      - observed_at: "2026-10-27T09:50:00Z"
+        record: {format: canon-evidence/1, id: pr-h2, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h2-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: false
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: false
+        tests.shown_red: true

@@ -2,17 +2,18 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-edit-after-a-red-ci
 kind: story
-status: active
+status: implemented
 title: A red CI admits the edit under story.delivery/2 with tests first
 summary: implementation.edit is admissible while ci.green is false at the current revision and the tests are written and pass
 relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 - informed_by: story:story-delivery-2-edit-after-a-red-gate
 - serves: vision:governed-autonomy
-revision: 5
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T22:40:25Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}}
 - {from: "proposed", to: "active", at: "2026-10-28T22:40:25Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"test_result":1}}}
+- {from: "active", to: "implemented", at: "2026-10-28T23:05:53Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":3}}}
 ---
 ## Outcome
 

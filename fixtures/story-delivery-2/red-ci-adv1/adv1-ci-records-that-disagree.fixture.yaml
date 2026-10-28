@@ -1,0 +1,112 @@
+format: els-fixture/1
+id: adv1-ci-records-that-disagree
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case. The history of `a-red-ci-admits-the-edit` to its red CI at h3, then CI is read
+# again at h3 (`ci.read` stays admissible after a result) and passes: a re-run of a flaky check.
+# The two records disagree, so Canon leaves `ci.green` unknown: the red CI no longer admits the
+# edit, and the green one does not admit the merge.
+case:
+  format: canon-case/1
+  id: SD-ADV1-CI-4
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: after_handover
+
+states:
+  - id: tests-red
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-fail, kind: test_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: false
+        change.handed_over: unknown
+        change.made: unknown
+        ci.green: unknown
+        gate.green: unknown
+        pr.merged: unknown
+        pr.opened: unknown
+        tests.pass: false
+        tests.shown_red: true
+
+  - id: green-gated-and-opened
+    set_revisions:
+      implementation: h3
+    add_evidence:
+      - observed_at: "2026-10-27T09:20:00Z"
+        record: {format: canon-evidence/1, id: tests-h3-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: handover-h3, kind: handover,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:31:00Z"
+        record: {format: canon-evidence/1, id: change-h3, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:31:00Z"
+        record: {format: canon-evidence/1, id: paths-h3, kind: paths_changed, result: both,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: gate-h3-pass, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+      - observed_at: "2026-10-27T09:45:00Z"
+        record: {format: canon-evidence/1, id: pr-h3, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: ci-red
+    add_evidence:
+      - observed_at: "2026-10-27T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h3-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: false
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: ci-green-on-a-rerun
+    add_evidence:
+      - observed_at: "2026-10-27T10:10:00Z"
+        record: {format: canon-evidence/1, id: ci-h3-pass, kind: ci_result, result: pass,
+                 subject: implementation, subject_revision: h3}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
