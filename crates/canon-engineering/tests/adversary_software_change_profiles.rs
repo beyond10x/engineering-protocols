@@ -9,7 +9,6 @@
 mod support;
 
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use b10x_canon::eval;
 use b10x_canon::model::{Decision, EvidenceRecord, Json};
