@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:gate-executable-link-keeps-its-name
 kind: story
-status: active
+status: implemented
 title: A gate command whose executable is a link runs under the link's name
 summary: rustup's cargo proxy runs as cargo, not rustup
 tags:
@@ -10,10 +10,11 @@ tags:
 relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 3
+revision: 4
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T13:13:53Z", actor: "human:timo", revision: 2}
 - {from: "proposed", to: "active", at: "2026-10-28T13:13:53Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-28T13:56:19Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":1}}}
 ---
 ## Outcome
 
