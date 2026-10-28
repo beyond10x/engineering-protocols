@@ -99,6 +99,14 @@ timeout_seconds: 30
 freshness_seconds: 300
 ```
 
+An `executable` that is a symbolic link is resolved once, at admission. A program it reaches is
+what is digested and what runs, under the link's path as `argv[0]`, so a multiplexing binary such as
+rustup's `cargo` proxy (`/usr/bin/cargo` linked to `rustup`) runs as `cargo`. A script it reaches
+(a file starting with `#!`) runs through the link, because its interpreter reads the path it is given
+and names it `$0`; the digest and link checks before and after each request are what bind it. A link
+retargeted after admission refuses collection, and each command's link and the file it reached enter
+the context identity.
+
 Pass this file with `--project .engineering/assertions-project.yaml`. `proj.tests.run($scope)`
 expects the admitted Rust producer to execute the suite and emit one JSON document:
 

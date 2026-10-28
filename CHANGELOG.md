@@ -15,11 +15,12 @@ releases at bare-version tags.
 
 ### Fixed
 
-- An executable link is resolved once, at admission: the file it reaches is what is digested and
+- An executable link is resolved once, at admission: a program it reaches is what is digested and
   what runs, and the admitted path is the command's `argv[0]`. In 0.11.1 the spawn resolved the link
-  again, so a link swapped during collection could run bytes admission never digested. A link
-  retargeted after planning still refuses collection, and a project's links enter its context
-  identity.
+  again, so a link swapped during collection could run bytes admission never digested. A script it
+  reaches (`#!`) still runs through the link, so its interpreter names the link `$0`. A link
+  retargeted after planning still refuses collection, and each command's link and the file it
+  reached enter the context identity, so two commands that swap their links differ.
 
 ## [0.11.1] - 2026-10-28
 

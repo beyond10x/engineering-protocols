@@ -8,7 +8,7 @@ summary: a link resolved again at spawn could run bytes admission never digested
 relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T14:19:31Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-28T14:19:31Z", actor: "human:timo", revision: 6}
@@ -35,3 +35,7 @@ Admission now resolves the link once (`command_paths`): `executable` becomes the
 
 - The same gap for a `program:` binding and the unbounded digest read: `story:gate-program-identity-bound-to-spawn`.
 - A hostile process of the gate's own user that rewrites the resolved file itself.
+
+## Second adversary pass (2026-10-28)
+
+The pass found two gaps in the first fix: the links entered the identity keyed by link, so two commands that swapped their links kept one identity, and a script reached through a link saw its target as `$0`. Under approval-record:gate-link-identity-and-script-name, the links enter the identity keyed by binding, and a script is spawned through its link so it keeps the link as its name; a program is still spawned at the file admission resolved. The cases are in `crates/canon-engineering-assertions/tests/executable_link_adv2.rs`, and the assertions guide says how a link runs.
