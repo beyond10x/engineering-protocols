@@ -137,7 +137,8 @@ fn harness_refuses_a_fixture_it_cannot_evaluate_as_written() {
             "observed_at: \"2026-10-03T23:00:00Z\"",
             "observed_at: \"yesterday\"",
             "state `healthy-observed`: evidence `observation-1` observation instant `yesterday` \
-             is not written YYYY-MM-DDTHH:MM:SSZ",
+             is not written YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.fZ (one to nine fraction \
+             digits)",
         ),
         (
             "protocol: fixtures/smoke/protocol.yaml",

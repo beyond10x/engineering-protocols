@@ -104,8 +104,8 @@ dependencies = [
 
 [[package]]
 name = "b10x-canon"
-version = "0.7.0"
-source = "git+https://github.com/beyond10x/canon?tag=0.7.0#a4317d800f5127ae9bd85d09fdf39dcf4e79607e"
+version = "0.8.0"
+source = "git+https://github.com/beyond10x/canon?tag=0.8.0#cf171757878af943105132f686ff8c46170f8a77"
 dependencies = [
  "serde",
  "serde_json",
@@ -146,8 +146,8 @@ dependencies = [
 
 [[package]]
 name = "b10x-canon-expr"
-version = "0.7.0"
-source = "git+https://github.com/beyond10x/canon?tag=0.7.0#a4317d800f5127ae9bd85d09fdf39dcf4e79607e"
+version = "0.8.0"
+source = "git+https://github.com/beyond10x/canon?tag=0.8.0#cf171757878af943105132f686ff8c46170f8a77"
 dependencies = [
  "logos",
  "serde",

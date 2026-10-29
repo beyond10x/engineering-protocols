@@ -42,7 +42,8 @@
 //!         service.healthy: unknown       # true, false or unknown
 //!   - id: healthy-observed
 //!     add_evidence:
-//!       - observed_at: "2026-10-03T23:00:00Z"   # when it was observed, not after the
+//!       - observed_at: "2026-10-03T23:00:00Z"   # when it was observed (a fraction of one to
+//!                                               # nine digits allowed), its second not after the
 //!                                               # state's evaluation instant
 //!         record: {format: canon-evidence/1, id: observation-1, kind: operational_observation,
 //!                  result: healthy, subject: service, subject_revision: r1}
@@ -648,14 +649,14 @@ impl Fixture {
                         ))
                     })?;
                 let evidence = record.id.as_str().to_owned();
-                if !is_instant(&observation.observed_at) {
+                if !is_observation_instant(&observation.observed_at) {
                     return refuse(format!(
                         "state `{}`: evidence `{evidence}` observation instant `{}` is not \
-                         written YYYY-MM-DDTHH:MM:SSZ",
+                         written {OBSERVED}",
                         state.id, observation.observed_at
                     ));
                 }
-                if observation.observed_at > at {
+                if second(&observation.observed_at) > second(&at) {
                     return refuse(format!(
                         "state `{}`: evidence `{evidence}` is observed at `{}`, after the \
                          evaluation instant `{at}`",
@@ -666,14 +667,14 @@ impl Fixture {
                 // held to the same rules as the entry's and must agree with it.
                 if let Some(own) = record.observed_at.take() {
                     let own = own.as_str();
-                    if !is_instant(own) {
+                    if !is_observation_instant(own) {
                         return refuse(format!(
                             "state `{}`: evidence `{evidence}` record observation instant \
-                             `{own}` is not written YYYY-MM-DDTHH:MM:SSZ",
+                             `{own}` is not written {OBSERVED}",
                             state.id
                         ));
                     }
-                    if own > at.as_str() {
+                    if second(own) > second(&at) {
                         return refuse(format!(
                             "state `{}`: evidence `{evidence}` record is observed at `{own}`, \
                              after the evaluation instant `{at}`",
@@ -1005,4 +1006,35 @@ fn is_instant(text: &str) -> bool {
         && field(11, 13) <= 23
         && field(14, 16) <= 59
         && field(17, 19) <= 59
+}
+
+/// How an observation instant may be written: as an evaluation instant, or with a fraction of
+/// one to nine digits, as Canon 0.8.0 reads `observed_at`
+/// (story:story-delivery-2-red-after-the-latest-write).
+const OBSERVED: &str =
+    "YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.fZ (one to nine fraction digits)";
+
+/// Whether `text` is an observation instant: [`is_instant`], or its second followed by `.`, one
+/// to nine digits and `Z`.
+fn is_observation_instant(text: &str) -> bool {
+    match text.get(19..) {
+        Some("Z") => is_instant(text),
+        Some(rest) => {
+            let digits = rest
+                .strip_prefix('.')
+                .and_then(|rest| rest.strip_suffix('Z'))
+                .unwrap_or_default();
+            (1..=9).contains(&digits.len())
+                && digits.bytes().all(|byte| byte.is_ascii_digit())
+                && is_instant(&format!("{}Z", &text[..19]))
+        }
+        None => false,
+    }
+}
+
+/// The whole second of an instant [`is_observation_instant`] accepts, as text: Canon counts an
+/// observation against the evaluation instant in whole seconds, its fraction ignored, so an
+/// observation is after the evaluation instant exactly when its second is.
+fn second(text: &str) -> &str {
+    &text[..19]
 }

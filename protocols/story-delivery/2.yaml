@@ -190,9 +190,9 @@ actions:
     description: >-
       change the implementation in the repository's working revision; when the case requires its
       tests first, needs the story's tests written and failing at the current revision, or written,
-      seen failing in a run observed after they were first written, and passing at the current one
-      with the gate or continuous integration failed there, so a failure no test reads (formatting,
-      lint, another platform) can be fixed
+      seen failing in a run at the revision of their latest write and observed after it, and
+      passing at the current one with the gate or continuous integration failed there, so a failure
+      no test reads (formatting, lint, another platform) can be fixed
     effect: write
     precondition:
       any:
@@ -205,8 +205,8 @@ actions:
                   is: false
                 - claim: ci.green
                   is: false
-            - after:
-                first: tests_change
+            - since:
+                last: tests_change
                 then:
                   kind: test_result
                   result: fail
