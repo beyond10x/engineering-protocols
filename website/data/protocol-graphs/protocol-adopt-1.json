@@ -16,9 +16,21 @@
       "to": "evidence:diff_report"
     },
     {
+      "from": "evidence:diff_report",
+      "kind": "establishes",
+      "qualifier": "before adoption_approval about generated_protocol",
+      "to": "claim:adoption.approved"
+    },
+    {
       "from": "evidence:adoption_approval",
       "kind": "establishes",
-      "qualifier": "approved about generated_protocol",
+      "qualifier": "after diff_report about generated_protocol",
+      "to": "claim:adoption.approved"
+    },
+    {
+      "from": "evidence:adoption_approval",
+      "kind": "establishes",
+      "qualifier": "approved about generated_protocol, independent on different_principal",
       "to": "claim:adoption.approved"
     },
     {
@@ -118,15 +130,26 @@
       "name": "diff_report"
     },
     {
-      "description": "a holder of protocol.adopt approved the current revision",
+      "description": "a principal the case lists as independent of the generation, a holder of protocol.adopt, approved the current revision, and the first canon diff report came before the first approval",
       "id": "claim:adoption.approved",
       "kind": "claim",
       "name": "adoption.approved",
       "predicate": {
-        "evidence": {
-          "kind": "adoption_approval",
-          "result": "approved"
-        }
+        "all": [
+          {
+            "before": {
+              "first": "diff_report",
+              "subject": "generated_protocol",
+              "then": "adoption_approval"
+            }
+          },
+          {
+            "evidence": {
+              "kind": "adoption_approval",
+              "result": "approved"
+            }
+          }
+        ]
       }
     },
     {

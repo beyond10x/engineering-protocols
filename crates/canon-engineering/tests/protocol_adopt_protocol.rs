@@ -14,6 +14,12 @@
 //! - `adoption`: no evidence (1), both reports (2), the grant and the approval (3), then the
 //!   generated protocol moves to a new revision (4).
 //! - `adoption-outside-floor`: a diff report outside the floor beside everything else (5).
+//! - `adoption-check-failed`, `adoption-rejected`, `adoption-unvouched` and
+//!   `adoption-approved-first`: a failed check, a rejected approval, an approval by a principal the
+//!   case does not list as independent (or by nobody named), and an approval observed before the
+//!   first diff report; none adopts. Canon outcomes read claims, not authority decisions, so the
+//!   approval counts only from a principal the case lists on `different_principal`, and only after
+//!   the first diff report.
 
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
 mod support;
@@ -182,6 +188,49 @@ fn adoption_needs_floor_check_and_authority() {
         builtin.yaml, on_disk,
         "7. the built-in is the file as released"
     );
+}
+
+/// Every fixture under `fixtures/protocol-adopt/` holds against the protocol: the failed check, the
+/// rejected approval, the approval by a principal the case does not list (or by nobody named), and
+/// the approval observed before the reports each adopt nothing.
+#[test]
+fn every_protocol_adopt_fixture_holds() {
+    let directory = support::repo_root().join("fixtures/protocol-adopt");
+    let mut files: Vec<String> = std::fs::read_dir(&directory)
+        .unwrap_or_else(|error| panic!("{}: {error}", directory.display()))
+        .map(|entry| {
+            entry
+                .expect("a directory entry")
+                .file_name()
+                .into_string()
+                .expect("a UTF-8 file name")
+        })
+        .filter(|file| file.ends_with(".fixture.yaml"))
+        .collect();
+    files.sort();
+    assert_eq!(
+        files,
+        [
+            "adoption-approved-first.fixture.yaml",
+            "adoption-check-failed.fixture.yaml",
+            "adoption-outside-floor.fixture.yaml",
+            "adoption-rejected.fixture.yaml",
+            "adoption-unvouched.fixture.yaml",
+            "adoption.fixture.yaml",
+        ]
+    );
+    for file in files {
+        let fixture = load(&format!("fixtures/protocol-adopt/{file}"));
+        let compiled = fixture.compile().expect("the protocol compiles");
+        assert_eq!(fixture.check(&compiled), Ok(()), "{file}");
+        for state in fixture.states() {
+            let decision = fixture
+                .evaluate(&compiled, state)
+                .unwrap_or_else(|refusal| panic!("{file} `{state}`: {refusal}"));
+            let expected = file == "adoption.fixture.yaml" && state == "approved";
+            assert_eq!(adopted(&decision), expected, "{file} `{state}`");
+        }
+    }
 }
 
 /// The protocol names no Git, pull request or code (the story's pressure test), so a generated

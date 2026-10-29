@@ -1,0 +1,44 @@
+format: els-fixture/1
+id: adoption-approved-first
+protocol: protocols/protocol-adopt/1.yaml
+at: "2026-10-29T12:00:00Z"
+
+# An approval by the listed approver observed at 10:00, before the diff report (11:00) and the
+# check report (11:05) that protocol.approve's precondition needs: it was given while approving was
+# blocked, so the first diff report did not come before the first approval and adoption.approved
+# is false. Nothing is adopted.
+case:
+  format: canon-case/1
+  id: ADOPT-6
+  protocol: protocol.adopt
+  independence:
+    approver: [different_principal]
+  artifacts:
+    generated_protocol: {revision: r1}
+
+states:
+  - id: approved-first
+    add_authority:
+      - {capability: protocol.adopt, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-29T10:00:00Z"
+        record: {format: canon-evidence/1, id: approval-r1, kind: adoption_approval,
+                 result: approved, subject: generated_protocol, subject_revision: r1,
+                 producer: approver}
+      - observed_at: "2026-10-29T11:00:00Z"
+        record: {format: canon-evidence/1, id: diff-r1, kind: diff_report, result: within_floor,
+                 subject: generated_protocol, subject_revision: r1}
+      - observed_at: "2026-10-29T11:05:00Z"
+        record: {format: canon-evidence/1, id: check-r1, kind: check_report, result: passed,
+                 subject: generated_protocol, subject_revision: r1}
+    expect:
+      claims:
+        floor.respected: true
+        checks.pass: true
+        adoption.approved: false
+      actions:
+        protocol.check: admissible
+        protocol.diff: admissible
+        protocol.approve: admissible
+      outcomes:
+        adopted: blocked

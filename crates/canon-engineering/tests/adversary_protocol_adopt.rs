@@ -23,8 +23,29 @@ use support::{Compiled, Fixture, compile_protocol, repo_root};
 const PROTOCOL: &str = "protocols/protocol-adopt/1.yaml";
 
 /// One evidence entry of a fixture state about `generated_protocol`, written as the fixture format
-/// writes it.
+/// writes it. An `adoption_approval` names `approver`, the principal the case lists as
+/// independent (story:protocol-adopt-protocol, fix of adversary findings 1-2).
 fn entry(observed_at: &str, id: &str, kind: &str, result: &str, revision: &str) -> String {
+    let producer = if kind == "adoption_approval" {
+        ", producer: approver"
+    } else {
+        ""
+    };
+    format!(
+        "      - observed_at: \"{observed_at}\"\n        record: {{format: canon-evidence/1, \
+         id: {id}, kind: {kind}, result: {result}, subject: generated_protocol, \
+         subject_revision: {revision}{producer}}}\n"
+    )
+}
+
+/// One evidence entry as [`entry`] writes it, but naming no producer.
+fn entry_unvouched(
+    observed_at: &str,
+    id: &str,
+    kind: &str,
+    result: &str,
+    revision: &str,
+) -> String {
     format!(
         "      - observed_at: \"{observed_at}\"\n        record: {{format: canon-evidence/1, \
          id: {id}, kind: {kind}, result: {result}, subject: generated_protocol, \
@@ -50,7 +71,7 @@ fn adopt(states: &[String]) -> Fixture {
     let text = format!(
         "format: els-fixture/1\nid: adversary-protocol-adopt\nprotocol: {PROTOCOL}\n\
          at: \"2026-10-29T12:00:00Z\"\ncase:\n  format: canon-case/1\n  id: ADOPT-9001\n  \
-         protocol: protocol.adopt\n  artifacts:\n    generated_protocol: {{revision: r1}}\n\
+         protocol: protocol.adopt\n  independence:\n    approver: [different_principal]\n  artifacts:\n    generated_protocol: {{revision: r1}}\n\
          states:\n{}",
         states.concat()
     );
@@ -182,7 +203,7 @@ fn an_approval_recorded_before_either_report_adopts_nothing() {
 #[test]
 fn an_approval_record_adopts_without_the_grant() {
     let mut evidence = reports("r1", "2026-10-29T11:00:00Z", "2026-10-29T11:05:00Z");
-    evidence.push(entry(
+    evidence.push(entry_unvouched(
         "2026-10-29T11:30:00Z",
         "approval-r1",
         "adoption_approval",
@@ -403,7 +424,7 @@ fn killed_by(name: &str, from: &str, to: &str) -> Vec<String> {
 /// Each rule of `protocol.adopt/1` is killed by some fixture under `fixtures/protocol-adopt/`.
 #[test]
 fn protocol_adopt_mutants_are_killed_by_a_fixture() {
-    let mutants: [(&str, &str, &str); 8] = [
+    let mutants: [(&str, &str, &str); 10] = [
         (
             "pa-outcome-drop-floor",
             "        - claim: floor.respected\n        - claim: checks.pass\n        \
@@ -442,8 +463,18 @@ fn protocol_adopt_mutants_are_killed_by_a_fixture() {
         ),
         (
             "pa-approval-any-result",
-            "        kind: adoption_approval\n        result: approved\n",
-            "        kind: adoption_approval\n",
+            "            kind: adoption_approval\n            result: approved\n",
+            "            kind: adoption_approval\n",
+        ),
+        (
+            "pa-approval-no-independence",
+            "            independent_on: [different_principal]\n",
+            "",
+        ),
+        (
+            "pa-approval-no-order",
+            "        - before:\n            first: diff_report\n            then: adoption_approval\n            subject: generated_protocol\n",
+            "",
         ),
     ];
     let mut survivors = Vec::new();
