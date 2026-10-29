@@ -1,0 +1,78 @@
+format: els-fixture/1
+id: adoption
+protocol: protocols/protocol-adopt/1.yaml
+at: "2026-10-29T12:00:00Z"
+
+# A generated protocol at revision r1 is adopted on a canon diff report within the floor, a passing
+# canon check report and an approval under protocol.adopt, each bound to r1. Evaluation reads the
+# two reports as evidence and runs neither tool. Then the generated protocol moves to r2: every
+# record about r1 is excluded as revision_mismatch, so every claim is unknown, not false, and the
+# case no longer adopts anything.
+case:
+  format: canon-case/1
+  id: ADOPT-1
+  protocol: protocol.adopt
+  artifacts:
+    generated_protocol: {revision: r1}
+
+states:
+  - id: opened
+    add_evidence: []
+    expect:
+      claims:
+        floor.respected: unknown
+        checks.pass: unknown
+        adoption.approved: unknown
+      actions:
+        protocol.approve: blocked
+      outcomes:
+        adopted: blocked
+
+  - id: reports-in
+    add_evidence:
+      - observed_at: "2026-10-29T11:00:00Z"
+        record: {format: canon-evidence/1, id: diff-r1, kind: diff_report, result: within_floor,
+                 subject: generated_protocol, subject_revision: r1}
+      - observed_at: "2026-10-29T11:05:00Z"
+        record: {format: canon-evidence/1, id: check-r1, kind: check_report, result: passed,
+                 subject: generated_protocol, subject_revision: r1}
+    expect:
+      claims:
+        floor.respected: true
+        checks.pass: true
+        adoption.approved: unknown
+      actions:
+        protocol.approve: approval-required
+      outcomes:
+        adopted: blocked
+
+  - id: approved
+    add_authority:
+      - {capability: protocol.adopt, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-29T11:30:00Z"
+        record: {format: canon-evidence/1, id: approval-r1, kind: adoption_approval,
+                 result: approved, subject: generated_protocol, subject_revision: r1}
+    expect:
+      claims:
+        floor.respected: true
+        checks.pass: true
+        adoption.approved: true
+      actions:
+        protocol.approve: admissible
+      outcomes:
+        adopted: legitimate
+
+  - id: revision-moved
+    set_revisions:
+      generated_protocol: r2
+    add_evidence: []
+    expect:
+      claims:
+        floor.respected: unknown
+        checks.pass: unknown
+        adoption.approved: unknown
+      actions:
+        protocol.approve: blocked
+      outcomes:
+        adopted: blocked
