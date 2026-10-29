@@ -3,12 +3,12 @@
 //! Invariants under check, for every committed `website/data/protocol-graphs/*.json`:
 //!
 //! 1. It conforms to the pinned docs-system schema, `schema/b10x.protocol-graph.v1.schema.json`
-//!    at docs-system 0.13.0, `7bbb9c2` (the commit `website/package.json` pins), transcribed
+//!    at docs-system 0.14.0, `d7c8084` (the commit `website/package.json` pins), transcribed
 //!    below: closed key sets, required keys, the node and edge kind enums, non-empty strings, the
-//!    predicate shapes (the `input` leaf and the order-form leaves `first`, `before` and `after`
-//!    among them, and the renderer's refusal of a `before` of one kind before itself), the optional
-//!    top-level `case.inputs`, and `applicable_when`, a predicate on a node of kind `obligation`
-//!    only. Nothing else in this
+//!    predicate shapes (the `input` leaf and the order-form leaves `first`, `before`, `after`
+//!    and `since` among them, and the renderer's refusal of a `before` of one kind before
+//!    itself), the optional top-level `case.inputs`, and `applicable_when`, a predicate on a node
+//!    of kind `obligation` only. Nothing else in this
 //!    repository checks a generated graph against that schema; the unit tests compare one
 //!    reference rendering byte for byte, which has no obligation in it.
 //! 2. It says what the compiled protocol says: one node per declared action, evidence kind,
@@ -165,17 +165,18 @@ fn predicate(value: &Value, at: &str) -> Vec<String> {
             }
             None => vec![format!("{at}.before: not an object")],
         },
-        "after" => match inner.as_object() {
+        form @ ("after" | "since") => match inner.as_object() {
             Some(after) => {
+                let anchor = if form == "after" { "first" } else { "last" };
                 let mut problems = closed(
                     after,
-                    &["first", "then", "subject"],
-                    &["first", "then"],
-                    &format!("{at}.after"),
+                    &[anchor, "then", "subject"],
+                    &[anchor, "then"],
+                    &format!("{at}.{form}"),
                 );
-                for key in ["first", "subject"] {
+                for key in [anchor, "subject"] {
                     if let Some(value) = after.get(key) {
-                        problems.extend(nonempty(value, &format!("{at}.after.{key}")));
+                        problems.extend(nonempty(value, &format!("{at}.{form}.{key}")));
                     }
                 }
                 match after.get("then").map(Value::as_object) {
@@ -184,20 +185,21 @@ fn predicate(value: &Value, at: &str) -> Vec<String> {
                             then,
                             &["kind", "result"],
                             &["kind", "result"],
-                            &format!("{at}.after.then"),
+                            &format!("{at}.{form}.then"),
                         ));
                         for key in ["kind", "result"] {
                             if let Some(value) = then.get(key) {
-                                problems.extend(nonempty(value, &format!("{at}.after.then.{key}")));
+                                problems
+                                    .extend(nonempty(value, &format!("{at}.{form}.then.{key}")));
                             }
                         }
                     }
-                    Some(None) => problems.push(format!("{at}.after.then: not an object")),
+                    Some(None) => problems.push(format!("{at}.{form}.then: not an object")),
                     None => {}
                 }
                 problems
             }
-            None => vec![format!("{at}.after: not an object")],
+            None => vec![format!("{at}.{form}: not an object")],
         },
         other => vec![format!("{at}: `{other}` is not a predicate form")],
     }
@@ -585,8 +587,8 @@ fn fidelity_problems(graph: &Value, ir: &Ir) -> Vec<String> {
     problems
 }
 
-/// Every evidence kind a drawn `first`, `before` or `after` leaf reads, each with the subject it
-/// names.
+/// Every evidence kind a drawn `first`, `before`, `after` or `since` leaf reads, each with the
+/// subject it names.
 fn order_reads(value: &Value, found: &mut Vec<(String, Option<String>)>) {
     match value {
         Value::Object(object) => {
@@ -604,6 +606,11 @@ fn order_reads(value: &Value, found: &mut Vec<(String, Option<String>)>) {
                 let subject = after.get("subject").map(text);
                 found.push((text(&after["first"]), subject.clone()));
                 found.push((text(&after["then"]["kind"]), subject));
+            }
+            if let Some(since) = object.get("since").and_then(Value::as_object) {
+                let subject = since.get("subject").map(text);
+                found.push((text(&since["last"]), subject.clone()));
+                found.push((text(&since["then"]["kind"]), subject));
             }
             for member in object.values() {
                 order_reads(member, found);
@@ -931,6 +938,81 @@ fn the_transcription_follows_the_0_13_0_after_leaf() {
         (
             "an after that is not an object",
             serde_json::json!({"after": "e"}),
+        ),
+    ] {
+        assert!(!broken(predicate).is_empty(), "{what} is not a problem");
+    }
+}
+
+/// The transcription accepts the `since` leaf docs-system 0.14.0 adds, with or without `subject`,
+/// with one kind twice and under `all` and `not`, and refuses what that schema refuses of it: a
+/// missing required key at either level, an unknown key (an `after`'s `first` among them), an
+/// empty or non-string value, and a `then` that is not an object.
+#[test]
+fn the_transcription_follows_the_0_14_0_since_leaf() {
+    let valid = serde_json::json!({
+        "format": "b10x-protocol-graph/1",
+        "protocol": {"id": "p", "revision": 1},
+        "nodes": [
+            {"id": "claim:a", "kind": "claim", "name": "a",
+             "predicate": {"all": [
+                 {"since": {"last": "e", "then": {"kind": "f", "result": "fail"}, "subject": "x"}},
+                 {"not": {"since": {"last": "f", "then": {"kind": "f", "result": "fail"}}}},
+             ]}},
+        ],
+        "edges": [],
+    });
+    assert_eq!(schema_problems(&valid), Vec::<String>::new());
+
+    let broken = |predicate: Value| {
+        let mut graph = valid.clone();
+        graph["nodes"][0]["predicate"] = predicate;
+        schema_problems(&graph)
+    };
+    for (what, predicate) in [
+        (
+            "a since without last",
+            serde_json::json!({"since": {"then": {"kind": "f", "result": "fail"}}}),
+        ),
+        (
+            "a since with first instead of last",
+            serde_json::json!({"since": {"first": "e", "then": {"kind": "f", "result": "fail"}}}),
+        ),
+        (
+            "a since without then",
+            serde_json::json!({"since": {"last": "e"}}),
+        ),
+        (
+            "a then that is a kind",
+            serde_json::json!({"since": {"last": "e", "then": "f"}}),
+        ),
+        (
+            "a then without result",
+            serde_json::json!({"since": {"last": "e", "then": {"kind": "f"}}}),
+        ),
+        (
+            "a then with an unknown key",
+            serde_json::json!({"since": {"last": "e", "then": {"kind": "f", "result": "fail", "subject": "x"}}}),
+        ),
+        (
+            "a since with an unknown key",
+            serde_json::json!({"since": {"last": "e", "then": {"kind": "f", "result": "fail"}, "result": "fail"}}),
+        ),
+        (
+            "a since with an empty last",
+            serde_json::json!({"since": {"last": "", "then": {"kind": "f", "result": "fail"}}}),
+        ),
+        (
+            "a since with an empty subject",
+            serde_json::json!({"since": {"last": "e", "then": {"kind": "f", "result": "fail"}, "subject": ""}}),
+        ),
+        (
+            "a since that is not an object",
+            serde_json::json!({"since": "e"}),
+        ),
+        (
+            "an after with last instead of first",
+            serde_json::json!({"after": {"last": "e", "then": {"kind": "f", "result": "fail"}}}),
         ),
     ] {
         assert!(!broken(predicate).is_empty(), "{what} is not a problem");

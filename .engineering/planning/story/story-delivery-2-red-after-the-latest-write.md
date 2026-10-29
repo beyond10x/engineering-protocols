@@ -2,21 +2,25 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-red-after-the-latest-write
 kind: story
-status: draft
+status: implemented
 title: A red gate or CI counts only a red run after the latest write
 summary: a late run about an older revision, or the red run of tests written earlier, does not admit implementation.edit; needs a Canon order form over the latest record or over revisions
 relations:
 - informed_by: story:story-delivery-2-red-gate-needs-red-tests
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 1
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-29T09:19:30Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-29T09:19:30Z", actor: "human:timo", revision: 3}
+- {from: "active", to: "implemented", at: "2026-10-29T12:26:35Z", actor: "human:timo", revision: 4, decided_on: {"recorded":{"test_result":3}}}
 ---
 ## Outcome
 
 Under `story.delivery/2` with `tests_first=required`, a red gate or a red continuous integration
-admits `implementation.edit` only when a run of the story's tests failed at a revision that holds
-them, after the latest time they were written. A late failing run about a revision from before the
-write, and a red run of tests written earlier, no longer count.
+admits `implementation.edit` only when a run of the story's tests failed at the revision of their
+latest write, observed after it. A late failing run about a revision from before the write, and a
+red run of tests written earlier, no longer count.
 
 ## Context
 
@@ -42,3 +46,16 @@ and no form anchored on the latest record of a kind, so this needs a Canon relea
 
 - Both cases above assert `blocked` and pass.
 - Every other `story.delivery/2` fixture and test passes unchanged.
+
+## Delivered
+
+- `implementation.edit`'s red-gate branch reads Canon 0.8.0's `since: {last: tests_change, then:
+  {kind: test_result, result: fail}, subject: implementation}`; both residual histories are
+  blocked and the subject-less mutant is killed by a write and a fail about the plan.
+- Sub-second instants order a write and its red run within one second; the fixture harness reads
+  observation instants with one to nine fraction digits.
+- The adversary pass found the rule narrower than the first Outcome ("a revision that holds
+  them"): a red run at a later revision does not stand in for one at the write, so with the write
+  and its red run in one whole second the edit stays blocked on a red gate. Kept as the rule; the
+  Outcome now says "at the revision of their latest write", and a recorder resolves the tie by
+  writing sub-second instants (`story_delivery_2_red_after_write_adv3.rs`).

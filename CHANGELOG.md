@@ -6,6 +6,32 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-29
+
+### Changed
+
+- Canon 0.7.0 -> 0.8.0. `registry::get` returns Canon's model type, so a consumer that uses it moves
+  to Canon 0.8.0 with this release. The Canon check of `story.delivery/2` now covers
+  15,335,424,000 states (3,067,084,800 in 0.13.0).
+- ESS 0.75.0 -> 0.76.0 for the assertion contracts in `ess/` and `ess/providers/`; regenerated
+  (generator stamp only); CI installs ESS 0.76.0.
+- The website pins docs-system 0.14.0, whose protocol-graph schema carries the `since` leaf; the
+  generated graph and protocol pages draw it.
+- The fixture harness accepts an observation instant with a fraction of one to nine digits, as
+  Canon 0.8.0 reads `observed_at`, and counts it against the evaluation instant in whole seconds.
+
+### Fixed
+
+- `story.delivery/2` with `tests_first=required`: a red gate or a red continuous integration admits
+  `implementation.edit` only when a failing `test_result` about the implementation was observed
+  after the latest `tests_change`, at that write's revision (Canon 0.8.0's `since` form). In 0.13.0
+  a late failing run about a revision from before the write, or the red run of tests written
+  earlier, admitted the edit (story:story-delivery-2-red-after-the-latest-write).
+- Narrower than "a failing run at any revision holding the tests": a red run at a later revision
+  does not stand in for one at the write. With every `observed_at` written at the same sub-second
+  precision, a failing run later in the same second as the write counts as red; in whole seconds
+  the two stay unordered and the edit stays blocked.
+
 ## [0.13.0] - 2026-10-29
 
 ### Changed

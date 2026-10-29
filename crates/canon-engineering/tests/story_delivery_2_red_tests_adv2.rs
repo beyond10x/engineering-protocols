@@ -1,14 +1,13 @@
 //! Adversary pass on story:story-delivery-2-red-gate-needs-red-tests: under `tests_first=required`
 //! a red gate or a red continuous integration admits `implementation.edit` only when the story's
-//! tests were red at some revision after they were written. The rule reads that through Canon
-//! 0.7.0's `after` form: a `test_result` of `fail` observed after the first `tests_change`, about
-//! the implementation, excluded records included.
+//! tests were red after they were written. The rule reads that through Canon 0.8.0's `since`
+//! form: a `test_result` of `fail` about the implementation, at the revision of the latest
+//! `tests_change` and observed after it, excluded records included.
 //!
-//! Two cases record where that reading stops short of "red at a revision after they were
-//! written": `after` orders records by when they were observed, not by revision, and anchors on
-//! the first `tests_change`. Both histories admitted the edit before this rule too. They assert
-//! today's verdict, so a rule that closes them turns them red on purpose;
-//! story:story-delivery-2-red-after-the-latest-write holds that work.
+//! Two cases recorded where Canon 0.7.0's `after`, the rule's first reading, stopped short: it
+//! ordered records by when they were observed, not by revision, and anchored on the first
+//! `tests_change`. Both histories admitted the edit before that rule too; under `since`
+//! (story:story-delivery-2-red-after-the-latest-write) both are blocked.
 //!
 //! These cases drive the rule from histories built inline (a fixture document per case, evaluated
 //! state by state and not checked against expectations), so they add nothing to the fixture
@@ -79,12 +78,12 @@ fn fixture(
 /// SD-210's history carried on: the tests written at h2, a late failing run about h1 (the seed,
 /// which carries none of the story's tests, "a late result of a run started before the write"),
 /// then the tests passing at h2 on their first run and the gate red there. The tests were never
-/// red after they were written, yet `after` reads the late h1 record (observed after the
-/// tests_change, excluded as `revision_mismatch` from `tests.pass`) as the red run, and the red
-/// gate admits the edit. Closing this needs an order over revisions, which Canon 0.7.0 does not
-/// have (story:story-delivery-2-red-after-the-latest-write).
+/// red after they were written. Canon 0.7.0's `after` read the late h1 record (observed after
+/// the tests_change) as the red run and the red gate admitted the edit; `since` reads only
+/// failures at h2, the revision of the latest write, so the edit is blocked
+/// (story:story-delivery-2-red-after-the-latest-write).
 #[test]
-fn a_late_fail_about_the_seed_still_admits_the_edit_on_a_red_gate() {
+fn a_late_fail_about_the_seed_no_longer_admits_the_edit_on_a_red_gate() {
     late_body(&compiled());
 }
 
@@ -148,21 +147,20 @@ fn late_body(compiled: &Compiled) {
     assert_eq!(claims(&red)["gate.green"], "false");
     assert_eq!(
         actions(&red)["implementation.edit"],
-        "admissible",
-        "the late h1 failure is observed after the first tests_change, so `after` holds and the \
-         red gate admits implementation.edit; if this is now blocked, the residual is closed: \
-         update this case and story:story-delivery-2-red-after-the-latest-write"
+        "blocked",
+        "the late failure is about h1, not h2, the revision of the latest tests_change, so it is \
+         not a red run of the story's tests (story:story-delivery-2-red-after-the-latest-write)"
     );
 }
 
 /// The tests written and red at h2, the implementation edited to h3 where they pass; then more of
 /// the story's tests written at h4 that pass on their first run (never red) and the gate red at
-/// h4, for example on the new tests' formatting. `after` anchors on the first tests_change only,
-/// so the red run of the earlier tests counts for the tests written later, and the red gate admits
-/// the edit. Closing this needs an order form anchored on the latest record of a kind
-/// (story:story-delivery-2-red-after-the-latest-write).
+/// h4, for example on the new tests' formatting. Canon 0.7.0's `after` anchored on the first
+/// tests_change, so the red run of the earlier tests counted for the tests written later and the
+/// red gate admitted the edit; `since` anchors on the latest tests_change, at h4, where no run
+/// failed, so the edit is blocked (story:story-delivery-2-red-after-the-latest-write).
 #[test]
-fn tests_written_again_and_never_red_are_still_admitted_by_a_red_gate() {
+fn tests_written_again_and_never_red_are_no_longer_admitted_by_a_red_gate() {
     again_body(&compiled());
 }
 
@@ -247,10 +245,9 @@ fn again_body(compiled: &Compiled) {
     assert_eq!(claims(&red)["gate.green"], "false");
     assert_eq!(
         actions(&red)["implementation.edit"],
-        "admissible",
-        "the h2 failure is observed after the first tests_change, so `after` holds for the tests \
-         written at h4 too; if this is now blocked, the residual is closed: update this case and \
-         story:story-delivery-2-red-after-the-latest-write"
+        "blocked",
+        "the tests written at h4 were never red; the h2 failure belongs to the earlier write \
+         (story:story-delivery-2-red-after-the-latest-write)"
     );
 }
 
@@ -313,7 +310,7 @@ fn a_fail_before_the_tests_were_written_does_not_make_them_red() {
 }
 
 /// A failing test_result about another artifact (the plan) after the tests were written is not a
-/// red run of the story's tests; without `subject: implementation` in the `after` form it would be.
+/// red run of the story's tests.
 #[test]
 fn a_fail_about_another_subject_does_not_make_the_tests_red() {
     let compiled = compiled();
@@ -362,32 +359,95 @@ fn another_subject_red() -> Fixture {
     )
 }
 
-/// The mutant without `subject: implementation` in the `after` form admits the edit over the
-/// history of `a_fail_about_another_subject_does_not_make_the_tests_red`, so that case kills it;
-/// no other story.delivery/2 case records a test_result about another artifact.
+/// Tests written about the implementation at h2 and passing at once, then a later
+/// `tests_change` about the plan with a failing run there, then the gate red at h2.
+fn another_subject_written_and_red() -> Fixture {
+    fixture(
+        "required",
+        "each_revision",
+        &[(
+            "plan-written-and-red-gate-red",
+            Some("h2"),
+            vec![
+                record(
+                    "tests-written-h2",
+                    0,
+                    "tests_change",
+                    None,
+                    "implementation",
+                    "h2",
+                ),
+                record(
+                    "tests-h2-pass",
+                    10,
+                    "test_result",
+                    Some("pass"),
+                    "implementation",
+                    "h2",
+                ),
+                record("plan-written", 20, "tests_change", None, "plan", "p1"),
+                record("plan-red", 30, "test_result", Some("fail"), "plan", "p1"),
+                record(
+                    "gate-h2-fail",
+                    40,
+                    "gate_result",
+                    Some("fail"),
+                    "implementation",
+                    "h2",
+                ),
+            ],
+        )],
+    )
+}
+
+/// A write and a red run about another artifact after the implementation's tests were written
+/// do not make those tests red: the latest write `since` reads is the implementation's.
 #[test]
-fn the_other_subject_case_kills_the_subject_less_after_mutant() {
+fn a_write_and_fail_about_another_subject_do_not_make_the_tests_red() {
+    let red = decide(
+        &another_subject_written_and_red(),
+        &compiled(),
+        "plan-written-and-red-gate-red",
+    );
+    assert_eq!(claims(&red)["tests.pass"], "true");
+    assert_eq!(claims(&red)["gate.green"], "false");
+    assert_eq!(actions(&red)["implementation.edit"], "blocked");
+}
+
+/// The mutant without `subject: implementation` in the `since` form anchors on the latest
+/// `tests_change` of any artifact, the plan's, and reads the plan's red run after it, so it admits
+/// the edit over `a_write_and_fail_about_another_subject_do_not_make_the_tests_red`'s history;
+/// that case kills it. (`since` reads a failure only at its anchor's subject, so the history of
+/// `a_fail_about_another_subject_does_not_make_the_tests_red` no longer does.)
+#[test]
+fn the_other_subject_write_kills_the_subject_less_since_mutant() {
     let path = support::repo_root().join("protocols/story-delivery/2.yaml");
     let text = std::fs::read_to_string(&path).expect("the protocol reads");
     let form = "                  result: fail\n                subject: implementation\n";
     assert_eq!(
         text.matches(form).count(),
         1,
-        "the after form is written once"
+        "the since form is written once"
     );
     let mutant =
         support::compile_protocol_text(&text.replace(form, "                  result: fail\n"))
             .unwrap_or_else(|error| panic!("the mutant compiles: {error}"));
     let red = decide(
+        &another_subject_written_and_red(),
+        &mutant,
+        "plan-written-and-red-gate-red",
+    );
+    assert_eq!(actions(&red)["implementation.edit"], "admissible");
+    let red = decide(
         &another_subject_red(),
         &mutant,
         "tests-written-plan-red-pass-gate-red",
     );
-    assert_eq!(actions(&red)["implementation.edit"], "admissible");
+    assert_eq!(actions(&red)["implementation.edit"], "blocked");
 }
 
-/// A failing run in the same second as the tests_change is not ordered after it (`after` is
-/// unknown), and an unknown precondition does not admit the edit.
+/// A failing run in the same second as the tests_change, both written in whole seconds, is not
+/// ordered after it (`since` is unknown), and an unknown precondition does not admit the edit.
 #[test]
 fn a_fail_at_the_instant_of_the_write_does_not_admit_the_edit() {
     let compiled = compiled();
@@ -446,8 +506,8 @@ fn a_fail_at_the_instant_of_the_write_does_not_admit_the_edit() {
     assert_eq!(actions(&red)["implementation.edit"], "blocked");
 }
 
-/// The red run comes after the first tests_change and a second tests_change: the order is read
-/// from the first write, so a red run after any write counts, and the edit is admitted.
+/// The red run comes after a second tests_change, at its revision: the order is read from the
+/// latest write, so the red run counts, and the edit is admitted.
 #[test]
 fn a_red_run_after_a_second_write_admits_the_edit_on_a_red_gate() {
     let compiled = compiled();
@@ -575,6 +635,81 @@ fn tests_optional_admits_the_edit_in_the_never_red_history() {
             actions(&decision)["implementation.edit"],
             "admissible",
             "`{state}`"
+        );
+    }
+}
+
+/// One evidence record observed at 09:00:`second`.`millis` on 2026-10-27, written at millisecond
+/// precision, of `kind`, with `result` when given, about the implementation at `revision`.
+fn record_ms(
+    id: &str,
+    second: u32,
+    millis: u32,
+    kind: &str,
+    result: Option<&str>,
+    revision: &str,
+) -> String {
+    let result = result.map(|r| format!(" result: {r},")).unwrap_or_default();
+    format!(
+        "      - observed_at: \"2026-10-27T09:00:{second:02}.{millis:03}Z\"\n        record: {{format: canon-evidence/1, id: {id}, kind: {kind},{result} subject: implementation, subject_revision: {revision}}}\n"
+    )
+}
+
+/// The tests written at `write_at` and run red at `fail_at` milliseconds into one second, every
+/// record at millisecond precision; then the implementation edited to h3, where the tests pass,
+/// and the gate red there.
+fn one_second(write_at: u32, fail_at: u32) -> Fixture {
+    fixture(
+        "required",
+        "each_revision",
+        &[
+            (
+                "written-and-run-in-one-second",
+                Some("h2"),
+                vec![
+                    record_ms("tests-written-h2", 0, write_at, "tests_change", None, "h2"),
+                    record_ms(
+                        "tests-h2-fail",
+                        0,
+                        fail_at,
+                        "test_result",
+                        Some("fail"),
+                        "h2",
+                    ),
+                ],
+            ),
+            (
+                "pass-and-gate-red",
+                Some("h3"),
+                vec![
+                    record_ms("tests-h3-pass", 20, 0, "test_result", Some("pass"), "h3"),
+                    record_ms("gate-h3-fail", 30, 0, "gate_result", Some("fail"), "h3"),
+                ],
+            ),
+        ],
+    )
+}
+
+/// takt's self-runs recorded the tests_change and the first red run within one second in 8 of 16
+/// cases. Written at millisecond precision, a failure 500 ms after the write in the same second
+/// is ordered after it, and the red gate admits the edit; a failure 500 ms before the write in
+/// that second is not, and the edit is blocked; at one millisecond the two are unordered, and
+/// the edit is blocked.
+#[test]
+fn a_fail_later_in_the_same_second_admits_the_edit_at_millisecond_precision() {
+    let compiled = compiled();
+    for (write_at, fail_at, expected) in [
+        (250, 750, "admissible"),
+        (750, 250, "blocked"),
+        (500, 500, "blocked"),
+    ] {
+        let fixture = one_second(write_at, fail_at);
+        let red = decide(&fixture, &compiled, "pass-and-gate-red");
+        assert_eq!(claims(&red)["gate.green"], "false");
+        assert_eq!(
+            actions(&red)["implementation.edit"],
+            expected,
+            "write {write_at} ms, fail {fail_at} ms"
         );
     }
 }

@@ -115,7 +115,10 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
             Predicate::Evidence(matching) => {
                 kinds.insert(matching.kind.as_str().to_owned());
             }
-            Predicate::First(_) | Predicate::Before(_) | Predicate::After(_) => {
+            Predicate::First(_)
+            | Predicate::Before(_)
+            | Predicate::After(_)
+            | Predicate::Since(_) => {
                 for (kind, _) in node.order_reads() {
                     kinds.insert(kind.as_str().to_owned());
                 }
