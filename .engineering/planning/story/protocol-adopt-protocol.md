@@ -2,15 +2,16 @@
 format: aep.planning-md/3
 id: story:protocol-adopt-protocol
 kind: story
-status: active
+status: implemented
 title: 'Ship protocol.adopt/1: adopting a generated protocol is a case'
 summary: A generated protocol revision is adopted only with a canon diff report within the floor, a passing canon check report and an approval under protocol.adopt.
 relations:
 - serves: vision:governed-autonomy
-revision: 4
+revision: 6
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-29T20:46:59Z", actor: "human:timo", revision: 2, executor: "agent:canon-ep-d221", correlation: "wave/2026-10-29-w3"}
 - {from: "proposed", to: "active", at: "2026-10-29T20:46:59Z", actor: "human:timo", revision: 3, executor: "agent:canon-ep-d221", correlation: "wave/2026-10-29-w3"}
+- {from: "active", to: "implemented", at: "2026-10-29T21:26:58Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"test_result":1}}, executor: "agent:canon-ep-d221", correlation: "wave/2026-10-29-w3"}
 ---
 ## Outcome
 
@@ -77,3 +78,37 @@ The test `adoption_needs_floor_check_and_authority` in `crates/canon-engineering
 ## Source
 
 https://github.com/beyond10x/engineering-protocols/issues/7 (gap 4); Atlas ADR 0086 § Decision 2–5 and § Open; Atlas `docs/design/governed-autonomy/generated-protocols.md:109-134`; Atlas ADR 0088 § Decision 1 and ADR 0089 § Decision 5, which route generated protocols through `protocol.adopt/1`. Read at the Atlas checkout's `main`, `c78c906`, and canon's `main`, `761239f`, on 2026-10-07.
+
+## Delivered
+
+Wave 2026-10-29-w3 (approval-record:wave-2026-10-29-w3, D221; D205 option A).
+
+- `protocols/protocol-adopt/1.yaml`: artifact `generated_protocol`; evidence kinds `diff_report`,
+  `check_report`, `adoption_approval`; claims `floor.respected`, `checks.pass`,
+  `adoption.approved`; actions `protocol.diff` and `protocol.check` (read; they produce the two
+  reports, so `canon check` finds no unproduced evidence: a runner outside evaluation runs the
+  tools) and `protocol.approve` (requires `protocol.adopt`, precondition floor and checks,
+  produces `adoption_approval`); outcome `adopted` on all three claims.
+- Reading of § Acceptance 3: Canon outcomes read claims, never authority decisions, so "an
+  authority decision approving `protocol.approve`" is the grant plus the `adoption_approval`
+  record the approved action produces. After adversary pass 1 (e4b8d48) the record counts only
+  from a producer the case lists on `different_principal`, and only after the first diff report
+  (ec0121e). What stays open is story:protocol-adopt-authority-and-floor.
+- Fixtures `adoption` (acceptance 1-4) and `adoption-outside-floor` (5), plus
+  `adoption-check-failed`, `adoption-rejected`, `adoption-unvouched` and `adoption-approved-first`.
+  The protocol-first commit fd8701e was red (`protocols/protocol-adopt/1.yaml: No such file or
+  directory`); a3f8688 added the two read actions to the fixtures' expectations with the protocol.
+- Its terms stay out of the vocabulary (`builtin_vocabulary_coverage` leaves out
+  `protocol-adopt@1` beside `support-triage@1`); AGENTS.md § Boundary and § Invariants say so.
+
+## Scope as delivered
+
+| path | scope line | confirmed |
+|---|---|---|
+| `protocols/protocol-adopt/1.yaml` | yes | yes, embedded with no Rust edit |
+| `fixtures/protocol-adopt/` | yes | yes, six fixtures |
+| `crates/canon-engineering/tests/protocol_adopt_protocol.rs` | yes | yes |
+| `AGENTS.md` § Boundary and § Invariants | yes | yes |
+| generated `website/docs/protocols/protocol-adopt/1.mdx`, `index.md`, `website/data/protocol-graphs/protocol-adopt-1.json`, `status.json` | yes | yes; `website/docs/status.mdx` did not change |
+| `crates/canon-engineering/tests/builtin_vocabulary_coverage.rs`, `crates/canon-engineering/src/vocabulary.rs`, `README.md` | no | added: the vocabulary exception and the protocol list |
+| `crates/canon-engineering/tests/adversary_protocol_adopt.rs` | no | added by adversary pass 1 |

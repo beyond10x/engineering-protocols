@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T21:26:55Z",
+  "actor": "human:timo",
+  "artifact": "story:protocol-adopt-protocol",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "task check steps at 8f8c40d with ess 0.77.0 on PATH: fmt 0, clippy 0, cargo test --workspace 0 (417 passed, 0 failed), docs generate --check 0, aep validate 0; protocol_adopt_protocol 3 passed, adversary_protocol_adopt 8 passed (10 mutants killed)"
+  }
+}
