@@ -2,14 +2,17 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-red-after-the-latest-write
 kind: story
-status: draft
+status: active
 title: A red gate or CI counts only a red run after the latest write
 summary: a late run about an older revision, or the red run of tests written earlier, does not admit implementation.edit; needs a Canon order form over the latest record or over revisions
 relations:
 - informed_by: story:story-delivery-2-red-gate-needs-red-tests
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 1
+revision: 3
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-29T09:19:30Z", actor: "human:timo", revision: 2}
+- {from: "proposed", to: "active", at: "2026-10-29T09:19:30Z", actor: "human:timo", revision: 3}
 ---
 ## Outcome
 
