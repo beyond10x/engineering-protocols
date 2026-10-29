@@ -36,6 +36,7 @@ blocked until evidence for R2 exists.
 | `story.delivery/2` | [`protocols/story-delivery/2.yaml`](protocols/story-delivery/2.yaml) | [story delivery 2](https://beyond10x.github.io/engineering-protocols/docs/protocols/story-delivery/2/) | 0.11.0 |
 | `self.improvement/1` | [`protocols/self-improvement/1.yaml`](protocols/self-improvement/1.yaml) | [self-improvement](https://beyond10x.github.io/engineering-protocols/docs/protocols/self-improvement/1/) | 0.10.0 |
 | `loop.improvement/1` | [`protocols/loop-improvement/1.yaml`](protocols/loop-improvement/1.yaml) | [loop improvement](https://beyond10x.github.io/engineering-protocols/docs/protocols/loop-improvement/1/) | 0.10.0 |
+| `protocol.adopt/1` | [`protocols/protocol-adopt/1.yaml`](protocols/protocol-adopt/1.yaml) | [protocol adoption](https://beyond10x.github.io/engineering-protocols/docs/protocols/protocol-adopt/1/) | 0.15.0 |
 
 The terms they are written in are [`protocols/vocabulary.yaml`](protocols/vocabulary.yaml),
 rendered as the [vocabulary page](https://beyond10x.github.io/engineering-protocols/docs/vocabulary/).
@@ -46,13 +47,13 @@ As a library (crate `b10x-canon-engineering`, imported as `canon_engineering`):
 
 ```toml
 [dependencies]
-b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.14.0" }
+b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.15.0" }
 ```
 
 As a command:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.14.0 b10x-canon-engineering
+cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.15.0 b10x-canon-engineering
 ```
 
 Nothing is published to crates.io; releases are Git tags.
@@ -71,9 +72,9 @@ fn main() {
 }
 ```
 
-Against tag 0.14.0 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
-`ml-experiment@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1`, `story-delivery@2`
-and `support-triage@1`.
+Against tag 0.15.0 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
+`ml-experiment@1`, `protocol-adopt@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1`,
+`story-delivery@2` and `support-triage@1`.
 `registry::get(name, major)` returns one protocol's YAML as released together with Canon's
 validated model of it.
 
@@ -85,9 +86,11 @@ eval-gated-change@1
 incident-response@1
 loop-improvement@1
 ml-experiment@1
+protocol-adopt@1
 self-improvement@1
 software-change@1
 story-delivery@1
+story-delivery@2
 support-triage@1
 $ cargo run -q -p b10x-canon-engineering -- protocols show software-change@1
 format: protocol/1
@@ -145,7 +148,7 @@ Changing the repository: read [AGENTS.md](AGENTS.md).
 
 ## Status
 
-Latest source release 0.14.0 (2026-10-29), using Canon 0.8.0 and ESS 0.76.0; see [CHANGELOG.md](CHANGELOG.md).
+Latest source release 0.15.0 (2026-10-29), using Canon 0.8.0 and ESS 0.77.0; see [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
