@@ -47,13 +47,13 @@ As a library (crate `b10x-canon-engineering`, imported as `canon_engineering`):
 
 ```toml
 [dependencies]
-b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.14.0" }
+b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.15.0" }
 ```
 
 As a command:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.14.0 b10x-canon-engineering
+cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.15.0 b10x-canon-engineering
 ```
 
 Nothing is published to crates.io; releases are Git tags.
@@ -148,7 +148,7 @@ Changing the repository: read [AGENTS.md](AGENTS.md).
 
 ## Status
 
-Latest source release 0.14.0 (2026-10-29), using Canon 0.8.0 and ESS 0.76.0; see [CHANGELOG.md](CHANGELOG.md).
+Latest source release 0.15.0 (2026-10-29), using Canon 0.8.0 and ESS 0.77.0; see [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 

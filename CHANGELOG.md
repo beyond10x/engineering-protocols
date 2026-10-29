@@ -6,6 +6,24 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-29
+
+### Added
+
+- `protocol.adopt/1` (`protocols/protocol-adopt/1.yaml`), a built-in outside engineering: adopting
+  one revision of a generated protocol is a case (Atlas ADR 0086 § Decision 4). `adopted` needs a
+  `canon diff` report within the organization floor, a passing `canon check` report and an
+  approval recorded by `protocol.approve`, which requires the capability `protocol.adopt`, each
+  bound to the revision under adoption. The approval counts only from a producer the case lists on
+  `different_principal`, and only after the first diff report. Evaluation reads the reports as
+  evidence and runs neither tool. Its terms stay out of `protocols/vocabulary.yaml`
+  (story:protocol-adopt-protocol).
+
+### Changed
+
+- ESS 0.76.0 -> 0.77.0 for the assertion contracts in `ess/` and `ess/providers/`; regenerated
+  (generator stamp only); CI installs ESS 0.77.0.
+
 ## [0.14.0] - 2026-10-29
 
 ### Changed
