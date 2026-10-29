@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-red-gate-needs-red-tests
 kind: story
-status: active
+status: implemented
 title: A red gate or CI admits the edit only after the tests were red
 summary: tests that passed on their first run do not reach implementation.edit through a gate or CI failure; needs a Canon order form over a later record
 relations:
@@ -10,10 +10,11 @@ relations:
 - informed_by: story:story-delivery-2-edit-after-a-red-gate
 - informed_by: story:story-delivery-2-edit-after-a-red-ci
 - serves: vision:governed-autonomy
-revision: 7
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T23:06:20Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-28T23:06:20Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-29T01:45:15Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":3}}}
 ---
 ## Outcome
 
