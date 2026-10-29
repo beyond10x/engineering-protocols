@@ -33,6 +33,8 @@ states:
         checks.pass: true
         adoption.approved: true
       actions:
+        protocol.check: admissible
+        protocol.diff: admissible
         protocol.approve: blocked
       outcomes:
         adopted: blocked

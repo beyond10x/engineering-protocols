@@ -21,10 +21,14 @@ ADRs 0066–0075 and 0094, and Atlas `docs/design/governed-autonomy/`.
 
 This repository owns engineering-domain vocabulary and the protocols written in it (Atlas ADR
 0068): `software.change/1`, `incident.response/1`, `ml.experiment/1` and `eval.gated_change/1`
-today, investigation, migration and security response later. `support.triage/1` is the one
-protocol outside engineering, placed here by operator decision of 2026-10-05 as the rules half of
-a support triage example; its terms stay out of `protocols/vocabulary.yaml`, and its actions are tool-agnostic like every other
-protocol's.
+today, investigation, migration and security response later. Two protocols here are outside
+engineering, and their terms stay out of `protocols/vocabulary.yaml`: `support.triage/1`, placed
+here by operator decision of 2026-10-05 as the rules half of a support triage example, its actions
+tool-agnostic like every other protocol's; and `protocol.adopt/1`, the case that adopts one
+revision of a generated protocol (Atlas ADR 0086 § Decision 4), placed here by the decision of
+2026-10-29 recorded in `decision-blocker:protocol-adopt-home`, because the registry and the
+fixture harness are here. A change to the shape of a `canon diff` or `canon check` report that it
+reads as evidence needs a release here as well.
 
 Every spec-level protocol a runtime uses lives here (Atlas ADR 0094): `story.delivery/1`,
 `self.improvement/1` and `loop.improvement/1` came from takt byte for byte (takt tag 0.12.0) and
@@ -62,10 +66,11 @@ protocols.
 | An eval-gated change is kept only on evidence about the current candidate revision from a producer the case lists as independent on `different_agent_run`; evidence by the run that wrote the candidate is excluded as `not_independent`, and evidence about an earlier candidate revision (a moved basis) as `revision_mismatch`, each leaving its claim `UNKNOWN`, not `FALSE`, so neither `change.keep` nor `change.reject` is admissible | `tests/eval_gated_change_protocol.rs::eval_gated_change_outcomes_are_earned` |
 | `eval.gated_change/1` checks under Canon's `STATE_BOUND` with no findings | `tests/eval_gated_change_protocol.rs::eval_gated_change_check_stays_under_the_bound` |
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |
+| A generated protocol is adopted only with a `diff_report` within the floor, a passing `check_report` and an approval under `protocol.adopt`, each bound to the revision under adoption; a new revision leaves every claim `UNKNOWN`, not `FALSE`, and a report outside the floor makes `floor.respected` `FALSE` | `tests/protocol_adopt_protocol.rs::adoption_needs_floor_check_and_authority` |
 | Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
 | The protocols moved from takt are byte-identical to takt tag 0.12.0 | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
-| Every term a built-in other than `support.triage/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
+| Every term a built-in other than `support.triage/1` and `protocol.adopt/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
 | The package, library and binary names are `b10x-canon-engineering`, `canon_engineering`, `canon-engineering`; no retired name ships | `tests/crate_names.rs`, `tests/adversary_rename.rs` |
