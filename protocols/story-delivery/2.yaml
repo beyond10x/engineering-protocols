@@ -189,9 +189,10 @@ actions:
   implementation.edit:
     description: >-
       change the implementation in the repository's working revision; when the case requires its
-      tests first, needs the story's tests written and failing at the current revision, or written
-      and passing there with the gate or continuous integration failed there, so a failure no test
-      reads (formatting, lint, another platform) can be fixed
+      tests first, needs the story's tests written and failing at the current revision, or written,
+      seen failing in a run observed after they were first written, and passing at the current one
+      with the gate or continuous integration failed there, so a failure no test reads (formatting,
+      lint, another platform) can be fixed
     effect: write
     precondition:
       any:
@@ -204,12 +205,13 @@ actions:
                   is: false
                 - claim: ci.green
                   is: false
+            - after:
+                first: tests_change
+                then:
+                  kind: test_result
+                  result: fail
+                subject: implementation
             - claim: tests.pass
-            - not:
-                first:
-                  kind: tests_change
-                  result: none
-                  subject: implementation
   change.handover:
     description: >-
       hand the change over, changing no file, once it is complete (the story's tests written

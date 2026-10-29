@@ -11,18 +11,19 @@
 use b10x_canon::check::STATE_BOUND;
 use canon_engineering::registry;
 
-/// The built-ins whose state space is over `STATE_BOUND`, each with the state count Canon 0.6.0's
+/// The built-ins whose state space is over `STATE_BOUND`, each with the state count Canon 0.7.0's
 /// `state-space-bound` refusal names. `self.improvement/1` is at the count Atlas ADR 0094
 /// § Consequences records; splitting it, or a Canon change, is its own story. `ml.experiment/1`
 /// and `software.change/1` were over the bound before ADR 0094 and are measured here as they are.
-/// `story.delivery/2` is over it by its two case inputs, the order form over `tests_change` and
-/// `paths_changed`; `story.delivery/1` stays under it
+/// `story.delivery/2` is over it by its two case inputs, the order form over `tests_change`,
+/// `paths_changed` and the `after` form over a failed `test_result`
+/// (story:story-delivery-2-red-gate-needs-red-tests); `story.delivery/1` stays under it
 /// (`story:story-delivery-2-with-settings`).
 const OVER_BOUND: &[(&str, u32, u128)] = &[
     ("ml-experiment", 1, 4_398_046_511_104),
     ("self-improvement", 1, 5_971_968),
     ("software-change", 1, 10_192_158_720),
-    ("story-delivery", 2, 15_728_640),
+    ("story-delivery", 2, 3_067_084_800),
 ];
 
 /// Checks the built-in `name@major` and returns what differs from the rule, or from its

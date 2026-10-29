@@ -1,0 +1,78 @@
+format: els-fixture/1
+id: adv1-a-red-ci-before-the-tests-were-red
+protocol: protocols/story-delivery/2.yaml
+at: "2026-10-27T12:00:00Z"
+
+# Adversary case, the continuous-integration sibling of `adv1-a-red-gate-before-the-tests-were-red`.
+# Tests first required, the gate after the handover. The tests are written at h2 and their first
+# run passes, so they were never red. The change is handed over at h2, the gate is green and the
+# pull request open. Then continuous integration fails at h2 on something no test reads. The tests
+# were still never red; the red CI must not admit the edit, or any story can skip red-first by
+# letting continuous integration fail.
+case:
+  format: canon-case/1
+  id: SD-ADV1-RC-7
+  protocol: story.delivery
+  revision: c1
+  artifacts:
+    intent: {revision: i1}
+    plan: {revision: p1}
+    implementation: {revision: h1}
+  inputs:
+    tests_first: required
+    gate_on: after_handover
+
+states:
+  - id: first-run-passes-gated-and-opened
+    set_revisions:
+      implementation: h2
+    add_evidence:
+      - observed_at: "2026-10-27T09:00:00Z"
+        record: {format: canon-evidence/1, id: tests-written-h2, kind: tests_change,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:10:00Z"
+        record: {format: canon-evidence/1, id: tests-h2-pass, kind: test_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:30:00Z"
+        record: {format: canon-evidence/1, id: handover-h2, kind: handover,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:31:00Z"
+        record: {format: canon-evidence/1, id: change-h2, kind: change_record, result: ahead,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:31:00Z"
+        record: {format: canon-evidence/1, id: paths-h2, kind: paths_changed, result: both,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:40:00Z"
+        record: {format: canon-evidence/1, id: gate-h2-pass, kind: gate_result, result: pass,
+                 subject: implementation, subject_revision: h2}
+      - observed_at: "2026-10-27T09:45:00Z"
+        record: {format: canon-evidence/1, id: pr-h2, kind: pull_request, result: open,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: unknown
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
+
+  - id: ci-red-on-another-platform
+    add_evidence:
+      - observed_at: "2026-10-27T10:00:00Z"
+        record: {format: canon-evidence/1, id: ci-h2-fail, kind: ci_result, result: fail,
+                 subject: implementation, subject_revision: h2}
+    expect:
+      claims:
+        change.complete: true
+        change.handed_over: true
+        change.made: true
+        ci.green: false
+        gate.green: true
+        pr.merged: unknown
+        pr.opened: true
+        tests.pass: true
+        tests.shown_red: false
