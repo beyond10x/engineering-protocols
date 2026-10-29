@@ -1011,7 +1011,8 @@ fn is_instant(text: &str) -> bool {
 /// How an observation instant may be written: as an evaluation instant, or with a fraction of
 /// one to nine digits, as Canon 0.8.0 reads `observed_at`
 /// (story:story-delivery-2-red-after-the-latest-write).
-const OBSERVED: &str = "YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.fZ (one to nine fraction digits)";
+const OBSERVED: &str =
+    "YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.fZ (one to nine fraction digits)";
 
 /// Whether `text` is an observation instant: [`is_instant`], or its second followed by `.`, one
 /// to nine digits and `Z`.

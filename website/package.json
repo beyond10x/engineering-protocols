@@ -15,7 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@beyond10x/docs-system": "git+https://github.com/beyond10x/docs-system.git#7bbb9c2ce9beb9fc8ee5b6c8bff5770f1f9961bd",
+    "@beyond10x/docs-system": "git+https://github.com/beyond10x/docs-system.git#d7c80849f74fe4eba7d4f6f73da5546cf2d1f90a",
     "@docusaurus/core": "3.10.2",
     "@docusaurus/faster": "3.10.2",
     "@docusaurus/plugin-client-redirects": "3.10.2",

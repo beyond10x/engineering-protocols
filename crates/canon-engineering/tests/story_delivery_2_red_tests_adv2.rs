@@ -668,7 +668,14 @@ fn one_second(write_at: u32, fail_at: u32) -> Fixture {
                 Some("h2"),
                 vec![
                     record_ms("tests-written-h2", 0, write_at, "tests_change", None, "h2"),
-                    record_ms("tests-h2-fail", 0, fail_at, "test_result", Some("fail"), "h2"),
+                    record_ms(
+                        "tests-h2-fail",
+                        0,
+                        fail_at,
+                        "test_result",
+                        Some("fail"),
+                        "h2",
+                    ),
                 ],
             ),
             (

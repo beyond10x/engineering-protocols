@@ -121,6 +121,18 @@ pub fn predicate(predicate: &Predicate) -> Value {
             }
             json!({"after": after})
         }
+        Predicate::Since(form) => {
+            let mut since = Map::new();
+            since.insert("last".into(), json!(form.last.as_str()));
+            since.insert(
+                "then".into(),
+                json!({"kind": form.then.kind.as_str(), "result": form.then.result}),
+            );
+            if let Some(subject) = &form.subject {
+                since.insert("subject".into(), json!(subject.as_str()));
+            }
+            json!({"since": since})
+        }
     }
 }
 
@@ -264,7 +276,8 @@ fn leaves<'a>(predicate: &'a Predicate, negated: bool, f: &mut impl FnMut(&'a Pr
         | Predicate::Input(_)
         | Predicate::First(_)
         | Predicate::Before(_)
-        | Predicate::After(_) => f(predicate, negated),
+        | Predicate::After(_)
+        | Predicate::Since(_) => f(predicate, negated),
     }
 }
 
@@ -407,6 +420,28 @@ pub fn document(ir: &Ir, source: &str) -> Value {
                     kind: "establishes",
                     qualifier: Some(order_qualifier(
                         format!("{} after {}", form.then.result, form.first),
+                        form.subject.as_ref(),
+                        negated,
+                    )),
+                });
+            }
+            Predicate::Since(form) => {
+                add(Edge {
+                    from: format!("evidence:{}", form.last),
+                    to: format!("claim:{id}"),
+                    kind: "establishes",
+                    qualifier: Some(order_qualifier(
+                        format!("latest, before {} {}", form.then.kind, form.then.result),
+                        form.subject.as_ref(),
+                        negated,
+                    )),
+                });
+                add(Edge {
+                    from: format!("evidence:{}", form.then.kind),
+                    to: format!("claim:{id}"),
+                    kind: "establishes",
+                    qualifier: Some(order_qualifier(
+                        format!("{} since {}", form.then.result, form.last),
                         form.subject.as_ref(),
                         negated,
                     )),
