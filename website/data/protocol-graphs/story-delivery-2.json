@@ -315,7 +315,7 @@
       }
     },
     {
-      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests written and failing at the current revision, or written, failed at some revision after they were written, and passing at the current one with the gate or continuous integration failed there, so a failure no test reads (formatting, lint, another platform) can be fixed",
+      "description": "change the implementation in the repository's working revision; when the case requires its tests first, needs the story's tests written and failing at the current revision, or written, seen failing in a run observed after they were first written, and passing at the current one with the gate or continuous integration failed there, so a failure no test reads (formatting, lint, another platform) can be fixed",
       "effect": "write",
       "id": "action:implementation.edit",
       "kind": "action",
