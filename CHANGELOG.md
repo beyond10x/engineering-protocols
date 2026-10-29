@@ -6,6 +6,26 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-29
+
+### Changed
+
+- Canon 0.6.0 -> 0.7.0. `registry::get` returns Canon's model type, so a consumer that uses it moves
+  to Canon 0.7.0 with this release. The Canon check of `story.delivery/2` now covers 3,067,084,800
+  states (15,728,640 in 0.12.2).
+- The website pins docs-system 0.13.0, whose protocol-graph schema carries the `after` leaf; the
+  generated graph and protocol pages draw it.
+
+### Fixed
+
+- `story.delivery/2` with `tests_first=required`: a red gate or a red continuous integration admits
+  `implementation.edit` only when a failing `test_result` about the implementation was observed
+  after the tests were first written (Canon 0.7.0's `after` form). In 0.12.2 tests that passed on
+  their first run could reach the edit through a gate or continuous-integration failure. Two
+  histories still admit the edit, as they did before: a late failing run about a revision from
+  before the write, and tests written again that pass at once after earlier tests were red
+  (story:story-delivery-2-red-after-the-latest-write).
+
 ## [0.12.2] - 2026-10-29
 
 ### Fixed

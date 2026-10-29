@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:story-delivery-2-red-gate-needs-red-tests
 kind: story
-status: active
+status: implemented
 title: A red gate or CI admits the edit only after the tests were red
 summary: tests that passed on their first run do not reach implementation.edit through a gate or CI failure; needs a Canon order form over a later record
 relations:
@@ -10,10 +10,11 @@ relations:
 - informed_by: story:story-delivery-2-edit-after-a-red-gate
 - informed_by: story:story-delivery-2-edit-after-a-red-ci
 - serves: vision:governed-autonomy
-revision: 6
+revision: 8
 transitions:
 - {from: "draft", to: "proposed", at: "2026-10-28T23:06:20Z", actor: "human:timo", revision: 5}
 - {from: "proposed", to: "active", at: "2026-10-28T23:06:20Z", actor: "human:timo", revision: 6}
+- {from: "active", to: "implemented", at: "2026-10-29T01:45:15Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"test_result":3}}}
 ---
 ## Outcome
 
@@ -56,3 +57,13 @@ writes the rule.
   shows the same for a red continuous integration.
 - `a_red_gate_admits_the_edit`, `a_red_ci_admits_the_edit` and every other `story.delivery/2`
   fixture pass unchanged.
+
+## Residual
+
+The rule reads "red after they were written" as a failing `test_result` about the implementation
+observed after the first `tests_change` (Canon 0.7.0 `after`), and the action's description says
+so. The adversary pass (`tests/story_delivery_2_red_tests_adv2.rs`, 8 cases) found two histories
+that reading still admits, both admitted before this story as well: a late failing run about a
+revision from before the write, and tests written again that pass on their first run after earlier
+tests were red. Closing them needs a Canon form this release does not have; the two cases assert
+today's verdict and story:story-delivery-2-red-after-the-latest-write holds the work.

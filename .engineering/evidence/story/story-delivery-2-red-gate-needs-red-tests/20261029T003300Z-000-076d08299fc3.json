@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T00:33:00Z",
+  "actor": "human:timo",
+  "artifact": "story:story-delivery-2-red-gate-needs-red-tests",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "cargo test -p b10x-canon-engineering --test story_delivery_2_red_gate_adv1 --test story_delivery_2_red_ci_adv1 on Canon 0.6.0: red_gate_adv1 3 passed 1 failed (a_red_gate_does_not_admit_the_edit_when_the_tests_were_never_red: implementation.edit admissible, expected blocked); red_ci_adv1 6 passed 1 failed (a_red_ci_does_not_admit_the_edit_when_the_tests_were_never_red: admissible, expected blocked)"
+  }
+}
