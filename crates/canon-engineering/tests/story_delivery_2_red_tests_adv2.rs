@@ -141,9 +141,9 @@ fn late_body(compiled: &Compiled) {
             ),
         ],
     );
-    let late = decide(&fixture, &compiled, "a-seed-run-fails-late");
+    let late = decide(&fixture, compiled, "a-seed-run-fails-late");
     assert_eq!(actions(&late)["implementation.edit"], "blocked");
-    let red = decide(&fixture, &compiled, "first-run-at-h2-passes-gate-red");
+    let red = decide(&fixture, compiled, "first-run-at-h2-passes-gate-red");
     assert_eq!(claims(&red)["tests.pass"], "true");
     assert_eq!(claims(&red)["gate.green"], "false");
     assert_eq!(
@@ -241,9 +241,9 @@ fn again_body(compiled: &Compiled) {
             ),
         ],
     );
-    let passed = decide(&fixture, &compiled, "more-tests-first-run-passes");
+    let passed = decide(&fixture, compiled, "more-tests-first-run-passes");
     assert_eq!(actions(&passed)["implementation.edit"], "blocked");
-    let red = decide(&fixture, &compiled, "gate-red-on-the-new-tests");
+    let red = decide(&fixture, compiled, "gate-red-on-the-new-tests");
     assert_eq!(claims(&red)["gate.green"], "false");
     assert_eq!(
         actions(&red)["implementation.edit"],
