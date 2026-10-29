@@ -102,6 +102,18 @@ pub fn predicate(predicate: &Predicate) -> String {
             }
             line
         }
+        Predicate::After(form) => {
+            let mut line = format!(
+                "a {} with result {} after the first {}",
+                code(form.then.kind.as_str()),
+                code(&form.then.result),
+                code(form.first.as_str())
+            );
+            if let Some(subject) = &form.subject {
+                line.push_str(&format!(", both about {}", code(subject.as_str())));
+            }
+            line
+        }
         Predicate::All(members) if members.is_empty() => "always true".to_owned(),
         Predicate::Any(members) if members.is_empty() => "never true".to_owned(),
         Predicate::All(members) => format!("all of ({})", list(members)),
