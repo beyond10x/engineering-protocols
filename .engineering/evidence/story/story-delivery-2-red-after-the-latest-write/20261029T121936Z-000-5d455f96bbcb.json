@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-29T12:19:36Z",
+  "actor": "human:timo",
+  "artifact": "story:story-delivery-2-red-after-the-latest-write",
+  "kind": "story",
+  "revision": 3,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "green: cargo test -p b10x-canon-engineering -p canon-engineering-docs on Canon 0.8.0 at 57816c6: 307 passed, 0 failed; story_delivery_2_red_tests_adv2 10/10 (both residual histories blocked, sub-second case admits), builtin_canon_check 1/1"
+  }
+}
