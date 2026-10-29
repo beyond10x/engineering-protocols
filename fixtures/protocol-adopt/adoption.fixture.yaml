@@ -12,6 +12,9 @@ case:
   format: canon-case/1
   id: ADOPT-1
   protocol: protocol.adopt
+  independence:
+    approver: [different_principal]
+    generator: []
   artifacts:
     generated_protocol: {revision: r1}
 
@@ -56,7 +59,8 @@ states:
     add_evidence:
       - observed_at: "2026-10-29T11:30:00Z"
         record: {format: canon-evidence/1, id: approval-r1, kind: adoption_approval,
-                 result: approved, subject: generated_protocol, subject_revision: r1}
+                 result: approved, subject: generated_protocol, subject_revision: r1,
+                 producer: approver}
     expect:
       claims:
         floor.respected: true

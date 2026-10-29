@@ -15,6 +15,12 @@ artifacts:
       the generated protocol under adoption, at one revision; the case pins that revision, and a
       new revision of the protocol needs its own reports and its own approval
 
+independence_dimensions:
+  different_principal:
+    description: >-
+      the producer is another principal than the one that generated the protocol, as the case
+      lists it
+
 evidence_kinds:
   diff_report:
     description: >-
@@ -44,12 +50,21 @@ claims:
         result: passed
         subject: generated_protocol
   adoption.approved:
-    description: a holder of protocol.adopt approved the current revision
+    description: >-
+      a principal the case lists as independent of the generation, a holder of protocol.adopt,
+      approved the current revision, and the first canon diff report came before the first
+      approval
     true_when:
-      evidence:
-        kind: adoption_approval
-        result: approved
-        subject: generated_protocol
+      all:
+        - evidence:
+            kind: adoption_approval
+            result: approved
+            subject: generated_protocol
+            independent_on: [different_principal]
+        - before:
+            first: diff_report
+            then: adoption_approval
+            subject: generated_protocol
 
 actions:
   protocol.diff:
