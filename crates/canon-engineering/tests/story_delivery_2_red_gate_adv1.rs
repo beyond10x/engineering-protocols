@@ -9,8 +9,9 @@
 //! The fixtures live in `fixtures/story-delivery-2/red-gate-adv1/`, a subdirectory, because
 //! `story_delivery_2_protocol.rs` asserts the exact fixture list of `fixtures/story-delivery-2/`
 //! and `fixture_ids` reads only that directory's own files. Each fixture's claims are checked by
-//! `fixture_of`; the actions are asserted here. The case of tests that passed on their first run
-//! is parked in `tests/pending/` (story:story-delivery-2-red-gate-needs-red-tests).
+//! `fixture_of`; the actions are asserted here. Tests that passed on their first run were never
+//! red, and a red gate does not admit the edit for them
+//! (story:story-delivery-2-red-gate-needs-red-tests).
 
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
 mod support;
@@ -87,4 +88,22 @@ fn a_late_red_gate_about_another_revision_does_not_admit_the_edit() {
     ));
     assert_eq!(actions(&late)["implementation.edit"], "blocked");
     assert_eq!(actions(&late)["change.handover"], "admissible");
+}
+
+/// Tests written and passing on their first run (never red), then the gate red on their formatting:
+/// `a-first-run-pass-is-not-red` refuses the edit, and the red gate does not reopen it.
+#[test]
+fn a_red_gate_does_not_admit_the_edit_when_the_tests_were_never_red() {
+    let compiled = compiled();
+    let fixture = load("adv1-a-red-gate-before-the-tests-were-red", &compiled);
+    let passed = decide(&fixture, &compiled, "tests-written-first-run-passes");
+    assert_eq!(actions(&passed)["implementation.edit"], "blocked");
+    let red = decide(&fixture, &compiled, "gate-red-on-the-tests-formatting");
+    assert_eq!(claims(&red)["tests.shown_red"], "false");
+    assert_eq!(
+        actions(&red)["implementation.edit"],
+        "blocked",
+        "the tests were written and passed on their first run, so they were never red; a gate \
+         failing on the new tests' formatting admits implementation.edit anyway"
+    );
 }

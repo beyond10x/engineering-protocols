@@ -10,8 +10,9 @@
 //! The fixtures live in `fixtures/story-delivery-2/red-ci-adv1/`, a subdirectory, because
 //! `story_delivery_2_protocol.rs` asserts the exact fixture list of `fixtures/story-delivery-2/`
 //! and `fixture_ids` reads only that directory's own files. Each fixture's claims are checked by
-//! `fixture_of`; the actions are asserted here. The case of tests that passed on their first run
-//! is known and tracked as story:story-delivery-2-red-gate-needs-red-tests.
+//! `fixture_of`; the actions are asserted here. Tests that passed on their first run were never
+//! red, and a red CI does not admit the edit for them
+//! (story:story-delivery-2-red-gate-needs-red-tests).
 
 #[allow(dead_code)] // uses part of the harness; fixture_harness.rs uses all of it
 mod support;
@@ -166,4 +167,23 @@ fn a_red_ci_under_tests_optional_changes_nothing() {
             "`{state}`"
         );
     }
+}
+
+/// Tests written and passing on their first run (never red), handed over, gated green and opened,
+/// then CI red on another platform: the red CI does not admit the edit, as the red gate does not.
+#[test]
+fn a_red_ci_does_not_admit_the_edit_when_the_tests_were_never_red() {
+    let compiled = compiled();
+    let fixture = load("adv1-a-red-ci-before-the-tests-were-red", &compiled);
+    let opened = decide(&fixture, &compiled, "first-run-passes-gated-and-opened");
+    assert_eq!(actions(&opened)["implementation.edit"], "blocked");
+    let red = decide(&fixture, &compiled, "ci-red-on-another-platform");
+    assert_eq!(claims(&red)["ci.green"], "false");
+    assert_eq!(claims(&red)["tests.shown_red"], "false");
+    assert_eq!(
+        actions(&red)["implementation.edit"],
+        "blocked",
+        "the tests were written and passed on their first run, so they were never red; a CI \
+         failure admits implementation.edit anyway"
+    );
 }
