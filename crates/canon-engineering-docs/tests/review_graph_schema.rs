@@ -888,17 +888,50 @@ fn the_transcription_follows_the_0_13_0_after_leaf() {
         schema_problems(&graph)
     };
     for (what, predicate) in [
-        ("an after without first", serde_json::json!({"after": {"then": {"kind": "f", "result": "fail"}}})),
-        ("an after without then", serde_json::json!({"after": {"first": "e"}})),
-        ("a then that is a kind", serde_json::json!({"after": {"first": "e", "then": "f"}})),
-        ("a then without result", serde_json::json!({"after": {"first": "e", "then": {"kind": "f"}}})),
-        ("a then without kind", serde_json::json!({"after": {"first": "e", "then": {"result": "fail"}}})),
-        ("a then with a null result", serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": null}}})),
-        ("a then with an unknown key", serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail", "subject": "x"}}})),
-        ("an after with an unknown key", serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail"}, "result": "fail"}})),
-        ("an after with an empty first", serde_json::json!({"after": {"first": "", "then": {"kind": "f", "result": "fail"}}})),
-        ("an after with an empty subject", serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail"}, "subject": ""}})),
-        ("an after that is not an object", serde_json::json!({"after": "e"})),
+        (
+            "an after without first",
+            serde_json::json!({"after": {"then": {"kind": "f", "result": "fail"}}}),
+        ),
+        (
+            "an after without then",
+            serde_json::json!({"after": {"first": "e"}}),
+        ),
+        (
+            "a then that is a kind",
+            serde_json::json!({"after": {"first": "e", "then": "f"}}),
+        ),
+        (
+            "a then without result",
+            serde_json::json!({"after": {"first": "e", "then": {"kind": "f"}}}),
+        ),
+        (
+            "a then without kind",
+            serde_json::json!({"after": {"first": "e", "then": {"result": "fail"}}}),
+        ),
+        (
+            "a then with a null result",
+            serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": null}}}),
+        ),
+        (
+            "a then with an unknown key",
+            serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail", "subject": "x"}}}),
+        ),
+        (
+            "an after with an unknown key",
+            serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail"}, "result": "fail"}}),
+        ),
+        (
+            "an after with an empty first",
+            serde_json::json!({"after": {"first": "", "then": {"kind": "f", "result": "fail"}}}),
+        ),
+        (
+            "an after with an empty subject",
+            serde_json::json!({"after": {"first": "e", "then": {"kind": "f", "result": "fail"}, "subject": ""}}),
+        ),
+        (
+            "an after that is not an object",
+            serde_json::json!({"after": "e"}),
+        ),
     ] {
         assert!(!broken(predicate).is_empty(), "{what} is not a problem");
     }
