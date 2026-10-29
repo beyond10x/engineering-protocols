@@ -67,7 +67,8 @@ fn adversary2_harness_leap_years_follow_the_gregorian_rule() {
     assert_eq!(
         error.to_string(),
         "state `healthy-observed`: evidence `observation-1` observation instant \
-         `2100-02-29T00:00:00Z` is not written YYYY-MM-DDTHH:MM:SSZ"
+         `2100-02-29T00:00:00Z` is not written YYYY-MM-DDTHH:MM:SSZ or \
+         YYYY-MM-DDTHH:MM:SS.fZ (one to nine fraction digits)"
     );
 }
 
@@ -173,4 +174,51 @@ fn adversary2_harness_compile_passes_canon_problems_through() {
         }
         other => panic!("expected Canon's problems, got {other:?}"),
     }
+}
+
+/// An observation instant may carry a fraction of one to nine digits, as Canon 0.8.0 reads
+/// `observed_at`; any other fraction is refused with the form named, and a fraction is counted
+/// against the evaluation instant in whole seconds, as Canon counts it: an observation in the
+/// evaluation instant's own second is not after it, one in the next second is.
+#[test]
+fn harness_observation_instants_take_a_fraction_counted_in_whole_seconds() {
+    for observed in [
+        "2026-10-03T23:00:00.5Z",
+        "2026-10-03T23:00:00.123456789Z",
+        "2026-10-04T00:00:00.999Z",
+    ] {
+        Fixture::from_yaml(&smoke_at("2026-10-04T00:00:00Z", observed))
+            .unwrap_or_else(|error| panic!("`{observed}` loads: {error}"));
+    }
+    for observed in [
+        "2026-10-03T23:00:00.Z",
+        "2026-10-03T23:00:00.1234567890Z",
+        "2026-10-03T23:00:00.5",
+        "2026-10-03T23:00:00,5Z",
+        "2026-10-03T23:00:00.5z",
+        "2026-10-03T23:00:00.-5Z",
+        "2026-10-03T23:00:00.５Z",
+        "2026-10-03T23:00:60.5Z",
+        "2026-10-03T23:00:00Z.5",
+    ] {
+        let error = Fixture::from_yaml(&smoke_at("2026-10-04T00:00:00Z", observed))
+            .map(|_| ())
+            .expect_err(&format!("`{observed}` is refused"));
+        assert_eq!(
+            error.to_string(),
+            format!(
+                "state `healthy-observed`: evidence `observation-1` observation instant \
+                 `{observed}` is not written YYYY-MM-DDTHH:MM:SSZ or YYYY-MM-DDTHH:MM:SS.fZ \
+                 (one to nine fraction digits)"
+            )
+        );
+    }
+    let error = Fixture::from_yaml(&smoke_at("2026-10-04T00:00:00Z", "2026-10-04T00:00:01.0Z"))
+        .map(|_| ())
+        .expect_err("the next second is after the evaluation instant");
+    assert_eq!(
+        error.to_string(),
+        "state `healthy-observed`: evidence `observation-1` is observed at \
+         `2026-10-04T00:00:01.0Z`, after the evaluation instant `2026-10-04T00:00:00Z`"
+    );
 }
