@@ -143,7 +143,7 @@ engineering protocols may admit (`story:ess-conformance-evidence`, draft); that 
 output, not a specification of this repository.
 
 Assertion collection and its CLI are not part of that opt-out. Their wire model lives in `ess/`;
-provider envelopes live in `ess/providers/`, both pinned to ESS 0.75.0. The gate document is a
+provider envelopes live in `ess/providers/`, both pinned to ESS 0.76.0. The gate document is a
 generated Rust data library. The Canon expression schema is vendored by `canon-engineering-docs`
 from the pinned core's `MODEL_SPEC`, with only the namespace remapped. Do not edit generated
 contracts or `.ess-output` ownership state. `crates/canon-engineering-assertions/tests/ess_contract.rs`
