@@ -2,12 +2,15 @@
 format: aep.planning-md/3
 id: story:protocol-adopt-protocol
 kind: story
-status: draft
+status: active
 title: 'Ship protocol.adopt/1: adopting a generated protocol is a case'
 summary: A generated protocol revision is adopted only with a canon diff report within the floor, a passing canon check report and an approval under protocol.adopt.
 relations:
 - serves: vision:governed-autonomy
-revision: 1
+revision: 4
+transitions:
+- {from: "draft", to: "proposed", at: "2026-10-29T20:46:59Z", actor: "human:timo", revision: 2, executor: "agent:canon-ep-d221", correlation: "wave/2026-10-29-w3"}
+- {from: "proposed", to: "active", at: "2026-10-29T20:46:59Z", actor: "human:timo", revision: 3, executor: "agent:canon-ep-d221", correlation: "wave/2026-10-29-w3"}
 ---
 ## Outcome
 
@@ -33,7 +36,9 @@ Pressure test: no element names Git, a pull request or code. A generated `softwa
 
 ## Home
 
-Open: `decision-blocker:protocol-adopt-home`. Atlas ADR 0086 § Open leaves where `protocol.adopt/1` lives, this repository or Canon. § Scope, § Protocol first and § Acceptance assume this repository (option A of that blocker). Under option B this story is archived and Canon plans the protocol in its own store.
+Decided: option A of `decision-blocker:protocol-adopt-home` (D205, cleared 2026-10-29). This
+repository ships `protocol.adopt/1`; § Scope, § Protocol first and § Acceptance stand as written.
+Approval: `approval-record:wave-2026-10-29-w3` (D221).
 
 ## Scope
 
