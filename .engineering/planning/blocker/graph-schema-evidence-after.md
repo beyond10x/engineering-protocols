@@ -2,12 +2,14 @@
 format: aep.planning-md/3
 id: blocker:graph-schema-evidence-after
 kind: blocker
-status: open
+status: cleared
 title: The protocol graph schema has no after order-form leaf
 summary: b10x-protocol-graph/1 has first and before leaves only, so story.delivery/2 with Canon 0.7.0's after cannot be drawn
 relations:
 - blocks: story:story-delivery-2-red-gate-needs-red-tests
-revision: 1
+revision: 3
+transitions:
+- {from: "open", to: "cleared", at: "2026-10-29T01:28:29Z", actor: "human:timo", revision: 3}
 ---
 ## What is missing
 
@@ -33,3 +35,11 @@ rather than publish a graph its schema rejects.
 A docs-system commit adds the leaf `{"after": {"first", "then": {"kind", "result"}, "subject"?}}`
 to `b10x-protocol-graph/1`, its `ProtocolGraph` renders it, and `website/package.json` here pins
 that commit.
+
+## Cleared
+
+Cleared 2026-10-29 by docs-system 0.13.0, commit `7bbb9c2ce9beb9fc8ee5b6c8bff5770f1f9961bd`
+(https://github.com/beyond10x/docs-system/pull/39). Its `schema/b10x.protocol-graph.v1.schema.json`
+adds the predicate leaf `{"after": {"first", "then": {"kind", "result"}, "subject"?}}`, and
+`ProtocolGraph` validates and reads it. `website/package.json` pins that commit, which is this
+blocker's clearing condition.
