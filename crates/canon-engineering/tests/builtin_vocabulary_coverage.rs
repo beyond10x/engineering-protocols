@@ -2,8 +2,9 @@
 //! built-in names is declared in `protocols/vocabulary.yaml`, in the category it is used in.
 //!
 //! The built-ins are read from `registry::list` at run time, so a protocol file added later is
-//! covered without an edit here. `support.triage/1` is left out: it is the one protocol outside
-//! engineering, and its terms stay out of the vocabulary (`AGENTS.md` § Boundary).
+//! covered without an edit here. `support.triage/1` and `protocol.adopt/1` are left out: they are the
+//! two protocols outside engineering, and their terms stay out of the vocabulary (`AGENTS.md`
+//! § Boundary).
 //!
 //! A term is every artifact kind, evidence kind, claim, action, obligation and outcome id, every
 //! decision name an outcome requires, every case input and each value it takes, and every
@@ -15,8 +16,8 @@ use b10x_canon::ir::Ir;
 use canon_engineering::registry;
 use canon_engineering::vocabulary::{self, Category, Marking, Vocabulary, VocabularyError};
 
-/// The one built-in whose terms the vocabulary leaves out.
-const OUTSIDE_ENGINEERING: (&str, u32) = ("support-triage", 1);
+/// The built-ins whose terms the vocabulary leaves out.
+const OUTSIDE_ENGINEERING: [(&str, u32); 2] = [("protocol-adopt", 1), ("support-triage", 1)];
 
 /// The terms a built-in names that the vocabulary's spelling rule refuses, so no entry can
 /// declare them: a claim or action id is `<subject>.<predicate>` of two snake_case tokens
@@ -101,15 +102,17 @@ fn gap(term: &str, category: Category) -> Option<String> {
 #[test]
 fn every_builtin_term_is_declared_in_the_category_it_is_used_in() {
     let listed = registry::list();
-    assert!(
-        listed.contains(&OUTSIDE_ENGINEERING),
-        "the registry lists {OUTSIDE_ENGINEERING:?}: {listed:?}"
-    );
+    for outside in OUTSIDE_ENGINEERING {
+        assert!(
+            listed.contains(&outside),
+            "the registry lists {outside:?}: {listed:?}"
+        );
+    }
     let mut gaps: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut checked = 0;
     let mut unspellable = Vec::new();
     for (name, major) in listed {
-        if (name, major) == OUTSIDE_ENGINEERING {
+        if OUTSIDE_ENGINEERING.contains(&(name, major)) {
             continue;
         }
         let builtin = registry::get(name, major)
@@ -184,7 +187,7 @@ fn every_builtin_term_is_declared_in_the_category_it_is_used_in() {
 fn a_protocol_marking_marks_only_that_protocols_terms() {
     let mut users: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for (name, major) in registry::list() {
-        if (name, major) == OUTSIDE_ENGINEERING {
+        if OUTSIDE_ENGINEERING.contains(&(name, major)) {
             continue;
         }
         let builtin = registry::get(name, major)

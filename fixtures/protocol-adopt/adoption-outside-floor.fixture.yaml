@@ -1,0 +1,40 @@
+format: els-fixture/1
+id: adoption-outside-floor
+protocol: protocols/protocol-adopt/1.yaml
+at: "2026-10-29T12:00:00Z"
+
+# A canon diff report that is not within the floor, beside a passing canon check report, a grant of
+# protocol.adopt and even an approval record, all bound to the current revision r1: the floor is
+# not respected (false, not unknown), approving is blocked, and nothing is adopted.
+case:
+  format: canon-case/1
+  id: ADOPT-2
+  protocol: protocol.adopt
+  artifacts:
+    generated_protocol: {revision: r1}
+
+states:
+  - id: outside-floor
+    add_authority:
+      - {capability: protocol.adopt, decision: granted}
+    add_evidence:
+      - observed_at: "2026-10-29T11:00:00Z"
+        record: {format: canon-evidence/1, id: diff-r1, kind: diff_report, result: outside_floor,
+                 subject: generated_protocol, subject_revision: r1}
+      - observed_at: "2026-10-29T11:05:00Z"
+        record: {format: canon-evidence/1, id: check-r1, kind: check_report, result: passed,
+                 subject: generated_protocol, subject_revision: r1}
+      - observed_at: "2026-10-29T11:30:00Z"
+        record: {format: canon-evidence/1, id: approval-r1, kind: adoption_approval,
+                 result: approved, subject: generated_protocol, subject_revision: r1}
+    expect:
+      claims:
+        floor.respected: false
+        checks.pass: true
+        adoption.approved: true
+      actions:
+        protocol.check: admissible
+        protocol.diff: admissible
+        protocol.approve: blocked
+      outcomes:
+        adopted: blocked

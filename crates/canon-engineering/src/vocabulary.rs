@@ -1,9 +1,9 @@
 //! The engineering vocabulary: the names the engineering protocols use for their terms.
 //!
 //! The vocabulary is data. Every term a built-in protocol names is declared once in
-//! `protocols/vocabulary.yaml`, with its category and its marking, except `support.triage/1`'s and
-//! the few the spelling rule below refuses (`tests/builtin_vocabulary_coverage.rs` names them,
-//! `NOT_SPELLABLE`); this module is
+//! `protocols/vocabulary.yaml`, with its category and its marking, except `support.triage/1`'s,
+//! `protocol.adopt/1`'s and the few the spelling rule below refuses
+//! (`tests/builtin_vocabulary_coverage.rs` names them, `NOT_SPELLABLE`); this module is
 //! the typed reader of that document and declares no term itself. The released file is compiled
 //! into the library, [`Vocabulary::from_yaml`] reads any vocabulary document given as text, and
 //! [`Vocabulary::to_yaml`] writes one.

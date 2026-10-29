@@ -64,6 +64,13 @@
     },
     {
       "area": "Protocols",
+      "detail": "Canon protocol/1 data declaring 3 claims, 3 evidence kinds, 3 actions and 1 outcome, with every evidence match bound to its artifact.",
+      "href": "/docs/protocols/protocol-adopt/1",
+      "label": "protocol.adopt/1",
+      "status": "shipped"
+    },
+    {
+      "area": "Protocols",
       "detail": "Canon protocol/1 data declaring 6 claims, 5 evidence kinds, 7 actions, 3 obligations and 4 outcomes, with every evidence match bound to its artifact.",
       "href": "/docs/protocols/self-improvement/1",
       "label": "self.improvement/1",
