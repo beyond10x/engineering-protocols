@@ -47,13 +47,13 @@ As a library (crate `b10x-canon-engineering`, imported as `canon_engineering`):
 
 ```toml
 [dependencies]
-b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.15.1" }
+b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.15.2" }
 ```
 
 As a command:
 
 ```console
-cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.15.1 b10x-canon-engineering
+cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.15.2 b10x-canon-engineering
 ```
 
 Nothing is published to crates.io; releases are Git tags.
@@ -72,7 +72,7 @@ fn main() {
 }
 ```
 
-Against tag 0.15.1 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
+Against tag 0.15.2 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
 `ml-experiment@1`, `protocol-adopt@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1`,
 `story-delivery@2` and `support-triage@1`.
 `registry::get(name, major)` returns one protocol's YAML as released together with Canon's

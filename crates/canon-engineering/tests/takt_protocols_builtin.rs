@@ -5,8 +5,39 @@
 //! (`git -C takt rev-parse 0.12.0:protocols/<name>/1.yaml`), computed here from the bytes the
 //! registry embeds and from the file in this tree. takt's `protocols/loop-improvement/metrics.yaml`
 //! is runtime data, not a protocol, and stays in takt (ADR 0094 rule 2).
+//!
+//! A built-in differs from takt 0.12.0 only by a change agreed with takt, listed in `AGREED`:
+//! its file now has the blob id named there, and undoing the change gives back takt's bytes.
 
 use canon_engineering::registry;
+
+/// A change to a built-in moved from takt that takt agreed to: the protocol, the text takt 0.12.0
+/// had, the text that replaces it, and the Git blob id of the file with the change.
+/// D257 (2026-10-30): `story.delivery/1`'s `pr.open` names no organisation's delivery route.
+const AGREED: [(&str, &str, &str, &str); 1] = [(
+    "story-delivery",
+    "through the repository's bot route",
+    "through the run's forge",
+    "bf0a661f119b12393c0254a1c09460dbd07a2e6e",
+)];
+
+/// The blob id `name`'s file must have now, and its bytes with every agreed change undone.
+fn agreed(name: &str, bytes: &str) -> (Option<&'static str>, String) {
+    let mut undone = bytes.to_owned();
+    let mut current = None;
+    for (protocol, before, after, blob) in AGREED {
+        if protocol == name {
+            assert_eq!(
+                undone.matches(after).count(),
+                1,
+                "{name}@1 carries the agreed text `{after}` exactly once"
+            );
+            undone = undone.replace(after, before);
+            current = Some(blob);
+        }
+    }
+    (current, undone)
+}
 
 /// Each built-in moved from takt, its protocol id, and its Git blob id at takt tag 0.12.0.
 const FROM_TAKT: [(&str, &str, &str); 3] = [
@@ -127,18 +158,27 @@ fn takt_protocols_are_builtins_byte_for_byte() {
             "{name}@1 declares protocol id `{id}`"
         );
         assert_eq!(builtin.model.protocol.revision, 1, "{name}@1 is revision 1");
+        let (current, undone) = agreed(name, builtin.yaml);
         assert_eq!(
             blob_id(builtin.yaml.as_bytes()),
+            current.unwrap_or(blob),
+            "registry::get({name}, 1) is takt 0.12.0's protocols/{name}/1.yaml byte for byte, \
+             but for the changes AGREED lists"
+        );
+        assert_eq!(
+            blob_id(undone.as_bytes()),
             blob,
-            "registry::get({name}, 1) is takt 0.12.0's protocols/{name}/1.yaml byte for byte"
+            "registry::get({name}, 1) with its agreed changes undone is takt 0.12.0's \
+             protocols/{name}/1.yaml byte for byte"
         );
         let path = root.join("protocols").join(name).join("1.yaml");
         let on_disk =
             std::fs::read(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
         assert_eq!(
             blob_id(&on_disk),
-            blob,
-            "{} is takt 0.12.0's protocols/{name}/1.yaml byte for byte",
+            current.unwrap_or(blob),
+            "{} is takt 0.12.0's protocols/{name}/1.yaml byte for byte, but for the changes \
+             AGREED lists",
             path.display()
         );
     }
