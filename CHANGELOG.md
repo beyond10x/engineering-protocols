@@ -6,6 +6,19 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-10-30
+
+### Changed
+
+- `pr.open` in `story.delivery/2` and in `protocols/vocabulary.yaml` opens its pull request
+  "through the run's forge" instead of "through the repository's bot route": a public protocol
+  names no organisation's delivery route. Wording only; preconditions, effects, evidence and every
+  fixture verdict are unchanged. A test now refuses a built-in protocol that names a bot
+  (story:forge-neutral-delivery).
+- `story.delivery/1` is unchanged: it stays takt 0.12.0's file byte for byte until a new major is
+  agreed with takt, and still carries the old wording; its successor `story.delivery/2` does not.
+- The 2026-10-04 showcase names its forge write credential neutrally.
+
 ## [0.15.0] - 2026-10-29
 
 ### Added

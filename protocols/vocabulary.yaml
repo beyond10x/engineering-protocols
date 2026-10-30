@@ -512,7 +512,7 @@ terms:
   - id: pr.open
     category: action_id
     marking: software.change
-    meaning: push the implementation revision and open its pull request through the repository's bot route
+    meaning: push the implementation revision and open its pull request through the run's forge
   - id: ci.required
     category: obligation_id
     marking: software.change
