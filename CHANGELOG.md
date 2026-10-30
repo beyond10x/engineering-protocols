@@ -6,6 +6,16 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-10-30
+
+### Changed
+
+- `pr.open` in `story.delivery/1` opens its pull request "through the run's forge" instead of
+  "through the repository's bot route", as `story.delivery/2` does since 0.15.1. Wording only;
+  every fixture verdict is unchanged. takt agreed to the change (D257); `/1` is takt 0.12.0's file
+  byte for byte but for it, which `takt_protocols_builtin.rs` checks in both directions, and
+  `forge_neutral.rs` now covers `/1` (story:forge-neutral-delivery).
+
 ## [0.15.1] - 2026-10-30
 
 ### Changed

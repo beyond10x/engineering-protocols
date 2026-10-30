@@ -12,7 +12,7 @@ ADRs 0066–0075 and 0094, and Atlas `docs/design/governed-autonomy/`.
 - **O1 — governed reach.** Every write action a protocol declares names the capability that
   authorises it, except `software.change/1`'s `tests.write` and `implementation.edit` (telling
   them apart needs a path scope on capabilities, which Canon does not have), and the six write
-  actions of the protocols moved from takt byte for byte that name none: `story.delivery/1`'s
+  actions of the protocols moved from takt that name none: `story.delivery/1`'s
   `tests.write`, `implementation.edit` and `pr.open`, `self.improvement/1`'s `finding.file`,
   `loop.improvement/1`'s `loop.change.deliver` and `loop.finding.file`
   (`story:takt-protocol-write-capabilities`). Loom's `loom-governor` consumes these protocols.
@@ -32,7 +32,11 @@ reads as evidence needs a release here as well.
 
 Every spec-level protocol a runtime uses lives here (Atlas ADR 0094): `story.delivery/1`,
 `self.improvement/1` and `loop.improvement/1` came from takt byte for byte (takt tag 0.12.0) and
-must stay identical to it until a new major is agreed with takt. A runtime pins a release of
+stay identical to it but for changes agreed with takt, each listed in `AGREED` in
+`tests/takt_protocols_builtin.rs`. The one so far is D257 (2026-10-30, takt agreeing):
+`story.delivery/1`'s `pr.open` opens its pull request through the run's forge, since a public
+protocol names no organisation's delivery route. Any other change needs takt's agreement first,
+or goes into a new revision. A runtime pins a release of
 `b10x-canon-engineering` and reads them through `registry::get`; runtime data that is not a
 protocol (takt's `loop-improvement/metrics.yaml`) stays in the runtime. Their terms are in the
 vocabulary, marked `software.change`, `self.improvement` or `loop.improvement` when they mean
@@ -68,7 +72,7 @@ protocols.
 | `support.triage/1` has no unreachable outcome and no authority bypass | `tests/support_triage_protocol.rs::canon_check_finds_no_unreachable_outcome_and_no_authority_bypass` |
 | A generated protocol is adopted only with a `diff_report` within the floor, a passing `check_report` and an approval under `protocol.adopt`, each bound to the revision under adoption; the approval counts only from a producer the case lists on `different_principal` and only after the first diff report, since Canon outcomes read claims, not authority decisions; a new revision leaves every claim `UNKNOWN`, not `FALSE`, and a report outside the floor makes `floor.respected` `FALSE` | `tests/protocol_adopt_protocol.rs::adoption_needs_floor_check_and_authority`, `every_protocol_adopt_fixture_holds` |
 | Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
-| The protocols moved from takt are byte-identical to takt tag 0.12.0 | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
+| The protocols moved from takt are byte-identical to takt tag 0.12.0 but for the changes agreed with takt (`AGREED`) | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
 | Every term a built-in other than `support.triage/1` and `protocol.adopt/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |

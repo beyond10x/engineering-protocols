@@ -438,7 +438,7 @@ fn adversary_loop_improvement_fixtures_kill_every_rule_mutant() {
 /// six write actions of the protocols moved from takt that AGENTS.md lists. Walked over every
 /// built-in the registry lists; `EXCEPTED` must match that AGENTS.md list.
 ///
-/// The three protocols moved from takt are byte-identical to takt 0.12.0, so their six write
+/// The three protocols moved from takt are takt 0.12.0's files but for wording agreed with takt, so their six write
 /// actions without a capability are an open defect, asserted here in its current state in both
 /// directions: a seventh fails, and so does one of the six gaining a capability.
 #[test]
