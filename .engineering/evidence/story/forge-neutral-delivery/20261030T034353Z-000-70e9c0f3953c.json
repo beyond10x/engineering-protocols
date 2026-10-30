@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-30T03:43:53Z",
+  "actor": "human:timo",
+  "artifact": "story:forge-neutral-delivery",
+  "kind": "story",
+  "revision": 4,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": ".engineering/evidence/story/forge-neutral-delivery/green.txt"
+  }
+}

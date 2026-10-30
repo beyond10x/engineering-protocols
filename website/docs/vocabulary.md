@@ -154,7 +154,7 @@ Category `action_id`.
 | `change.read` | `software.change` | read whether merging the implementation revision into the base branch's tip would change its tree outside .engineering/ |
 | `ci.read` | `software.change` | read the continuous integration result for the pull request's head |
 | `gate.run` | `software.change` | run the repository's gate against an implementation revision |
-| `pr.open` | `software.change` | push the implementation revision and open its pull request through the repository's bot route |
+| `pr.open` | `software.change` | push the implementation revision and open its pull request through the run's forge |
 | `binary.promote` | `self.improvement` | build the merged candidate, embed its revision and install it for runs |
 | `candidate.merge` | `self.improvement` | merge a candidate that touches no judge surface |
 | `candidate.merge_judge_surface` | `self.improvement` | merge a candidate that touches a judge surface, under the owner's capability or a revocable delegation of it |
