@@ -11,7 +11,7 @@
 use b10x_canon::check::STATE_BOUND;
 use canon_engineering::registry;
 
-/// The built-ins whose state space is over `STATE_BOUND`, each with the state count Canon 0.8.0's
+/// The built-ins whose state space is over `STATE_BOUND`, each with the state count Canon 0.9.0's
 /// `state-space-bound` refusal names. `self.improvement/1` is at the count Atlas ADR 0094
 /// § Consequences records; splitting it, or a Canon change, is its own story. `ml.experiment/1`
 /// and `software.change/1` were over the bound before ADR 0094 and are measured here as they are.

@@ -76,6 +76,9 @@ fn drawn(predicate: &Predicate) -> Value {
                 None => json!({"since": {"last": form.last.as_str(), "then": then}}),
             }
         }
+        Predicate::Children(_) => {
+            panic!("the schema has no children leaf, so generation refuses the protocol")
+        }
     }
 }
 

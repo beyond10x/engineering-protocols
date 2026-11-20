@@ -133,6 +133,7 @@ pub fn predicate(predicate: &Predicate) -> Value {
             }
             json!({"since": since})
         }
+        Predicate::Children(form) => json!({"children": {"in": form.r#in}}),
     }
 }
 
@@ -277,7 +278,8 @@ fn leaves<'a>(predicate: &'a Predicate, negated: bool, f: &mut impl FnMut(&'a Pr
         | Predicate::First(_)
         | Predicate::Before(_)
         | Predicate::After(_)
-        | Predicate::Since(_) => f(predicate, negated),
+        | Predicate::Since(_)
+        | Predicate::Children(_) => f(predicate, negated),
     }
 }
 
@@ -294,6 +296,43 @@ fn claim_edges(predicate: &Predicate, to: &str, kind: &'static str, add: &mut im
             });
         }
     });
+}
+
+/// The first construct of `ir` that `b10x-protocol-graph/1` cannot draw, as a clause naming where
+/// it is: an action that opens a child case (`case_open`, which the format has no key for) or a
+/// `children` form (which the schema has no leaf for). Both are new in Canon 0.9.0. `None` when
+/// the format draws all of `ir`.
+pub fn undrawn(ir: &Ir) -> Option<String> {
+    for (id, action) in &ir.actions {
+        if action.case_open.is_some() {
+            return Some(format!("action {id} opens a child case (`case_open`)"));
+        }
+    }
+    let mut drawn: Vec<(String, &Predicate)> = Vec::new();
+    for (id, action) in &ir.actions {
+        drawn.push((format!("action {id}"), &action.precondition));
+    }
+    for (id, claim) in &ir.claims {
+        drawn.push((format!("claim {id}"), &claim.true_when));
+    }
+    for (id, outcome) in &ir.outcomes {
+        if let Some(requires) = outcome.requires.predicate() {
+            drawn.push((format!("outcome {id}"), requires));
+        }
+    }
+    for (id, obligation) in &ir.obligations {
+        drawn.push((format!("obligation {id}"), &obligation.discharged_when));
+        if let Some(applicable_when) = &obligation.applicable_when {
+            drawn.push((format!("obligation {id}"), applicable_when));
+        }
+    }
+    drawn.into_iter().find_map(|(place, predicate)| {
+        let mut reads_children = false;
+        leaves(predicate, false, &mut |leaf, _| {
+            reads_children |= matches!(leaf, Predicate::Children(_));
+        });
+        reads_children.then(|| format!("{place} reads its child cases (a `children` form)"))
+    })
 }
 
 /// The graph document for one compiled protocol; `source` names the document it came from.
@@ -447,7 +486,11 @@ pub fn document(ir: &Ir, source: &str) -> Value {
                     )),
                 });
             }
-            Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
+            Predicate::All(_)
+            | Predicate::Any(_)
+            | Predicate::Not(_)
+            | Predicate::Input(_)
+            | Predicate::Children(_) => {}
         });
     }
     for (id, outcome) in &ir.outcomes {
