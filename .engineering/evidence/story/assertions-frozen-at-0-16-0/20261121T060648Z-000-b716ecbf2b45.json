@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T06:06:48Z",
+  "actor": "human:timo",
+  "artifact": "story:assertions-frozen-at-0-16-0",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator after adversary pass 2, unit tree at the last correction: git show --stat 708b84f for the two crates, ess/ and .github/ against the file lists in both crate READMEs",
+    "reference": "10 files touched by 708b84f, each covered by the two lists; READMEs only in the correction; generate --check 35 files fresh; pass 2 ledger carried 0, new 2, resolved 4, no third pass"
+  }
+}

@@ -130,9 +130,10 @@ executors through Substrate, design not started), recorded in
 | Crate | Holds |
 |---|---|
 | `b10x-canon-engineering` | Library `canon_engineering` (protocol registry, engineering vocabulary) and the `canon-engineering` binary |
-| `b10x-canon-engineering-assertions` | Typed catalog, gate CLI, collection planning and retained replay |
-| `b10x-assertion-providers` | Bounded engineering observation collectors and external-provider transport |
-| `canon-engineering-docs` | Generator for the site's protocol pages, protocol graphs, vocabulary page and status record; not released |
+| `b10x-engineering-vocabulary` | Library `engineering_vocabulary`: the reader of `protocols/vocabulary.yaml`. It embeds no data; `canon_engineering::vocabulary` re-exports it. Not released |
+| `b10x-canon-engineering-assertions` | Typed catalog, gate CLI, collection planning and retained replay; frozen at tag 0.16.0 |
+| `b10x-assertion-providers` | Bounded engineering observation collectors and external-provider transport; frozen at tag 0.16.0 |
+| `canon-engineering-docs` | Generator for the site's protocol pages, protocol graphs, vocabulary page and status record, and the catalog archive; reads `protocols/` as files and does not depend on `b10x-canon-engineering`; not released |
 
 ## Documentation
 

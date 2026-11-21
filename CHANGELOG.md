@@ -29,6 +29,19 @@ releases at bare-version tags.
 - The assertion function catalog moves from `catalog/engineering.yaml` to
   `crates/canon-engineering-assertions/catalog.yaml`, bytes unchanged; the directory `catalog/` is
   gone. `BUILTIN_CATALOG` and every assertion are unchanged (story:assertion-catalog-path).
+- `b10x-canon-engineering-assertions` and `b10x-assertion-providers` are frozen at the behaviour
+  of tag 0.16.0 and marked `publish = false`: no new assertion function, provider, CLI command or
+  wire-model field; their Canon and ESS pins still move with the workspace's, and a security
+  defect is still fixed. Their public items are the ones tag 0.16.0 has. A consumer that depends
+  on them by Git tag is not affected. Loom owns what replaces them; that design has not started.
+  The status page no longer lists AEP acceptance and Kubernetes providers as planned here
+  (story:assertions-frozen-at-0-16-0).
+- The vocabulary reader moves to a crate of its own, `b10x-engineering-vocabulary` (library
+  `engineering_vocabulary`, `publish = false`, no embedded data). `b10x-canon-engineering`
+  depends on it by path and re-exports it, so every item under `canon_engineering::vocabulary`
+  resolves as before; a consumer that pins `b10x-canon-engineering` by Git tag changes nothing.
+  The docs generator depends on the new crate and no longer on `b10x-canon-engineering`; the
+  generated site is unchanged (story:docs-generator-reads-files).
 
 ## [0.16.0] - 2026-11-21
 

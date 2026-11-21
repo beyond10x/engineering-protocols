@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:docs-generator-reads-files
 kind: story
-status: active
+status: implemented
 title: The docs generator reads files and links Canon, without the registry crate
 summary: canon-engineering-docs drops its dependency on b10x-canon-engineering; the assertion reference page is kept or dropped.
 relations:
@@ -13,21 +13,22 @@ scope:
 - confidence: cited
   path: Cargo.lock
 - confidence: cited
-  path: Cargo.toml
-- confidence: cited
   path: crates/canon-engineering-docs
 - confidence: cited
   path: crates/canon-engineering/Cargo.toml
 - confidence: cited
-  path: crates/canon-engineering/src/lib.rs
-- confidence: cited
   path: crates/canon-engineering/src/vocabulary.rs
-- confidence: inferred
+- confidence: cited
+  path: crates/canon-engineering/tests/adversary_vocabulary_reexport.rs
+- confidence: cited
+  path: crates/canon-engineering/tests/vocabulary_reexport.rs
+- confidence: cited
   path: crates/engineering-vocabulary
-revision: 9
+revision: 12
 transitions:
 - {from: "draft", to: "proposed", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":2}}}
 - {from: "proposed", to: "active", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "active", to: "implemented", at: "2026-11-21T06:44:04Z", actor: "human:timo", revision: 12, decided_on: {"recorded":{"test_result":1,"review_outcome":7,"verification":2}}}
 ---
 ## Outcome
 
@@ -102,3 +103,29 @@ Settled by the coordinator:
   moves the file.
 - story:catalog-release-archive (wave 2) added `src/catalog_archive.rs` and three test files to
   the generator crate. This story changes none of them.
+
+## Delivered (wave 2026-11-21-w3)
+
+- `crates/engineering-vocabulary` (package `b10x-engineering-vocabulary`, library
+  `engineering_vocabulary`, `publish = false`, `#![forbid(unsafe_code)]`, no embedded data): the
+  vocabulary reader, moved verbatim from `crates/canon-engineering/src/vocabulary.rs` with its
+  five unit tests.
+- `canon_engineering::vocabulary` keeps the embedded released vocabulary, `terms()` and
+  `lookup()`, and re-exports `Category`, `FORMAT`, `Marking`, `Term`, `UnknownTerm`, `Vocabulary`
+  and `VocabularyError`. `crates/canon-engineering/src/lib.rs` did not need an edit. `serde` and
+  `serde_yaml_ng` are dev-dependencies of the registry crate now: only its tests use them.
+- `canon-engineering-docs` depends on the new crate and not on `b10x-canon-engineering`;
+  `src/generate.rs` and `src/status.rs` changed one import line each. The generator already read
+  `protocols/vocabulary.yaml` from its root. It still includes
+  `crates/canon-engineering/src/builtin_name.rs` by `#[path]`; story:protocol-check-tool moves
+  that file.
+- The root `Cargo.toml` did not change (`members = ["crates/*"]`). `Cargo.lock` gains one
+  package, `b10x-engineering-vocabulary`, and no external one.
+- Tests: `crates/canon-engineering-docs/tests/no_registry_dependency.rs` (3) and
+  `adversary_no_registry_dependency.rs` (3); `crates/canon-engineering/tests/
+  vocabulary_reexport.rs` (3) and `adversary_vocabulary_reexport.rs` (3).
+- Acceptance as measured on the wave branch: `cargo tree -p canon-engineering-docs` lists no
+  `b10x-canon-engineering`; `generate --check` reports 35 files fresh and the unit changed no
+  file under `website/`; `git grep -n "pub struct Vocabulary" -- crates` prints one line, in
+  `crates/engineering-vocabulary/src/lib.rs`; `vocabulary_yaml_is_the_source` passes.
+- `README.md` § Crates and `AGENTS.md` § Invariants name the new crate and the rule.
