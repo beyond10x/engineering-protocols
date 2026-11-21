@@ -158,7 +158,6 @@ fn build_embeds_only_what_the_rule_and_canon_engineering_docs_accept() {
         std::fs::copy(root.join(file), checkout.join(file)).expect("manifest copies");
     }
     copy_tree(&root.join("crates"), &checkout.join("crates"));
-    copy_tree(&root.join("catalog"), &checkout.join("catalog"));
     let protocols = checkout.join("protocols");
     std::fs::create_dir_all(&protocols).expect("protocols dir");
     std::fs::copy(
