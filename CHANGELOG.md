@@ -16,6 +16,13 @@ releases at bare-version tags.
   from a tag against the manifest of that tag without compiling this repository. `task check`
   refuses a manifest that disagrees with the files or lists a `canon` above the pinned Canon; an
   understated `canon` is not detected (story:catalog-manifest).
+- `canon-engineering-docs catalog-archive --out <dir>` (`task catalog-archive`, into
+  `target/catalog/`) writes `engineering-protocols-catalog-<version>.tar.gz` and its `.sha256`
+  file in `sha256sum` format. The archive holds what the manifest lists and the manifest itself,
+  at repository-relative paths with no top-level directory, and is byte-identical across runs on
+  one tree and one `Cargo.lock`. From the release after 0.16.0 both files are assets of the
+  GitHub Release, so a consumer that compiles nothing from this repository fetches the catalog of
+  a tag and checks it with `sha256sum -c` (story:catalog-release-archive).
 
 ### Changed
 

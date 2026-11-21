@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T04:57:48Z",
+  "actor": "human:timo",
+  "artifact": "story:catalog-release-archive",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator: cargo run -q --locked -p canon-engineering-docs -- catalog-archive --out <dir>, twice into two directories on the unit tree at 1edaaf0; git grep on the base 8be96b3",
+    "reference": "both archives sha256 73bacc79762696ea1e384a2054d57ea3dcf26e48c73a3fa880c98d1e379ef004, cmp identical; sha256sum -c OK; 13 entries; base has 0 mentions of catalog-archive; implementor red run 0 passed, 5 failed"
+  }
+}

@@ -79,6 +79,7 @@ protocols.
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
 | The package, library and binary names are `b10x-canon-engineering`, `canon_engineering`, `canon-engineering`; no retired name ships | `tests/crate_names.rs`, `tests/adversary_rename.rs` |
+| The catalog archive (`canon-engineering-docs catalog-archive`) holds the files `protocols/manifest.yaml` lists and the manifest, each with its listed sha256, as plain entries in byte order with no owner and no time, and two runs on one tree are byte-identical; a manifest that breaks a path rule of the manifest check, a missing or changed listed file, or an unlisted file under `protocols/` is refused before anything is written | `crates/canon-engineering-docs/tests/catalog_archive.rs::two_runs_write_identical_archives_and_digests`, `archive_holds_exactly_what_the_manifest_lists_and_each_file_has_its_digest`, and `tests/adversary_catalog_archive.rs` beside it |
 | Generated site files match a fresh render | `canon-engineering-docs generate --check` in `task check` |
 
 Test paths above are under `crates/canon-engineering/`. Anything that runs is Rust, and command
@@ -195,7 +196,8 @@ story's `## Protocol first`.
   the gated tree.
 - Every commit and push is `b10x-bot[bot]`'s, through `b10x-gates bot`; check both author and
   committer before pushing. Every other GitHub write (pull request, comment, release, workflow
-  dispatch, re-run) goes through `b10x-gates api`. `gh` is for reading only.
+  dispatch, re-run) goes through `b10x-gates api`, which sends JSON bodies; a release asset is a
+  file and goes through `b10x-gates gh -- release upload`. Bare `gh` is for reading only.
 
 ## Releases
 
@@ -210,6 +212,17 @@ release workflow. A release is:
    "Engineering protocols <version>" <commit>`, then `-- push origin <version>`.
 4. The GitHub Release for the tag, created by the bot (`b10x-gates api --method POST --path
    /repos/beyond10x/engineering-protocols/releases`), its notes taken from the CHANGELOG entry.
+5. The catalog archive, built from a checkout of the tag with its own `Cargo.lock`:
+   `task catalog-archive` writes `target/catalog/engineering-protocols-catalog-<version>.tar.gz`
+   and the same name with `.sha256` appended, `<version>` being the workspace version of that
+   checkout, which must equal the tag. The bot attaches both files to the release:
+   `b10x-gates gh -- release upload <version> <the two files>`.
+
+The archive holds what `protocols/manifest.yaml` lists (the protocol files, `vocabulary.yaml`,
+the schema it names) and the manifest, at repository-relative paths with no top-level directory.
+It is the same bytes for one tree and one `Cargo.lock`: the compressed bytes depend on the
+locked `flate2`, so the archive of a release is the one attached to it, and a rebuild is compared
+by unpacking, not by digest, once `Cargo.lock` has moved.
 
 Consumers pin `b10x-canon-engineering` by `tag = "<version>"`; README.md's install lines name the
 latest tag and change in the release commit.
@@ -228,6 +241,12 @@ latest tag and change in the release commit.
 An ordinary release completes after this repository's exact tag, required source checks,
 published release and required artifacts are verified. A pushed tag with unfinished checks or
 uploads is queued; report it as released only after those requirements succeed.
+
+The required artifacts are the two release assets of § Releases step 5,
+`engineering-protocols-catalog-<version>.tar.gz` and the same name with `.sha256` appended. A
+release without both is queued, not complete. They are verified by downloading both from the
+published release and running `sha256sum -c` on the digest file beside the archive. Releases up
+to 0.16.0 have no assets.
 
 Atlas reconciliation and public documentation publication run asynchronously. Do not wait for
 Atlas or Website, update Website source locks or bootstrap snapshots, promote consumer pins,
