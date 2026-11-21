@@ -10,10 +10,15 @@ use std::{
 };
 
 /// A directory outside `root` holding an executable named `tool` that prints its first argument.
+/// It is a script and not a copy of `/usr/bin/printf`: where coreutils is one multi-call binary
+/// (Ubuntu 26.04), a copy run under another name prints nothing and exits 1 (`unknown program
+/// 'tool'`).
 fn tools() -> (tempfile::TempDir, PathBuf) {
+    use std::os::unix::fs::PermissionsExt;
     let dir = tempfile::tempdir().unwrap();
     let tool = dir.path().join("tool");
-    fs::copy("/usr/bin/printf", &tool).unwrap();
+    fs::write(&tool, "#!/bin/sh\nprintf %s \"$1\"\n").unwrap();
+    fs::set_permissions(&tool, fs::Permissions::from_mode(0o755)).unwrap();
     (dir, tool)
 }
 

@@ -19,6 +19,12 @@ releases at bare-version tags.
   naming the file and the construct: `b10x-protocol-graph/1` in docs-system 0.14.0 has no place
   for either, so a page or graph of such a protocol would leave it out.
 
+### Fixed
+
+- The `process_program` tests of `b10x-assertion-providers` pass where coreutils is one multi-call
+  binary (Ubuntu 26.04, which CI's `ubuntu-latest` now is): their `tool` fixture is a script, where
+  it was a copy of `/usr/bin/printf` that refuses to run under another name. Tests only.
+
 ## [0.15.2] - 2026-10-30
 
 ### Changed
