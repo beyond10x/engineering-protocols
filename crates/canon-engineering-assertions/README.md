@@ -13,10 +13,12 @@ The crate is frozen at the behaviour of tag 0.16.0. It stays in the tree, builds
 and is marked `publish = false`. Frozen means:
 
 - No new assertion function, provider, CLI command or wire-model field.
-- A Canon or ESS pin still moves when the workspace's does, and that edit lands in these files:
-  the Canon `tag` of `b10x-canon-expr` in `Cargo.toml`, and for ESS `ess/ess-inputs.yaml` and the
-  header of `generated/types.rs` (regenerated). The ESS version the gate installs is in
-  `.github/workflows/check.yml`.
+- A Canon or ESS pin still moves when the workspace's does. A Canon move edits the `tag` of
+  `b10x-canon-expr` in `crates/canon-engineering-assertions/Cargo.toml`. An ESS move edits
+  `ess/ess-inputs.yaml`, `.github/workflows/check.yml`, the regenerated
+  `crates/canon-engineering-assertions/generated/` and the version in the message at
+  `crates/canon-engineering-assertions/tests/ess_contract.rs:134`; it edits nothing in `src/`
+  (the last such move was commit 708b84f).
 - A security defect is still fixed.
 - This README is corrected when what replaces the crate exists.
 
