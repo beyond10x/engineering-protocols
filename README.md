@@ -47,8 +47,9 @@ rendered as the [vocabulary page](https://beyond10x.github.io/engineering-protoc
 The protocols are files. A release carries them in two forms, a Git tag and an archive, and
 [`protocols/manifest.yaml`](protocols/manifest.yaml) lists the vocabulary and every protocol file
 with the sha256 of its bytes. For each protocol it also gives the id, the revision and `canon`, the
-lowest Canon release that reads the file. The commands below need `git`, `curl`, `tar`,
-`sha256sum` and `awk`; nothing is compiled.
+lowest Canon release its author declared the file needs; it is written by hand and the repository
+only refuses a value above the Canon it pins, so it is no guarantee to choose your Canon by. The
+commands below need `git`, `curl`, `tar`, `sha256sum` and `awk`; nothing is compiled.
 
 Tag 0.16.0 has no manifest and no release archive. The first release that carries both is the one
 after 0.16.0; `<version>` below is the tag of a release that does.
@@ -85,8 +86,11 @@ missing or differs it names the file with `FAILED` and exits non-zero. It does n
 under `protocols/` that the manifest does not list, and it does not check the schema the manifest
 names, `schema/b10x.protocol-catalog.v1.schema.json`, which carries no digest.
 
-The crate `b10x-canon-engineering` and its `canon-engineering` binary are still in the tree until a
-CI check replaces them. They are not the way to take the catalog.
+The crate `b10x-canon-engineering`, which embeds the protocols at build time and exposes them as a
+registry, is still in the tree. It is not the way to take the catalog, and it is planned to be
+deleted. The `canon-engineering` binary is planned to move to `b10x-canon-engineering-assertions`
+under the same name, with its `assertions` and `gates` commands unchanged and its `protocols list`
+and `protocols show` commands ended; § Assertion gates below runs it from a checkout today.
 
 ## Assertion gates
 

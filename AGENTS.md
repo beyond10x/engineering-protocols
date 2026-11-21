@@ -48,13 +48,19 @@ each file's sha256 against `protocols/manifest.yaml`, and links Canon itself, no
 `b10x-canon-engineering` (`approval-record:data-only-catalog`, operator decision of 2026-11-21;
 README.md § Take the protocols and check them has the commands). That replaces Atlas ADR 0094
 decision 2, which had a runtime pin the registry crate and read protocols through it; the
-replacement is not yet recorded in Atlas (no ADR under `architecture/adr/` says it).
+replacement is not yet recorded in Atlas (no ADR under `architecture/adr/` says it). Decision 4 of
+that ADR (a protocol change in a runtime is a pin bump, so the pin files are on the runtime's judge
+surface) still describes a Cargo pin and has not been restated for a catalog read as files; that is
+not decided here and not yet recorded in Atlas.
 
 Until `story:protocol-check-tool` lands the registry crate `b10x-canon-engineering` still exists,
 with its `registry` module and the `canon-engineering` binary, and tests under
 `crates/canon-engineering/tests/` still go through it; the invariants below that name them hold
 today. It is not the way to consume the catalog. What still compiles against it is in
-`upstream-blocker:consumers-compile-against-canon-engineering`.
+`upstream-blocker:consumers-compile-against-canon-engineering`. That story (draft) deletes the
+crate: the `canon-engineering` binary moves to `b10x-canon-engineering-assertions` under the same
+name with its `assertions` and `gates` commands unchanged, and `protocols list` and `protocols
+show` end.
 
 It does not own:
 
@@ -88,7 +94,7 @@ protocols.
 | Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
 | The protocols moved from takt are byte-identical to takt tag 0.12.0 but for the changes agreed with takt (`AGREED`) | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
-| `protocols/manifest.yaml` (`b10x-protocol-catalog/1`, schema `schema/b10x.protocol-catalog.v1.schema.json`) lists every other file under `protocols/` with the sha256 of its bytes, and each protocol with the id and revision Canon parses from it and a hand-declared lowest Canon release; a Canon pinned in `Cargo.lock` below a listed release fails, an understated release is not detected | `tests/catalog_manifest.rs::the_manifest_matches_the_catalog` |
+| `protocols/manifest.yaml` (`b10x-protocol-catalog/1`, schema `schema/b10x.protocol-catalog.v1.schema.json`) lists every other file under `protocols/` with the sha256 of its bytes, and each protocol with the id and revision Canon parses from it and a hand-declared lowest Canon release; a Canon pinned in `Cargo.lock` below a listed release fails, an understated release is not detected; its text keeps the line shape of README.md's `awk` check, which the test's `line_pairs` repeats, so a change to that line edits both (`LineShape`) | `tests/catalog_manifest.rs::the_manifest_matches_the_catalog`, `the_readme_holds_the_awk_program_the_line_reader_is_written_from`, `catalog_files_are_checked_out_byte_for_byte` |
 | Every term a built-in other than `support.triage/1` and `protocol.adopt/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
@@ -209,7 +215,8 @@ story's `## Protocol first`.
 - A change to any file under `protocols/` updates its entry in `protocols/manifest.yaml` in the
   same commit: the sha256 (`sha256sum <file>`), and for a protocol the id, the revision and, when
   it uses a newer Canon form, `canon`. The manifest is hand-written, not generated, and carries
-  no comments.
+  no comments. Files under `protocols/` and `schema/` are checked out byte for byte
+  (`.gitattributes`, `-text`), because the manifest lists the sha256 of their bytes.
 - Build into the checkout's own `target/`. The Taskfile sets no `CARGO_TARGET_DIR`; do not set
   one. `crates/canon-engineering/build.rs` embeds `protocols/` by absolute path, so a target
   directory shared between checkouts can embed another checkout's protocol files, and cargo can
