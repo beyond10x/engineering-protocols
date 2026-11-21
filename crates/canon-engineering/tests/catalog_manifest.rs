@@ -8,6 +8,10 @@
 //! a scratch copy, which must give exactly the problem that mutation makes. The `canon` value is
 //! declared by hand and checked in one direction only: a Canon pinned in `Cargo.lock` lower than
 //! it is a problem, an understated value is not detected.
+//!
+//! The manifest's text is also held to the line shape README.md's `awk` command reads
+//! ([`line_pairs`]): the check parses the manifest with serde, which accepts forms of the same
+//! document that command would pass over, so it is a problem when the two read different pairs.
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -114,12 +118,19 @@ enum Problem {
         canon: String,
         pinned: String,
     },
+    /// The `(sha256, path)` pairs [`line_pairs`] reads from the manifest's text are not those of
+    /// the entries serde parsed from it, in order: the manifest is in a form of the same document
+    /// that README.md's `awk` line does not read.
+    LineShape {
+        parsed: Vec<(String, String)>,
+        read: Vec<(String, String)>,
+    },
 }
 
 /// Every problem of `manifest` against the files under `root` and the Canon pinned in `lock`,
 /// sorted; none when the manifest holds.
-fn check(root: &Path, manifest: &str, lock: &str) -> Vec<Problem> {
-    let manifest: Manifest = match serde_yaml_ng::from_str(manifest) {
+fn check(root: &Path, manifest_text: &str, lock: &str) -> Vec<Problem> {
+    let manifest: Manifest = match serde_yaml_ng::from_str(manifest_text) {
         Ok(manifest) => manifest,
         Err(error) => return vec![Problem::Manifest(error.to_string())],
     };
@@ -219,8 +230,47 @@ fn check(root: &Path, manifest: &str, lock: &str) -> Vec<Problem> {
         }
     }
 
+    let parsed = parsed_pairs(&manifest);
+    let read = line_pairs(manifest_text);
+    if read != parsed {
+        problems.push(Problem::LineShape { parsed, read });
+    }
+
     problems.sort();
     problems
+}
+
+/// The `(sha256, path)` pairs README.md's manifest check reads from the manifest's text. README.md
+/// pipes `protocols/manifest.yaml` through this `awk` program into `sha256sum -c`:
+///
+/// ```text
+/// $1 == "path:" {p = $2} $1 == "-" && $2 == "path:" {p = $3} $1 == "sha256:" {print $2 "  " p}
+/// ```
+///
+/// This function is that program, rule for rule, and the two must change together
+/// (`the_readme_holds_the_awk_program_the_line_reader_is_written_from` fails when README.md's line
+/// is not the program above). Fields are split on blanks and tabs only, as `awk` does, so a
+/// carriage return stays in the last field of a line; lines are split at `\n` only.
+fn line_pairs(text: &str) -> Vec<(String, String)> {
+    let mut pairs = Vec::new();
+    let mut path = String::new();
+    for line in text.split('\n') {
+        let fields: Vec<&str> = line
+            .split([' ', '\t'])
+            .filter(|field| !field.is_empty())
+            .collect();
+        let field = |number: usize| fields.get(number - 1).copied().unwrap_or("");
+        if field(1) == "path:" {
+            path = field(2).to_owned();
+        }
+        if field(1) == "-" && field(2) == "path:" {
+            path = field(3).to_owned();
+        }
+        if field(1) == "sha256:" {
+            pairs.push((field(2).to_owned(), path.clone()));
+        }
+    }
+    pairs
 }
 
 /// The bytes of a listed file, recording a problem for a missing or unreadable file and for a
@@ -408,6 +458,12 @@ impl Scratch {
     fn parsed_manifest(&self) -> Manifest {
         serde_yaml_ng::from_str(&self.manifest)
             .unwrap_or_else(|error| panic!("{MANIFEST}: {error}"))
+    }
+
+    /// Replaces the one occurrence of `from` in the scratch manifest's text.
+    fn replace_manifest_text(&mut self, from: &str, to: &str) {
+        assert_eq!(self.manifest.matches(from).count(), 1, "{from:?}");
+        self.manifest = self.manifest.replacen(from, to, 1);
     }
 
     /// Rewrites the scratch manifest through the typed model.
@@ -917,6 +973,213 @@ fn a_vocabulary_entry_for_another_file_is_a_problem() {
             Problem::Unlisted(VOCABULARY.to_owned()),
             Problem::Vocabulary(other.to_owned()),
         ]
+    );
+}
+
+/// The `(sha256, path)` pairs of the entries `manifest` holds, in the order README.md's `awk` line
+/// must emit them: the vocabulary, then each protocol.
+fn parsed_pairs(manifest: &Manifest) -> Vec<(String, String)> {
+    std::iter::once((
+        manifest.vocabulary.sha256.clone(),
+        manifest.vocabulary.path.clone(),
+    ))
+    .chain(
+        manifest
+            .protocols
+            .iter()
+            .map(|entry| (entry.sha256.clone(), entry.path.clone())),
+    )
+    .collect()
+}
+
+/// The scratch manifest's `(sha256, path)` pairs with those of `entry` replaced by `replaced`, or
+/// removed when `replaced` is `None`: what the line reader must read after a mutation of `entry`'s
+/// lines.
+fn pairs_with(
+    scratch: &Scratch,
+    path: &str,
+    replaced: Option<(String, String)>,
+) -> Vec<(String, String)> {
+    let mut pairs = Vec::new();
+    for pair in parsed_pairs(&scratch.parsed_manifest()) {
+        if pair.1 != path {
+            pairs.push(pair);
+        } else if let Some(replaced) = &replaced {
+            pairs.push(replaced.clone());
+        }
+    }
+    pairs
+}
+
+/// The five lines of the listed entry of `entry`, as `protocols/manifest.yaml` writes them.
+fn entry_text(entry: &ProtocolEntry) -> String {
+    format!(
+        "  - path: {}\n    id: {}\n    revision: {}\n    sha256: {}\n    canon: {}\n",
+        entry.path, entry.id, entry.revision, entry.sha256, entry.canon
+    )
+}
+
+#[test]
+fn the_manifest_text_has_the_shape_the_readme_command_reads() {
+    let root = repository_root();
+    let manifest = read(&root, MANIFEST);
+    let parsed: Manifest = serde_yaml_ng::from_str(&manifest).expect("the manifest parses");
+    assert!(manifest.contains(&format!(
+        "vocabulary:\n  path: {}\n  sha256: {}\n",
+        parsed.vocabulary.path, parsed.vocabulary.sha256
+    )));
+    for entry in &parsed.protocols {
+        assert!(manifest.contains(&entry_text(entry)), "{}", entry.path);
+    }
+}
+
+#[test]
+fn a_protocol_entry_that_starts_with_its_sha256_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let entry = scratch.entry(SOFTWARE_CHANGE);
+    scratch.replace_manifest_text(
+        &entry_text(&entry),
+        &format!(
+            "  - sha256: {}\n    path: {}\n    id: {}\n    revision: {}\n    canon: {}\n",
+            entry.sha256, entry.path, entry.id, entry.revision, entry.canon
+        ),
+    );
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::LineShape {
+            parsed: parsed_pairs(&scratch.parsed_manifest()),
+            read: pairs_with(&scratch, SOFTWARE_CHANGE, None),
+        }]
+    );
+}
+
+#[test]
+fn a_vocabulary_written_as_a_flow_mapping_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let vocabulary = scratch.parsed_manifest().vocabulary;
+    scratch.replace_manifest_text(
+        &format!(
+            "vocabulary:\n  path: {}\n  sha256: {}\n",
+            vocabulary.path, vocabulary.sha256
+        ),
+        &format!(
+            "vocabulary: {{path: {}, sha256: {}}}\n",
+            vocabulary.path, vocabulary.sha256
+        ),
+    );
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::LineShape {
+            parsed: parsed_pairs(&scratch.parsed_manifest()),
+            read: pairs_with(&scratch, VOCABULARY, None),
+        }]
+    );
+}
+
+#[test]
+fn a_quoted_sha256_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let entry = scratch.entry(SOFTWARE_CHANGE);
+    scratch.replace_manifest_text(
+        &format!("    sha256: {}\n", entry.sha256),
+        &format!("    sha256: \"{}\"\n", entry.sha256),
+    );
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::LineShape {
+            parsed: parsed_pairs(&scratch.parsed_manifest()),
+            read: pairs_with(
+                &scratch,
+                SOFTWARE_CHANGE,
+                Some((format!("\"{}\"", entry.sha256), entry.path.clone()))
+            ),
+        }]
+    );
+}
+
+#[test]
+fn a_quoted_path_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let entry = scratch.entry(SOFTWARE_CHANGE);
+    scratch.replace_manifest_text(
+        &format!("  - path: {}\n", entry.path),
+        &format!("  - path: \"{}\"\n", entry.path),
+    );
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::LineShape {
+            parsed: parsed_pairs(&scratch.parsed_manifest()),
+            read: pairs_with(
+                &scratch,
+                SOFTWARE_CHANGE,
+                Some((entry.sha256.clone(), format!("\"{}\"", entry.path)))
+            ),
+        }]
+    );
+}
+
+#[test]
+fn a_manifest_with_crlf_line_endings_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    scratch.manifest = scratch.manifest.replace('\n', "\r\n");
+    let parsed = parsed_pairs(&scratch.parsed_manifest());
+    // `awk` splits fields on blanks and tabs only, so the carriage return stays in the last field.
+    let read = parsed
+        .iter()
+        .map(|(sha256, path)| (format!("{sha256}\r"), format!("{path}\r")))
+        .collect();
+    assert_eq!(scratch.check(), vec![Problem::LineShape { parsed, read }]);
+}
+
+/// The reader's pairs are compared with the entries in the order README.md's command prints them,
+/// the vocabulary first. `sha256sum -c` does not need that order, and the document means the same
+/// in any order, but a reorder changes what the command prints and is a shape change someone
+/// should make on purpose, with this test in hand.
+#[test]
+fn a_vocabulary_after_the_protocols_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let vocabulary = scratch.parsed_manifest().vocabulary;
+    let block = format!(
+        "vocabulary:\n  path: {}\n  sha256: {}\n",
+        vocabulary.path, vocabulary.sha256
+    );
+    scratch.replace_manifest_text(&format!("{block}\n"), "");
+    scratch.manifest.push('\n');
+    scratch.manifest.push_str(&block);
+    let parsed = parsed_pairs(&scratch.parsed_manifest());
+    assert_eq!(
+        parsed[0].1, VOCABULARY,
+        "serde still parses the vocabulary first"
+    );
+    let mut read = parsed.clone();
+    read.rotate_left(1);
+    assert_eq!(scratch.check(), vec![Problem::LineShape { parsed, read }]);
+}
+
+/// The `awk` program of README.md's manifest check, character for character. [`line_pairs`] is
+/// this program written in Rust, and the two change together; the next test reads README.md.
+const README_AWK: &str = r#"$1 == "path:" {p = $2} $1 == "-" && $2 == "path:" {p = $3} $1 == "sha256:" {print $2 "  " p}"#;
+
+#[test]
+fn the_readme_holds_the_awk_program_the_line_reader_is_written_from() {
+    let readme = read(&repository_root(), "README.md");
+    assert!(
+        readme.contains(&format!(
+            "awk '{README_AWK}' protocols/manifest.yaml | sha256sum -c -\n"
+        )),
+        "README.md's manifest check is not the awk program line_pairs reads like"
+    );
+}
+
+#[test]
+fn catalog_files_are_checked_out_byte_for_byte() {
+    let attributes = read(&repository_root(), ".gitattributes");
+    let lines = attributes.strip_suffix('\n').unwrap_or(&attributes);
+    assert_eq!(
+        lines, "protocols/** -text\nschema/** -text",
+        ".gitattributes is exactly the two `-text` lines and nothing else: a later line such as \
+         `*.yaml text eol=crlf` overrides them, so an added attribute line must be made with this \
+         test in hand"
     );
 }
 

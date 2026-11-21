@@ -18,8 +18,9 @@ blocked until evidence for R2 exists.
 - Not the live engineering record. That is [AEP](https://beyond10x.github.io/ecosystem/aep/)
   ([GitHub](https://github.com/beyond10x/aep)).
 - Not an agent runtime. [Loom](https://beyond10x.github.io/loom/)
-  ([GitHub](https://github.com/beyond10x/loom)) runs agents, and its `loom-governor` crate depends
-  on this one.
+  ([GitHub](https://github.com/beyond10x/loom)) runs agents. It takes protocols from this
+  repository; some of its crates, `loom-governor` among them, still compile against the crate
+  `b10x-canon-engineering`, and Loom plans to read the protocol files instead.
 - Not a source of time, network or model input: a protocol adds no clock, network or model call
   to Canon's evaluation.
 
@@ -41,73 +42,62 @@ blocked until evidence for R2 exists.
 The terms they are written in are [`protocols/vocabulary.yaml`](protocols/vocabulary.yaml),
 rendered as the [vocabulary page](https://beyond10x.github.io/engineering-protocols/docs/vocabulary/).
 
-## Install
+## Take the protocols and check them
 
-As a library (crate `b10x-canon-engineering`, imported as `canon_engineering`):
+The protocols are files. A release carries them in two forms, a Git tag and an archive, and
+[`protocols/manifest.yaml`](protocols/manifest.yaml) lists the vocabulary and every protocol file
+with the sha256 of its bytes. For each protocol it also gives the id, the revision and `canon`, the
+lowest Canon release its author declared the file needs; it is written by hand and the repository
+only refuses a value above the Canon it pins, so it is no guarantee to choose your Canon by. The
+commands below need `git`, `curl`, `tar`, `sha256sum` and `awk`; nothing is compiled.
 
-```toml
-[dependencies]
-b10x-canon-engineering = { git = "https://github.com/beyond10x/engineering-protocols", tag = "0.16.0" }
+Tag 0.16.0 has no manifest and no release archive. The first release that carries both is the one
+after 0.16.0; `<version>` below is the tag of a release that does.
+
+From the release tag, a shallow clone:
+
+```sh
+git clone --depth 1 --branch <version> https://github.com/beyond10x/engineering-protocols
+cd engineering-protocols
 ```
 
-As a command:
+From the release archive, the file and its digest, checked and unpacked:
 
-```console
-cargo install --locked --git https://github.com/beyond10x/engineering-protocols --tag 0.16.0 b10x-canon-engineering
+```sh
+curl -fLO https://github.com/beyond10x/engineering-protocols/releases/download/<version>/engineering-protocols-catalog-<version>.tar.gz
+curl -fLO https://github.com/beyond10x/engineering-protocols/releases/download/<version>/engineering-protocols-catalog-<version>.tar.gz.sha256
 ```
 
-Nothing is published to crates.io; releases are Git tags.
-
-## Smallest example
-
-The built-in protocols are embedded in the crate at build time. Listing them from a dependent crate:
-
-```rust
-use canon_engineering::registry;
-
-fn main() {
-    for (name, major) in registry::list() {
-        println!("{name}@{major}");
-    }
-}
+```sh
+sha256sum -c engineering-protocols-catalog-<version>.tar.gz.sha256
+mkdir catalog
+tar -xzf engineering-protocols-catalog-<version>.tar.gz -C catalog
+cd catalog
 ```
 
-Against tag 0.16.0 this prints `eval-gated-change@1`, `incident-response@1`, `loop-improvement@1`,
-`ml-experiment@1`, `protocol-adopt@1`, `self-improvement@1`, `software-change@1`, `story-delivery@1`,
-`story-delivery@2` and `support-triage@1`.
-`registry::get(name, major)` returns one protocol's YAML as released together with Canon's
-validated model of it.
+Either way, in the directory that holds `protocols/`, check each file against the manifest:
 
-From a checkout, the command line does the same:
-
-```console
-$ cargo run -q -p b10x-canon-engineering -- protocols list
-eval-gated-change@1
-incident-response@1
-loop-improvement@1
-ml-experiment@1
-protocol-adopt@1
-self-improvement@1
-software-change@1
-story-delivery@1
-story-delivery@2
-support-triage@1
-$ cargo run -q -p b10x-canon-engineering -- protocols show software-change@1
-format: protocol/1
-
-protocol:
-  id: software.change
-  revision: 1
-...
+```sh
+awk '$1 == "path:" {p = $2} $1 == "-" && $2 == "path:" {p = $3} $1 == "sha256:" {print $2 "  " p}' protocols/manifest.yaml | sha256sum -c -
 ```
 
-A malformed `<name>@<major>` exits 2; a well-formed one that names no built-in exits 1.
+It prints `<path>: OK` for the vocabulary and for each protocol and exits 0. If a listed file is
+missing or differs it names the file with `FAILED` and exits non-zero. It does not notice a file
+under `protocols/` that the manifest does not list, and it does not check the schema the manifest
+names, `schema/b10x.protocol-catalog.v1.schema.json`, which carries no digest.
+
+The crate `b10x-canon-engineering`, which embeds the protocols at build time and exposes them as a
+registry, is still in the tree. It is not the way to take the catalog, and it is planned to be
+deleted. The `canon-engineering` binary is planned to move to `b10x-canon-engineering-assertions`
+under the same name, with its `assertions` and `gates` commands unchanged and its `protocols list`
+and `protocols show` commands ended; § Assertion gates below runs it from a checkout today.
 
 ## Assertion gates
 
 The CLI also checks `.engineering/gates.yaml` using typed assertions. `canon-engineering
 assertions list` discovers the catalog; `gates validate`, `gates run` and `gates evaluate` validate
-checks, collect observations and replay retained evidence. See the [assertion guide](website/docs/guides/assertions.md)
+checks, collect observations and replay retained evidence. From a checkout, run it as
+`cargo run --bin canon-engineering -- assertions list`. See the [assertion guide](website/docs/guides/assertions.md)
 for a complete gate and commands. These commands are included in release 0.2.0.
 
 The generic expression core lives in Canon. This repository supplies files/documents, explicit

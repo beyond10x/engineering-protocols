@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T07:22:59Z",
+  "actor": "human:timo",
+  "artifact": "story:agents-boundary-data-only",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator on the unit tree: a clone of 2cafe04 made with core.autocrlf=true and the README's manifest check in it; ESS_TOOLCHAIN=0.77.0 cargo test -p b10x-canon-engineering --locked --test catalog_manifest at 43027cb, the last correction",
+    "reference": "clone: README.md CRLF, protocols/manifest.yaml LF, 11 OK, exit 0; catalog_manifest 35 passed, 0 failed; pass 2 ledger carried 0, new 2, resolved 5, no third pass"
+  }
+}

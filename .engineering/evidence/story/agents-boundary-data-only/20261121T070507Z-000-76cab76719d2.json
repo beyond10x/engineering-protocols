@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T07:05:07Z",
+  "actor": "human:timo",
+  "artifact": "story:agents-boundary-data-only",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator on the unit tree at 361cdcb: the README's manifest check run as written (awk over protocols/manifest.yaml into sha256sum -c -); the acceptance grep on the base and on the unit",
+    "reference": "11 files OK, exit 0; grep 9 lines on b0d38a0, none on 361cdcb; implementor transcript: tag route 0, archive route 0, negatives exit 1 naming both files, a changed archive fails sha256sum -c; the curl download not run, no release has the files"
+  }
+}

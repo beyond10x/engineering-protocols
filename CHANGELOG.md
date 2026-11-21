@@ -42,6 +42,18 @@ releases at bare-version tags.
   resolves as before; a consumer that pins `b10x-canon-engineering` by Git tag changes nothing.
   The docs generator depends on the new crate and no longer on `b10x-canon-engineering`; the
   generated site is unchanged (story:docs-generator-reads-files).
+- README.md and AGENTS.md state the boundary the operator decided on 2026-11-21: the repository
+  is a catalog of protocol files. A runtime takes the files from a release tag or the release
+  archive and checks each against `protocols/manifest.yaml`; README.md § Take the protocols and
+  check them has the commands, which need `git`, `curl`, `tar`, `sha256sum` and `awk` and compile
+  nothing. The README no longer tells a reader to depend on `b10x-canon-engineering` or to call
+  `registry::get`. The crate and its `canon-engineering` binary still exist and are unchanged
+  (story:agents-boundary-data-only).
+- Files under `protocols/` and `schema/` are checked out byte for byte on every platform
+  (`.gitattributes`, `-text`): with Git for Windows' default line-ending conversion the manifest's
+  digests did not match the checked-out files. `task check` also refuses a manifest whose text is
+  not in the line shape the README's check reads, so a manifest that passes the gate is one that
+  command checks in full (story:agents-boundary-data-only).
 
 ## [0.16.0] - 2026-11-21
 
