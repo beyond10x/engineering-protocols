@@ -4,7 +4,7 @@
 
 use b10x_canon::ir::Ir;
 use b10x_canon::model::{OutcomeRequirement, Predicate};
-use canon_engineering::vocabulary::Vocabulary;
+use engineering_vocabulary::Vocabulary;
 use serde_json::{Value, json};
 
 use crate::markdown::HEADER;

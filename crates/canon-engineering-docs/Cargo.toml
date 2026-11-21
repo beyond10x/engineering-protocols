@@ -10,7 +10,7 @@ publish = false
 b10x-canon-engineering-assertions = { path = "../canon-engineering-assertions" }
 anyhow = "1"
 b10x-canon = { git = "https://github.com/beyond10x/canon", tag = "0.9.0" }
-b10x-canon-engineering = { path = "../canon-engineering" }
+b10x-engineering-vocabulary = { path = "../engineering-vocabulary" }
 clap = { version = "4.5", features = ["derive"] }
 flate2 = "1"
 serde = { version = "1", features = ["derive"] }
