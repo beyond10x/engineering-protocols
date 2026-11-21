@@ -126,6 +126,7 @@ version = "0.16.0"
 dependencies = [
  "b10x-canon",
  "b10x-canon-engineering-assertions",
+ "b10x-engineering-vocabulary",
  "clap",
  "serde",
  "serde_json",
@@ -161,6 +162,15 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+]
+
+[[package]]
+name = "b10x-engineering-vocabulary"
+version = "0.16.0"
+dependencies = [
+ "b10x-canon",
+ "serde",
+ "serde_yaml_ng",
 ]
 
 [[package]]
@@ -223,8 +233,8 @@ version = "0.16.0"
 dependencies = [
  "anyhow",
  "b10x-canon",
- "b10x-canon-engineering",
  "b10x-canon-engineering-assertions",
+ "b10x-engineering-vocabulary",
  "clap",
  "flate2",
  "serde",
