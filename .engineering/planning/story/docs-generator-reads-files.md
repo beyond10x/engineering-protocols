@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:docs-generator-reads-files
 kind: story
-status: draft
+status: active
 title: The docs generator reads files and links Canon, without the registry crate
 summary: canon-engineering-docs drops its dependency on b10x-canon-engineering; the assertion reference page is kept or dropped.
 relations:
@@ -24,7 +24,10 @@ scope:
   path: crates/canon-engineering/src/vocabulary.rs
 - confidence: inferred
   path: crates/engineering-vocabulary
-revision: 6
+revision: 9
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "proposed", to: "active", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
 ---
 ## Outcome
 
@@ -78,3 +81,24 @@ Exempt: no protocol YAML and no fixture verdict changes.
 `canon-engineering-docs generate --check` reports every generated file fresh with no generated
 file changed against the commit before; `git grep -n "pub struct Vocabulary" -- crates` prints one
 line, in the new crate; `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` passes.
+
+## Decided before dispatch (wave 2026-11-21-w3)
+
+Settled by the coordinator:
+
+- The new crate is `crates/engineering-vocabulary`, package `b10x-engineering-vocabulary`,
+  library `engineering_vocabulary`, `publish = false`, version and edition from the workspace.
+  It holds the reader: the types, `from_yaml`, `to_yaml`, `with_term`, `terms`, `lookup` on
+  `Vocabulary`, the errors and `FORMAT`. It embeds no data.
+- The released vocabulary stays embedded where it is today, in `b10x-canon-engineering`
+  (`include_str!` of `protocols/vocabulary.yaml`, the free functions `vocabulary::terms()` and
+  `vocabulary::lookup()`), next to a `pub use` of the reader's items, so every path under
+  `canon_engineering::vocabulary` that tag 0.16.0 has still resolves.
+- The generator reads `protocols/vocabulary.yaml` from the root it was given, as it reads the
+  protocols, and parses it with the reader.
+- `crates/canon-engineering-docs/src/generate.rs` includes
+  `crates/canon-engineering/src/builtin_name.rs` by `#[path]`. That is a file, not a crate
+  dependency, and stays as it is; story:protocol-check-tool, which deletes the registry crate,
+  moves the file.
+- story:catalog-release-archive (wave 2) added `src/catalog_archive.rs` and three test files to
+  the generator crate. This story changes none of them.

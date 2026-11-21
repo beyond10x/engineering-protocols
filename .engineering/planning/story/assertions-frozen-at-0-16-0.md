@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:assertions-frozen-at-0-16-0
 kind: story
-status: draft
+status: active
 title: The assertion crates are frozen at tag 0.16.0, not deleted
 summary: Replay and the collectors stay until an executor exists elsewhere; they take no new behaviour meanwhile.
 relations:
@@ -20,7 +20,10 @@ scope:
   path: crates/canon-engineering-assertions/Cargo.toml
 - confidence: cited
   path: crates/canon-engineering-assertions/README.md
-revision: 5
+revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T05:42:25Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "proposed", to: "active", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":4}}}
 ---
 ## Outcome
 
@@ -88,3 +91,18 @@ tag 0.16.0 has: `cargo public-api --simplified -p b10x-canon-engineering-asserti
 for `-p b10x-assertion-providers`, run at tag 0.16.0 and at the story's commit with one version of
 `cargo-public-api` (not installed on the workstation today; the story records the version it
 used), print the same lines, and both outputs are in the story's evidence.
+
+## Decided before dispatch (wave 2026-11-21-w3)
+
+Settled by the coordinator; where this section and the text above differ, this section holds:
+
+- decision-blocker:assertion-executor-owner was cleared on 2026-11-21 after this story was
+  written: the owner of what replaces the two crates is Loom (observation collection and gates
+  as executors through Substrate, design not started). The READMEs and README.md say that, and
+  still name the decision-blocker as the record of the decision. They do not say "not decided".
+- `cargo-public-api` is installed into the unit's scratch directory, not into the workstation's
+  cargo home, and run on the nightly toolchain the workstation already has. The tag's side is
+  measured on a `git archive 0.16.0` copy inside the unit tree's `target/`, never by checking the
+  tag out in a worktree. The story's evidence records the tool's version and the nightly's.
+- The two public-API listings are kept as text under the wave's scratch and summarised in an
+  evidence record by the coordinator: files under `.engineering/evidence/` are records only.
