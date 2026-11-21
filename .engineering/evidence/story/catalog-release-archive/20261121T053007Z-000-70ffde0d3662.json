@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T05:30:07Z",
+  "actor": "human:timo",
+  "artifact": "story:catalog-release-archive",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "whole gate on wave/2026-11-21-w2 at 7e0e583 with the coordinator's AGENTS.md and CHANGELOG.md edits: cargo fmt --all --check, clippy -D warnings, cargo test --workspace --locked --no-fail-fast, generate --check, each exit 0; then catalog-archive --out target/catalog and sha256sum -c, each exit 0",
+    "reference": "472 passed, 0 failed, 0 ignored in 104 result lines; --list 472; 35 generated files fresh; plan valid; archive 13 files, sha256 73bacc79762696ea1e384a2054d57ea3dcf26e48c73a3fa880c98d1e379ef004"
+  }
+}

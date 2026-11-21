@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T05:30:06Z",
+  "actor": "human:timo",
+  "artifact": "story:catalog-release-archive",
+  "kind": "story",
+  "revision": 10,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator after adversary pass 2, unit tree at d0bf3cb: ESS_TOOLCHAIN=0.77.0 cargo test -p canon-engineering-docs --locked --no-fail-fast --test catalog_archive --test adversary_catalog_archive --test adversary2_catalog_archive, exit 0",
+    "reference": "11 passed, 6 passed, 7 passed, 0 failed; pass 2 ledger carried 0, new 1, resolved 4; mutants N1 to N5 of the correction each turn adversary2_catalog_archive red"
+  }
+}
