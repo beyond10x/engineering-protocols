@@ -446,6 +446,35 @@ fn entry_mut<'a>(manifest: &'a mut Manifest, path: &str) -> &'a mut ProtocolEntr
         .unwrap_or_else(|| panic!("{MANIFEST} lists no {path}"))
 }
 
+/// Rewrites the version of the [`CANON_PACKAGE`] that `lock` pins.
+fn set_pinned_canon(lock: &mut String, version: &str) {
+    let marker = format!("name = \"{CANON_PACKAGE}\"\nversion = \"");
+    let start = lock
+        .find(&marker)
+        .unwrap_or_else(|| panic!("Cargo.lock has no {CANON_PACKAGE} package"))
+        + marker.len();
+    let end = start + lock[start..].find('"').expect("a quoted version");
+    lock.replace_range(start..end, version);
+}
+
+/// Every listed protocol whose `canon` is above `pinned`, as the problem a Canon pinned at
+/// `pinned` gives it, sorted.
+fn pinned_below(manifest: Manifest, pinned: &str) -> Vec<Problem> {
+    let floor = release(pinned).expect("a MAJOR.MINOR.PATCH pin");
+    let mut problems: Vec<Problem> = manifest
+        .protocols
+        .into_iter()
+        .filter(|entry| release(&entry.canon).is_some_and(|canon| canon > floor))
+        .map(|entry| Problem::CanonPin {
+            path: entry.path,
+            canon: entry.canon,
+            pinned: pinned.to_owned(),
+        })
+        .collect();
+    problems.sort();
+    problems
+}
+
 const SOFTWARE_CHANGE: &str = "protocols/software-change/1.yaml";
 const STORY_DELIVERY_2: &str = "protocols/story-delivery/2.yaml";
 
@@ -591,34 +620,88 @@ fn a_pinned_canon_lower_than_a_listed_canon_is_a_problem() {
     );
 
     let mut scratch = Scratch::new();
-    let marker = format!("name = \"{CANON_PACKAGE}\"\nversion = \"");
-    let start = scratch
-        .lock
-        .find(&marker)
-        .unwrap_or_else(|| panic!("Cargo.lock has no {CANON_PACKAGE} package"))
-        + marker.len();
-    let end = start + scratch.lock[start..].find('"').expect("a quoted version");
-    scratch.lock.replace_range(start..end, "0.1.0");
-    let expected: Vec<Problem> = scratch
-        .parsed_manifest()
-        .protocols
-        .into_iter()
-        .filter(|entry| release(&entry.canon).is_some_and(|canon| canon > (0, 1, 0)))
-        .map(|entry| Problem::CanonPin {
-            path: entry.path,
-            canon: entry.canon,
-            pinned: "0.1.0".to_owned(),
-        })
-        .collect();
+    set_pinned_canon(&mut scratch.lock, "0.1.0");
+    let expected = pinned_below(scratch.parsed_manifest(), "0.1.0");
     assert!(
         expected.iter().any(
             |problem| matches!(problem, Problem::CanonPin { path, .. } if path == STORY_DELIVERY_2)
         ),
         "{STORY_DELIVERY_2} needs a Canon above 0.1.0"
     );
-    let mut expected = expected;
-    expected.sort();
     assert_eq!(scratch.check(), expected);
+}
+
+#[test]
+fn a_canon_one_patch_above_the_pin_is_a_problem() {
+    let mut scratch = Scratch::new();
+    let (pinned, (major, minor, patch)) =
+        pinned_canon(&scratch.lock).expect("Cargo.lock pins Canon");
+    let above = format!("{major}.{minor}.{}", patch + 1);
+    scratch.edit_manifest(|manifest| {
+        entry_mut(manifest, SOFTWARE_CHANGE).canon = above.clone();
+    });
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::CanonPin {
+            path: SOFTWARE_CHANGE.to_owned(),
+            canon: above,
+            pinned,
+        }]
+    );
+}
+
+#[test]
+fn the_lowest_of_two_pinned_canons_is_compared() {
+    let mut scratch = Scratch::new();
+    scratch.lock.push_str(
+        "\n[[package]]\nname = \"b10x-canon\"\nversion = \"0.3.0\"\nsource = \"git+https://example.invalid/canon?tag=0.3.0#0\"\n",
+    );
+    let expected = pinned_below(scratch.parsed_manifest(), "0.3.0");
+    assert!(
+        !expected.is_empty(),
+        "the manifest lists a protocol above Canon 0.3.0"
+    );
+    assert_eq!(scratch.check(), expected);
+}
+
+#[test]
+fn a_lock_that_pins_no_canon_or_no_release_is_a_problem() {
+    let mut scratch = Scratch::new();
+    scratch.lock = scratch.lock.replace(
+        &format!("name = \"{CANON_PACKAGE}\"\n"),
+        &format!("name = \"{CANON_PACKAGE}-renamed\"\n"),
+    );
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::Lock(format!("Cargo.lock pins no {CANON_PACKAGE}"))]
+    );
+
+    let mut scratch = Scratch::new();
+    set_pinned_canon(&mut scratch.lock, "0.9");
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::Lock(format!(
+            "{CANON_PACKAGE} 0.9 is not MAJOR.MINOR.PATCH"
+        ))]
+    );
+}
+
+#[test]
+fn a_canon_that_is_not_major_minor_patch_is_a_problem() {
+    for value in ["0.4.0.1", "v0.4.0", "0.04.0", "0.4"] {
+        let mut scratch = Scratch::new();
+        scratch.edit_manifest(|manifest| {
+            entry_mut(manifest, SOFTWARE_CHANGE).canon = value.to_owned();
+        });
+        assert_eq!(
+            scratch.check(),
+            vec![Problem::CanonValue {
+                path: SOFTWARE_CHANGE.to_owned(),
+                value: value.to_owned(),
+            }],
+            "{value}"
+        );
+    }
 }
 
 #[test]
@@ -703,6 +786,68 @@ fn a_path_outside_the_catalog_or_listed_twice_is_a_problem() {
     assert_eq!(
         scratch.check(),
         vec![Problem::Duplicate(SOFTWARE_CHANGE.to_owned())]
+    );
+}
+
+#[test]
+fn a_file_in_a_subdirectory_of_a_protocol_directory_is_unlisted() {
+    let scratch = Scratch::new();
+    let nested = "protocols/software-change/drafts/1.yaml";
+    fs::create_dir_all(scratch.path("protocols/software-change/drafts"))
+        .expect("creating a subdirectory");
+    fs::copy(scratch.path(SOFTWARE_CHANGE), scratch.path(nested)).expect("copying a protocol");
+    assert_eq!(scratch.check(), vec![Problem::Unlisted(nested.to_owned())]);
+}
+
+#[test]
+fn an_uppercase_sha256_is_a_problem() {
+    let mut scratch = Scratch::new();
+    let actual = scratch.entry(SOFTWARE_CHANGE).sha256;
+    let listed = actual.to_ascii_uppercase();
+    scratch.edit_manifest(|manifest| {
+        entry_mut(manifest, SOFTWARE_CHANGE).sha256 = listed.clone();
+    });
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::Digest {
+            path: SOFTWARE_CHANGE.to_owned(),
+            listed,
+            actual,
+        }]
+    );
+}
+
+#[test]
+fn a_listed_file_canon_does_not_parse_is_a_problem() {
+    let mut scratch = Scratch::new();
+    let text = "format: protocol/1\nnot_a_field: true\n";
+    let error = b10x_canon::model::parse(text)
+        .expect_err("Canon refuses an unknown top-level field")
+        .to_string();
+    fs::write(scratch.path(SOFTWARE_CHANGE), text).expect("writing a protocol file");
+    scratch.edit_manifest(|manifest| {
+        entry_mut(manifest, SOFTWARE_CHANGE).sha256 = digest(text.as_bytes());
+    });
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::Unparsed {
+            path: SOFTWARE_CHANGE.to_owned(),
+            error,
+        }]
+    );
+}
+
+#[test]
+fn a_vocabulary_entry_for_another_file_is_a_problem() {
+    let mut scratch = Scratch::new();
+    let other = "protocols/vocab.yaml";
+    scratch.edit_manifest(|manifest| manifest.vocabulary.path = other.to_owned());
+    assert_eq!(
+        scratch.check(),
+        vec![
+            Problem::Unlisted(VOCABULARY.to_owned()),
+            Problem::Vocabulary(other.to_owned()),
+        ]
     );
 }
 
