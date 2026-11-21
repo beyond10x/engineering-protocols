@@ -51,8 +51,8 @@ lowest Canon release its author declared the file needs; it is written by hand a
 only refuses a value above the Canon it pins, so it is no guarantee to choose your Canon by. The
 commands below need `git`, `curl`, `tar`, `sha256sum` and `awk`; nothing is compiled.
 
-Tag 0.16.0 has no manifest and no release archive. The first release that carries both is the one
-after 0.16.0; `<version>` below is the tag of a release that does.
+Release 0.17.0 is the first that carries a manifest and a release archive; tag 0.16.0 and earlier
+have neither. `<version>` below is the tag of a release that has both.
 
 From the release tag, a shallow clone:
 
@@ -149,7 +149,7 @@ Changing the repository: read [AGENTS.md](AGENTS.md).
 
 ## Status
 
-Latest source release 0.16.0 (2026-11-21), using Canon 0.9.0 and ESS 0.77.0; see [CHANGELOG.md](CHANGELOG.md).
+Latest source release 0.17.0 (2026-11-21), using Canon 0.9.0 and ESS 0.77.0; see [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 

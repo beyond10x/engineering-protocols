@@ -6,6 +6,8 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-21
+
 ### Added
 
 - `protocols/manifest.yaml` (format `b10x-protocol-catalog/1`, schema
@@ -20,7 +22,7 @@ releases at bare-version tags.
   `target/catalog/`) writes `engineering-protocols-catalog-<version>.tar.gz` and its `.sha256`
   file in `sha256sum` format. The archive holds what the manifest lists and the manifest itself,
   at repository-relative paths with no top-level directory, and is byte-identical across runs on
-  one tree and one `Cargo.lock`. From the release after 0.16.0 both files are assets of the
+  one tree and one `Cargo.lock`. From this release on both files are assets of the
   GitHub Release, so a consumer that compiles nothing from this repository fetches the catalog of
   a tag and checks it with `sha256sum -c` (story:catalog-release-archive).
 
