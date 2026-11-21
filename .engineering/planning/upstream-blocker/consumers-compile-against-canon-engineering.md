@@ -7,7 +7,7 @@ title: Loom (four crates, tag 0.15.2) and takt (tag 0.9.0) compile against b10x-
 summary: Cleared when Loom loads the catalog from files and takt reads vendored files or is declared to stay on its pin.
 relations:
 - blocks: story:protocol-check-tool
-revision: 3
+revision: 4
 ---
 ## What is open
 
@@ -44,3 +44,12 @@ its tag by the operator's decision of 2026-11-21. takt's half of "What clears it
 blocker now waits on Loom's four crates only; Loom accepted its
 epic:engineering-protocols-as-vendored-data on 2026-11-21, and its stories run behind its Canon
 pin wave.
+
+## Read again on 2026-11-21 (wave 2026-11-21-w4)
+
+Loom's four crates now pin tag 0.16.0, not 0.15.2: `crates/loom-protocols/Cargo.toml:15`,
+`crates/loom-governor/Cargo.toml:19`, `crates/loom-intake-slice/Cargo.toml:18` and
+`crates/loom-intake-router/Cargo.toml:15`, read in Loom's checkout at commit `c94ccbbf`. The
+title and the line above keep the number they were written with. What this blocker waits on is
+unchanged: the four crates still compile against `b10x-canon-engineering`. AGENTS.md § Boundary
+cites this record and names no tag.

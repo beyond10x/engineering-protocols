@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T07:41:30Z",
+  "actor": "human:timo",
+  "artifact": "story:agents-boundary-data-only",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "whole gate on wave/2026-11-21-w4 at 65ab3ff with the coordinator's CHANGELOG.md edit: cargo fmt --all --check, clippy -D warnings, cargo test --workspace --locked --no-fail-fast, generate --check, each exit 0; then catalog-archive, sha256sum -c, the story's acceptance grep and the README's manifest check as written",
+    "reference": "493 passed, 0 failed, 0 ignored in 110 result lines; --list 493; 35 generated files fresh; plan valid; acceptance grep 0 lines; README check 11 OK, exit 0; archive sha256 73bacc79762696ea1e384a2054d57ea3dcf26e48c73a3fa880c98d1e379ef004"
+  }
+}
