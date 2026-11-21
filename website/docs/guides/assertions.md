@@ -3,7 +3,7 @@ title: Deterministic assertion gates
 sidebar_position: 4
 description: Author typed engineering checks, collect observations, and replay retained evidence.
 lede: A gate passes only when every assertion evaluates true against its bound observations.
-source: crates/canon-engineering-assertions; crates/assertion-providers; catalog/engineering.yaml
+source: crates/canon-engineering-assertions; crates/assertion-providers; crates/canon-engineering-assertions/catalog.yaml
 ---
 
 Assertion gates are available in source release 0.2.0. They use the generic `canon-expr/1` language

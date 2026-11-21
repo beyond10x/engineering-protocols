@@ -23,7 +23,7 @@ use std::{
     time::Duration,
 };
 
-pub const BUILTIN_CATALOG: &str = include_str!("../../../catalog/engineering.yaml");
+pub const BUILTIN_CATALOG: &str = include_str!("../catalog.yaml");
 const MAX_DOCUMENT: u64 = 4 * 1024 * 1024;
 
 #[path = "../generated/types.rs"]
