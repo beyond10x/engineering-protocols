@@ -67,7 +67,10 @@ fn a_checkout_without_the_assertion_catalog_does_not_build_and_names_the_file() 
         .expect("cargo runs");
     let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
     let _ = std::fs::remove_dir_all(&scratch);
-    assert!(!out.status.success(), "a checkout without catalog.yaml builds");
+    assert!(
+        !out.status.success(),
+        "a checkout without catalog.yaml builds"
+    );
     assert!(
         stderr.contains("catalog.yaml"),
         "the failure names catalog.yaml: {stderr}"
