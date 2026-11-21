@@ -1,14 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "b10x-protocol-catalog/1",
-  "description": "The manifest of the engineering protocol catalog, protocols/manifest.yaml: every file under protocols/ but the manifest itself, each with the sha256 of its bytes, so a consumer checks a file it took from a tag against the manifest of that tag without compiling anything from this repository. The repository's tests (crates/canon-engineering/tests/catalog_manifest.rs) refuse a manifest that leaves out a file under protocols/, names a file that does not exist, lists a digest, id or revision the file does not have, lists a canon release above the Canon pinned in Cargo.lock, or has a field this schema does not name.",
+  "description": "A b10x-protocol-catalog/1 document: the manifest of the engineering protocol catalog, protocols/manifest.yaml. It lists every file under protocols/ but the manifest itself, each with the sha256 of its bytes, so a consumer checks a file it took from a tag against the manifest of that tag without compiling anything from this repository. The repository's tests (crates/canon-engineering/tests/catalog_manifest.rs) refuse a manifest that names another schema or one that does not exist, leaves out a file under protocols/, names a file that does not exist, lists a digest, id or revision the file does not have, lists a canon release above the Canon pinned in Cargo.lock, or has a field this schema does not name.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format", "vocabulary", "protocols"],
+  "required": ["format", "schema", "vocabulary", "protocols"],
   "properties": {
     "format": {
       "description": "The document format, always b10x-protocol-catalog/1.",
       "const": "b10x-protocol-catalog/1"
+    },
+    "schema": {
+      "description": "The path of this schema relative to the repository root, so a reader of the manifest alone can find the rules it follows: always schema/b10x.protocol-catalog.v1.schema.json, in the same tag as the manifest.",
+      "const": "schema/b10x.protocol-catalog.v1.schema.json"
     },
     "vocabulary": {
       "description": "The engineering vocabulary, the one catalog file that is not a protocol.",

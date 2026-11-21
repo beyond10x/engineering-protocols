@@ -26,7 +26,7 @@ const MANIFEST: &str = "protocols/manifest.yaml";
 const FORMAT: &str = "b10x-protocol-catalog/1";
 /// The one catalog file that is not a protocol.
 const VOCABULARY: &str = "protocols/vocabulary.yaml";
-/// The manifest's JSON Schema, relative to the repository root.
+/// The manifest's JSON Schema, relative to the repository root, which the manifest's `schema` names.
 const SCHEMA: &str = "schema/b10x.protocol-catalog.v1.schema.json";
 /// The package in `Cargo.lock` whose release parses the protocol files.
 const CANON_PACKAGE: &str = "b10x-canon";
@@ -38,6 +38,7 @@ const CANON_PACKAGE: &str = "b10x-canon";
 #[serde(deny_unknown_fields)]
 struct Manifest {
     format: String,
+    schema: String,
     vocabulary: VocabularyEntry,
     protocols: Vec<ProtocolEntry>,
 }
@@ -67,6 +68,8 @@ enum Problem {
     Manifest(String),
     /// The manifest's `format` is not [`FORMAT`].
     Format(String),
+    /// The manifest's `schema` is not [`SCHEMA`].
+    Schema(String),
     /// `Cargo.lock` cannot be read, pins no [`CANON_PACKAGE`], or pins one whose version is not
     /// `MAJOR.MINOR.PATCH`.
     Lock(String),
@@ -123,6 +126,11 @@ fn check(root: &Path, manifest: &str, lock: &str) -> Vec<Problem> {
     let mut problems = Vec::new();
     if manifest.format != FORMAT {
         problems.push(Problem::Format(manifest.format.clone()));
+    }
+    if manifest.schema != SCHEMA {
+        problems.push(Problem::Schema(manifest.schema.clone()));
+    } else if !root.join(SCHEMA).is_file() {
+        problems.push(Problem::Missing(SCHEMA.to_owned()));
     }
     let pinned = match pinned_canon(lock) {
         Ok(pinned) => Some(pinned),
@@ -360,8 +368,8 @@ fn read(root: &Path, path: &str) -> String {
     fs::read_to_string(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
-/// A copy of the repository's `protocols/` in a temporary directory under the target directory,
-/// with the repository's manifest and `Cargo.lock` text, for one mutation.
+/// A copy of the repository's `protocols/` and schema file in a temporary directory under the
+/// target directory, with the repository's manifest and `Cargo.lock` text, for one mutation.
 struct Scratch {
     dir: tempfile::TempDir,
     manifest: String,
@@ -374,6 +382,10 @@ impl Scratch {
         let dir = tempfile::tempdir_in(env!("CARGO_TARGET_TMPDIR"))
             .unwrap_or_else(|error| panic!("scratch directory: {error}"));
         copy_dir(&root.join("protocols"), &dir.path().join("protocols"));
+        let schema = dir.path().join(SCHEMA);
+        fs::create_dir_all(schema.parent().expect("the schema is in a directory"))
+            .unwrap_or_else(|error| panic!("{}: {error}", schema.display()));
+        fs::copy(root.join(SCHEMA), &schema).unwrap_or_else(|error| panic!("{SCHEMA}: {error}"));
         Self {
             dir,
             manifest: read(&root, MANIFEST),
@@ -531,6 +543,23 @@ fn a_file_under_protocols_missing_from_the_manifest_is_a_problem() {
 }
 
 #[test]
+fn a_file_under_protocols_that_is_not_yaml_or_is_hidden_is_unlisted() {
+    for added in [
+        "protocols/README.md",
+        "protocols/software-change/notes.txt",
+        "protocols/software-change/.1.yaml.swp",
+    ] {
+        let scratch = Scratch::new();
+        fs::write(scratch.path(added), b"x\n").expect("writing a file under protocols/");
+        assert_eq!(
+            scratch.check(),
+            vec![Problem::Unlisted(added.to_owned())],
+            "{added}"
+        );
+    }
+}
+
+#[test]
 fn a_listed_file_that_does_not_exist_is_a_problem() {
     let scratch = Scratch::new();
     let removed = "protocols/ml-experiment/1.yaml";
@@ -570,36 +599,61 @@ fn a_listed_sha256_that_differs_from_the_bytes_is_a_problem() {
 }
 
 #[test]
-fn a_listed_id_that_differs_from_what_canon_parses_is_a_problem() {
-    let mut scratch = Scratch::new();
-    scratch.edit_manifest(|manifest| {
-        entry_mut(manifest, SOFTWARE_CHANGE).id = "software.changes".to_owned();
-    });
+fn a_protocol_file_whose_line_endings_change_is_a_digest_problem() {
+    let scratch = Scratch::new();
+    let listed = scratch.entry(SOFTWARE_CHANGE).sha256;
+    let text = fs::read_to_string(scratch.path(SOFTWARE_CHANGE)).expect("reading a protocol file");
+    let crlf = text.replace('\n', "\r\n");
+    fs::write(scratch.path(SOFTWARE_CHANGE), &crlf).expect("writing a protocol file");
     assert_eq!(
         scratch.check(),
-        vec![Problem::Id {
+        vec![Problem::Digest {
             path: SOFTWARE_CHANGE.to_owned(),
-            listed: "software.changes".to_owned(),
-            parsed: "software.change".to_owned(),
+            listed,
+            actual: digest(crlf.as_bytes()),
         }]
     );
 }
 
 #[test]
+fn a_listed_id_that_differs_from_what_canon_parses_is_a_problem() {
+    // One id the parsed one is a prefix of, and one that is a prefix of the parsed one.
+    for listed in ["software.changes", "software"] {
+        let mut scratch = Scratch::new();
+        scratch.edit_manifest(|manifest| {
+            entry_mut(manifest, SOFTWARE_CHANGE).id = listed.to_owned();
+        });
+        assert_eq!(
+            scratch.check(),
+            vec![Problem::Id {
+                path: SOFTWARE_CHANGE.to_owned(),
+                listed: listed.to_owned(),
+                parsed: "software.change".to_owned(),
+            }],
+            "{listed}"
+        );
+    }
+}
+
+#[test]
 fn a_listed_revision_that_differs_from_what_canon_parses_is_a_problem() {
-    let mut scratch = Scratch::new();
-    let parsed = scratch.entry(STORY_DELIVERY_2).revision;
-    scratch.edit_manifest(|manifest| {
-        entry_mut(manifest, STORY_DELIVERY_2).revision = parsed + 1;
-    });
-    assert_eq!(
-        scratch.check(),
-        vec![Problem::Revision {
-            path: STORY_DELIVERY_2.to_owned(),
-            listed: parsed + 1,
-            parsed,
-        }]
-    );
+    let parsed = Scratch::new().entry(STORY_DELIVERY_2).revision;
+    // One revision above the parsed one and one below it.
+    for listed in [parsed + 1, parsed - 1] {
+        let mut scratch = Scratch::new();
+        scratch.edit_manifest(|manifest| {
+            entry_mut(manifest, STORY_DELIVERY_2).revision = listed;
+        });
+        assert_eq!(
+            scratch.check(),
+            vec![Problem::Revision {
+                path: STORY_DELIVERY_2.to_owned(),
+                listed,
+                parsed,
+            }],
+            "{listed}"
+        );
+    }
 }
 
 #[test]
@@ -753,6 +807,21 @@ fn a_manifest_of_another_format_is_a_problem() {
 }
 
 #[test]
+fn a_manifest_naming_another_schema_is_a_problem() {
+    let other = "schema/b10x.protocol-catalog.v2.schema.json";
+    let mut scratch = Scratch::new();
+    scratch.edit_manifest(|manifest| manifest.schema = other.to_owned());
+    assert_eq!(scratch.check(), vec![Problem::Schema(other.to_owned())]);
+}
+
+#[test]
+fn a_manifest_whose_schema_file_does_not_exist_is_a_problem() {
+    let scratch = Scratch::new();
+    fs::remove_file(scratch.path(SCHEMA)).expect("removing the schema file");
+    assert_eq!(scratch.check(), vec![Problem::Missing(SCHEMA.to_owned())]);
+}
+
+#[test]
 fn a_path_outside_the_catalog_or_listed_twice_is_a_problem() {
     let mut scratch = Scratch::new();
     scratch.edit_manifest(|manifest| {
@@ -861,6 +930,7 @@ fn the_schema_names_exactly_the_fields_the_types_accept() {
         .unwrap_or_else(|error| panic!("{SCHEMA}: {error}"));
     let sample = serde_json::to_value(Manifest {
         format: FORMAT.to_owned(),
+        schema: SCHEMA.to_owned(),
         vocabulary: VocabularyEntry {
             path: VOCABULARY.to_owned(),
             sha256: digest(b""),

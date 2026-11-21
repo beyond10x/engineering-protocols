@@ -1,4 +1,5 @@
 format: b10x-protocol-catalog/1
+schema: schema/b10x.protocol-catalog.v1.schema.json
 
 vocabulary:
   path: protocols/vocabulary.yaml
