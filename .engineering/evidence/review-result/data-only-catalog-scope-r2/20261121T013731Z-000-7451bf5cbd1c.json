@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-21T01:37:31Z",
+  "actor": "human:timo",
+  "artifact": "review-result:data-only-catalog-scope-r2",
+  "kind": "review-result",
+  "revision": 2,
+  "change": {
+    "change": "redaction",
+    "literal_sha256": "31c03d081789286293fdc39698d11ef81a1f67725a430c03cc231f807202bd70",
+    "literal_chars": 63,
+    "replacement": "sdc/docs/engineering-protocols-boundary.md",
+    "count": 1,
+    "reason": "an absolute path on the operator's workstation, refused by the gates privacy check; replaced by the path relative to the workspace"
+  }
+}
