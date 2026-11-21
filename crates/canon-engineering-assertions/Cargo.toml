@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "Typed engineering gates, observation collection and offline replay"
+publish = false
 
 [lib]
 name = "canon_engineering_assertions"

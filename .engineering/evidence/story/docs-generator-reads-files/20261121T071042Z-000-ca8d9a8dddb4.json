@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T07:10:42Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-generator-reads-files",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "adversary pass 2 on 476c46a, the last correction: cargo build --locked -p b10x-canon-engineering, cargo metadata --locked, the three-package suite",
+    "reference": "ledger carried 0, new 0, resolved 5; build exit 0 without dev-dependencies; Cargo.lock unchanged by the correction; 387 passed, 0 failed"
+  }
+}

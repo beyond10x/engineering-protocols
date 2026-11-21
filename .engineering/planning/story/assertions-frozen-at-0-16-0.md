@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:assertions-frozen-at-0-16-0
 kind: story
-status: draft
+status: implemented
 title: The assertion crates are frozen at tag 0.16.0, not deleted
 summary: Replay and the collectors stay until an executor exists elsewhere; they take no new behaviour meanwhile.
 relations:
@@ -20,7 +20,17 @@ scope:
   path: crates/canon-engineering-assertions/Cargo.toml
 - confidence: cited
   path: crates/canon-engineering-assertions/README.md
-revision: 5
+- confidence: cited
+  path: crates/canon-engineering-docs/src/status.rs
+- confidence: cited
+  path: website/data/status.json
+- confidence: cited
+  path: website/docs/guides/assertions.md
+revision: 11
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T05:42:25Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "proposed", to: "active", at: "2026-11-21T05:42:26Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":4}}}
+- {from: "active", to: "implemented", at: "2026-11-21T06:44:03Z", actor: "human:timo", revision: 11, decided_on: {"recorded":{"test_result":1,"review_outcome":11,"verification":2}}}
 ---
 ## Outcome
 
@@ -88,3 +98,47 @@ tag 0.16.0 has: `cargo public-api --simplified -p b10x-canon-engineering-asserti
 for `-p b10x-assertion-providers`, run at tag 0.16.0 and at the story's commit with one version of
 `cargo-public-api` (not installed on the workstation today; the story records the version it
 used), print the same lines, and both outputs are in the story's evidence.
+
+## Decided before dispatch (wave 2026-11-21-w3)
+
+Settled by the coordinator; where this section and the text above differ, this section holds:
+
+- decision-blocker:assertion-executor-owner was cleared on 2026-11-21 after this story was
+  written: the owner of what replaces the two crates is Loom (observation collection and gates
+  as executors through Substrate, design not started). The READMEs and README.md say that, and
+  still name the decision-blocker as the record of the decision. They do not say "not decided".
+- `cargo-public-api` is installed into the unit's scratch directory, not into the workstation's
+  cargo home, and run on the nightly toolchain the workstation already has. The tag's side is
+  measured on a `git archive 0.16.0` copy inside the unit tree's `target/`, never by checking the
+  tag out in a worktree. The story's evidence records the tool's version and the nightly's.
+- The two public-API listings are kept as text under the wave's scratch and summarised in an
+  evidence record by the coordinator: files under `.engineering/evidence/` are records only.
+
+## Delivered (wave 2026-11-21-w3)
+
+- `publish = false` in `crates/canon-engineering-assertions/Cargo.toml` and
+  `crates/assertion-providers/Cargo.toml`. No source or test file of either crate changed.
+- `crates/canon-engineering-assertions/README.md` (new) and `crates/assertion-providers/README.md`
+  state the freeze at the behaviour of tag 0.16.0, what frozen means, why, and that Loom owns
+  what replaces the crates (decision-blocker:assertion-executor-owner, cleared). Each lists the
+  files a Canon or ESS pin move still edits, from the repository root, checked against the last
+  ESS move (commit 708b84f, 10 files).
+- `README.md` § Assertion gates states the freeze and no longer lists Kubernetes providers and
+  AEP acceptance integration as planned; § Crates marks both crates frozen.
+- Beyond the story's scope, by the coordinator's decision after adversary pass 1, because the
+  freeze made them false: the status record's planned item "AEP acceptance and Kubernetes
+  providers" is removed (`crates/canon-engineering-docs/src/status.rs`,
+  `website/data/status.json` regenerated), and `website/docs/guides/assertions.md` states the
+  freeze instead of listing those integrations as planned.
+- Public items, the acceptance's measurement: `cargo public-api --simplified` with
+  cargo-public-api 0.52.0 on rustc 1.101.0-nightly (0abfedbc7 2026-10-02), at a `git archive` of
+  tag 0.16.0 and at the unit: `b10x-canon-engineering-assertions` 345 lines, sha256
+  `3bbc0f96136e1641c12d927dcb07ebdb05ad68c7df710b13cb71d0e0cf00198b` on both sides;
+  `b10x-assertion-providers` 338 lines, sha256
+  `88c97e66ccc4252a6a270b714bf45c4f5d0d24ae1d58d6379cb455f5428ee0f4` on both sides. The listings
+  show signatures; that behaviour is unchanged rests on the source diff between the tag and the
+  unit, which is one `include_str!` path (story:assertion-catalog-path), the catalog file being
+  the same blob at both paths. The four listings were kept in the coordinator's session scratch,
+  not in the repository.
+- `AGENTS.md` § Invariants has the freeze's row. § ESS still describes the crates as before:
+  story:agents-boundary-data-only writes the frozen state there.

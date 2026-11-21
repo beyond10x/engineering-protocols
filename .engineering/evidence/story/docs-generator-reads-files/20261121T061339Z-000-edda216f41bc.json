@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T06:13:39Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-generator-reads-files",
+  "kind": "story",
+  "revision": 9,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator on the unit tree at d975e9e: cargo tree --locked -p canon-engineering-docs --prefix none; diff of lines 39-388 of the base's crates/canon-engineering/src/vocabulary.rs against crates/engineering-vocabulary/src/lib.rs",
+    "reference": "0 lines b10x-canon-engineering v, 1 line b10x-engineering-vocabulary v; 0 of the 350 base lines missing from the new crate; implementor red run: no_registry_dependency 0 passed, 3 failed, vocabulary_reexport did not compile"
+  }
+}

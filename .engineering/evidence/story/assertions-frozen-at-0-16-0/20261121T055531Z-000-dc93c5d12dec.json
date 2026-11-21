@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T05:55:31Z",
+  "actor": "human:timo",
+  "artifact": "story:assertions-frozen-at-0-16-0",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "coordinator on the unit tree at ba94af2: cmp of the implementor's four cargo public-api --simplified listings (cargo-public-api 0.52.0, rustc 1.101.0-nightly 0abfedbc7 2026-10-02), tag 0.16.0 against the unit",
+    "reference": "b10x-canon-engineering-assertions 345 lines, sha256 3bbc0f96136e1641c12d927dcb07ebdb05ad68c7df710b13cb71d0e0cf00198b on both sides; b10x-assertion-providers 338 lines, sha256 88c97e66ccc4252a6a270b714bf45c4f5d0d24ae1d58d6379cb455f5428ee0f4 on both sides; cmp exit 0 for both pairs; git status of the unit: 5 files, no source or test file, Cargo.lock unchanged"
+  }
+}

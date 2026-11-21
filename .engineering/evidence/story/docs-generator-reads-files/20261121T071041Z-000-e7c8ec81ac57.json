@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T07:10:41Z",
+  "actor": "human:timo",
+  "artifact": "story:docs-generator-reads-files",
+  "kind": "story",
+  "revision": 11,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "whole gate on wave/2026-11-21-w3 at b1f8df0 with the coordinator's AGENTS.md, README.md and CHANGELOG.md edits: cargo fmt --all --check, clippy -D warnings, cargo test --workspace --locked --no-fail-fast, generate --check, each exit 0; then catalog-archive and sha256sum -c, each exit 0",
+    "reference": "484 passed, 0 failed, 0 ignored in 110 result lines; --list 484; 35 generated files fresh; plan valid; cargo tree -p canon-engineering-docs lists 0 b10x-canon-engineering and 1 b10x-engineering-vocabulary; git grep pub struct Vocabulary under crates prints 1 line; archive sha256 73bacc79762696ea1e384a2054d57ea3dcf26e48c73a3fa880c98d1e379ef004"
+  }
+}

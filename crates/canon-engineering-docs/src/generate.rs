@@ -9,7 +9,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow, bail, ensure};
 use b10x_canon::ir::{Ir, compile};
 use b10x_canon::model::{one_line, parse};
-use canon_engineering::vocabulary::{Category, Marking, Vocabulary};
+use engineering_vocabulary::{Category, Marking, Vocabulary};
 
 use crate::graph;
 use crate::markdown::{HEADER, code, text, yaml_string};
