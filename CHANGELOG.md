@@ -6,6 +6,25 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-21
+
+### Changed
+
+- Canon 0.8.0 -> 0.9.0 (tag `0.9.0`, commit 8f1f4527). `registry::get` returns Canon's model type,
+  so a consumer that uses it moves to Canon 0.9.0 with this release. Canon 0.9.0 adds child cases
+  (an action's `case_open`, the `children` predicate form, the evidence kind `case_outcome`); no
+  built-in protocol uses them, and every protocol, fixture verdict, measured state count and
+  generated page is the one 0.15.2 has (story:canon-0-9-0-pin).
+- `canon-engineering-docs generate` refuses a protocol with `case_open` or a `children` form,
+  naming the file and the construct: `b10x-protocol-graph/1` in docs-system 0.14.0 has no place
+  for either, so a page or graph of such a protocol would leave it out.
+
+### Fixed
+
+- The `process_program` tests of `b10x-assertion-providers` pass where coreutils is one multi-call
+  binary (Ubuntu 26.04, which CI's `ubuntu-latest` now is): their `tool` fixture is a script, where
+  it was a copy of `/usr/bin/printf` that refuses to run under another name. Tests only.
+
 ## [0.15.2] - 2026-10-30
 
 ### Changed

@@ -209,13 +209,23 @@ fn index_page(shipped: &[Shipped]) -> String {
     out
 }
 
-/// Parses and compiles one protocol document with Canon; any problem names the document.
+/// Parses and compiles one protocol document with Canon; any problem names the document. A
+/// protocol the graph format cannot draw is refused here, so no page or graph leaves part of it
+/// out.
 fn compiled(source: &Source) -> Result<Ir> {
     let document = parse(&source.text).map_err(|error| anyhow!("{}: {error}", source.path))?;
-    compile(&document).map_err(|problems| {
+    let ir = compile(&document).map_err(|problems| {
         let problems: Vec<String> = problems.iter().map(ToString::to_string).collect();
         anyhow!("{}: {}", source.path, problems.join("; "))
-    })
+    })?;
+    if let Some(construct) = graph::undrawn(&ir) {
+        bail!(
+            "{}: {construct}, which {} cannot draw",
+            source.path,
+            graph::FORMAT
+        );
+    }
+    Ok(ir)
 }
 
 /// Every generated file, by path below `website/`.
@@ -597,6 +607,32 @@ mod tests {
             "{error}"
         );
         assert!(error.contains("hearsay"), "{error}");
+    }
+
+    /// Canon 0.9.0's two child-case constructs compile, and `b10x-protocol-graph/1` has no place
+    /// for either: generation refuses the protocol by path and names the construct, and writes
+    /// neither a page nor a graph that leaves it out.
+    #[test]
+    fn a_protocol_with_a_child_case_construct_is_refused_with_its_path() {
+        let opens = "format: protocol/1\nprotocol: {id: audit, revision: 1}\nartifacts: {findings: {}}\nactions:\n  open_change: {case_open: {protocol: software.change, subject: findings}}\n";
+        let error = with(vec![source("audit", opens)])
+            .expect_err("refused")
+            .to_string();
+        assert_eq!(
+            error,
+            "protocols/audit/1.yaml: action open_change opens a child case (`case_open`), \
+             which b10x-protocol-graph/1 cannot draw"
+        );
+
+        let reads = "format: protocol/1\nprotocol: {id: audit, revision: 1}\nartifacts: {findings: {}}\nevidence_kinds: {case_outcome: {}}\nclaims:\n  resolved:\n    true_when: {not: {children: {in: [accepted, declined]}}}\n";
+        let error = with(vec![source("audit", reads)])
+            .expect_err("refused")
+            .to_string();
+        assert_eq!(
+            error,
+            "protocols/audit/1.yaml: claim resolved reads its child cases (a `children` form), \
+             which b10x-protocol-graph/1 cannot draw"
+        );
     }
 
     #[test]

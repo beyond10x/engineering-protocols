@@ -126,6 +126,14 @@ pub fn predicate(predicate: &Predicate) -> String {
             }
             line
         }
+        Predicate::Children(form) => format!(
+            "every child case ended with an outcome in ({})",
+            form.r#in
+                .iter()
+                .map(|outcome| code(outcome))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
         Predicate::All(members) if members.is_empty() => "always true".to_owned(),
         Predicate::Any(members) if members.is_empty() => "never true".to_owned(),
         Predicate::All(members) => format!("all of ({})", list(members)),
@@ -508,6 +516,19 @@ mod tests {
                 "{any: [{evidence: {kind: e, result: fail}}, {before: {first: e, then: f}}]}"
             ),
             "any of (evidence `e` with result `fail`; the first `e` before the first `f`)"
+        );
+    }
+
+    /// Canon 0.9.0's form over the child cases reads as one line, its outcomes in the order Canon
+    /// holds them.
+    #[test]
+    fn a_children_form_names_the_outcomes_it_admits() {
+        let source = "format: protocol/1\nprotocol: {id: p, revision: 1}\nartifacts: {x: {}}\nevidence_kinds: {case_outcome: {}}\nclaims:\n  a:\n    true_when: {children: {in: [accepted, declined]}}\n";
+        let protocol = parse(source).expect("parses");
+        let (_, claim) = protocol.claims.iter().next().expect("claim a");
+        assert_eq!(
+            predicate(&claim.true_when),
+            "every child case ended with an outcome in (`accepted`, `declined`)"
         );
     }
 

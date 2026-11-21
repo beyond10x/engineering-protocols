@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-20T23:41:37Z",
+  "actor": "human:timo",
+  "artifact": "story:canon-0-9-0-pin",
+  "kind": "story",
+  "revision": 2,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": ".engineering/evidence/story/canon-0-9-0-pin/green.txt"
+  }
+}

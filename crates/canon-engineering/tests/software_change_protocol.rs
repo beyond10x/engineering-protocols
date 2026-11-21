@@ -67,6 +67,9 @@ fn reached(ir: &Ir, predicate: &Predicate) -> (Vec<String>, Vec<String>) {
                     kinds.insert(kind.as_str().to_owned());
                 }
             }
+            Predicate::Children(_) => {
+                kinds.insert("case_outcome".to_owned());
+            }
             Predicate::All(_) | Predicate::Any(_) | Predicate::Not(_) | Predicate::Input(_) => {}
         });
     }
