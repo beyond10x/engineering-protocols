@@ -55,6 +55,15 @@ releases at bare-version tags.
   not in the line shape the README's check reads, so a manifest that passes the gate is one that
   command checks in full (story:agents-boundary-data-only).
 
+### Fixed
+
+- The `Documentation site` workflow calls beyond10x/website's `project-site.yml` at `c870d2c8`
+  instead of `fb4024ef`. The older workflow deployed within a second of uploading the Pages
+  artifact and failed with "No artifacts named github-pages were found" on 2 of the 4 wave merges to
+  `main` on 2026-11-21; a re-run of the job then failed on two artifacts of the same name. The
+  newer one names the artifact per attempt, waits for it and retries the deploy. Site content
+  and the workflow's inputs are unchanged.
+
 ## [0.16.0] - 2026-11-21
 
 ### Changed
