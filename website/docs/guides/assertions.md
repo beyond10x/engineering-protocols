@@ -8,9 +8,11 @@ source: crates/canon-engineering-assertions; crates/assertion-providers; crates/
 
 Assertion gates are available in source release 0.2.0. They use the generic `canon-expr/1` language
 from [Canon](https://beyond10x.github.io/canon/) ([GitHub](https://github.com/beyond10x/canon)).
-Engineering Protocols owns the catalog, process registration and collection. AEP acceptance
-objects and automatic task offboarding are **planned** integrations. Kubernetes collection is
-also planned; this version does not contact clusters.
+Engineering Protocols owns the catalog, process registration and collection.
+
+The two assertion crates are frozen at tag 0.16.0: no new assertion function, provider, CLI command
+or wire-model field. Loom owns what replaces them; that design has not started. This version does
+not contact clusters.
 
 ## Write and validate a gate
 
@@ -167,7 +169,7 @@ The [generated reference](../reference/assertions.md) contains every builtin and
 signatures and changed recipe semantics change plan identities. Grammar/operator changes require
 a new language version; provider/catalog evolution does not require editing the parser.
 
-## Networking and later Kubernetes checks
+## Networking checks
 
 ```text
 net.host.resolves("api.example.org", resolver: $resolver)
@@ -186,7 +188,6 @@ The repository's `fixtures/assertions/network.yaml` and `network-project.yaml` s
 configuration with documentation-only addresses. Replace those addresses with your environment
 before running them.
 
-Later catalogs can expose `k8s.namespace.exists(...)` and a deployment observation with
-`.rollout_complete`. Those providers must bind cluster/context, namespace, resource UID,
-resourceVersion and observed generation, and retain freshness. There is no Kubernetes provider
-or AEP lifecycle change in this version.
+A provider that observes a Kubernetes cluster, built by whoever owns collection, must bind
+cluster/context, namespace, resource UID, resourceVersion and observed generation, and retain
+freshness. This repository ships no Kubernetes provider.

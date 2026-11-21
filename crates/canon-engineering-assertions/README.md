@@ -13,7 +13,10 @@ The crate is frozen at the behaviour of tag 0.16.0. It stays in the tree, builds
 and is marked `publish = false`. Frozen means:
 
 - No new assertion function, provider, CLI command or wire-model field.
-- A Canon or ESS pin still moves when the workspace's does, because the crates share its lockfile.
+- A Canon or ESS pin still moves when the workspace's does, and that edit lands in these files:
+  the Canon `tag` of `b10x-canon-expr` in `Cargo.toml`, and for ESS `ess/ess-inputs.yaml` and the
+  header of `generated/types.rs` (regenerated). The ESS version the gate installs is in
+  `.github/workflows/check.yml`.
 - A security defect is still fixed.
 - This README is corrected when what replaces the crate exists.
 

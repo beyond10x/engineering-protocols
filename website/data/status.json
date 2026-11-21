@@ -3,17 +3,10 @@
   "items": [
     {
       "area": "Foundations",
-      "detail": "Typed file, process, report and network checks retain source-bound evidence for offline replay. Recipes and explicitly admitted Rust providers extend the catalog.",
+      "detail": "Typed file, process, report and network checks retain source-bound evidence for offline replay. Recipes and explicitly admitted Rust providers extend the catalog. The two assertion crates are frozen at tag 0.16.0 and take no new assertion function or provider.",
       "href": "/docs/guides/assertions",
       "label": "Typed assertion gates and replay",
       "status": "shipped"
-    },
-    {
-      "area": "Foundations",
-      "detail": "Future consumers can reuse typed assertions; this version does not change AEP lifecycles or query clusters.",
-      "href": "/docs/guides/assertions",
-      "label": "AEP acceptance and Kubernetes providers",
-      "status": "planned"
     },
     {
       "area": "Foundations",
