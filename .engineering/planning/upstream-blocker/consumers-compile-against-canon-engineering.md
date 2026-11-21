@@ -7,7 +7,7 @@ title: Loom (four crates, tag 0.15.2) and takt (tag 0.9.0) compile against b10x-
 summary: Cleared when Loom loads the catalog from files and takt reads vendored files or is declared to stay on its pin.
 relations:
 - blocks: story:protocol-check-tool
-revision: 2
+revision: 3
 ---
 ## What is open
 
@@ -35,3 +35,12 @@ The `sdc` session reported an operator decision made in the `sdc` session: takt 
 2026-11-21 and stays pinned to its tag. If that is confirmed in this repository, takt's half of
 "What clears it" is met, and Loom's four crates are the one active compile-time consumer. It is a
 relay; this blocker stays open on Loom either way.
+
+## Confirmed on 2026-11-21
+
+The `sdc` session, which decides for the operator in this session
+(approval-record:sdc-orchestrates-engineering-protocols-2026-11-21), confirmed: takt is frozen on
+its tag by the operator's decision of 2026-11-21. takt's half of "What clears it" is met. This
+blocker now waits on Loom's four crates only; Loom accepted its
+epic:engineering-protocols-as-vendored-data on 2026-11-21, and its stories run behind its Canon
+pin wave.

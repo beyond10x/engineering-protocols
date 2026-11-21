@@ -2,13 +2,15 @@
 format: aep.planning-md/3
 id: decision-blocker:assertion-executor-owner
 kind: decision-blocker
-status: open
+status: cleared
 title: Nobody has decided who owns engineering-gates/1 execution and offline replay after the assertion crates
 summary: Loom executors through Substrate, takt, or a tool on Canon's expression crate; the operator decides.
 relations:
 - blocks: epic:gates-and-delivery-for-any-repository
 - blocks: story:gate-program-identity-bound-to-spawn
-revision: 3
+revision: 5
+transitions:
+- {from: "open", to: "cleared", at: "2026-11-21T02:28:36Z", actor: "human:timo", revision: 5}
 ---
 ## The question
 
@@ -46,3 +48,19 @@ The operator did not put this repository's session under that role, and the `sdc
 so. This blocker stays open until the decision is on record as "What clears it" asks: an
 approval-record the operator confirms in this repository, or an Atlas ADR. When it is, the owner
 to name is Loom.
+
+## Answer
+
+Decided on 2026-11-21 by the `sdc` session, which decides for the operator in this session
+(approval-record:sdc-orchestrates-engineering-protocols-2026-11-21): the owner is Loom. Loom owns
+the design for running observation collection and gates, as executors through Substrate, as a
+draft epic behind its epic:engineering-protocols-as-vendored-data.
+
+Consequences here:
+
+- epic:gates-and-delivery-for-any-repository and story:gate-program-identity-bound-to-spawn are
+  re-homed, not implemented in the frozen crates: their text goes to the `loom` session as input
+  for its observation-collection epic, and they are archived here once Loom has acknowledged it.
+- The story that deletes `b10x-canon-engineering-assertions` and `b10x-assertion-providers`
+  waits on Loom's executors, not on a decision.
+- The READMEs story:assertions-frozen-at-0-16-0 writes name Loom as the next owner.

@@ -2,14 +2,16 @@
 format: aep.planning-md/3
 id: approval-record:data-only-catalog
 kind: approval-record
-status: draft
+status: approved
 title: engineering-protocols becomes a data-only catalog (operator, 2026-11-21, option A)
 summary: Relayed by the sdc session on 2026-11-21; not heard in this repository's session directly.
 tags:
 - relayed
 relations:
 - decides: epic:data-only-catalog
-revision: 2
+revision: 4
+transitions:
+- {from: "draft", to: "approved", at: "2026-11-21T02:28:36Z", actor: "human:timo", revision: 4}
 ---
 # Approval: engineering-protocols becomes a data-only catalog
 
@@ -48,3 +50,16 @@ too: this record and every story stay draft.
 
 Whether the relayed wording is his decision as recorded here, before any story of the epic is
 moved out of draft.
+
+## Confirmed
+
+Confirmed on 2026-11-21 by the `sdc` session, which decides for the operator in this session
+(approval-record:sdc-orchestrates-engineering-protocols-2026-11-21): the operator answered "A" in
+the `sdc` session to the option "a data-only catalog; Loom loads protocols from files; observation
+collection moves into Loom executors; the crates shrink to a CI check". This record is his
+decision as written above.
+
+Standing from the same message: the stories of epic:data-only-catalog are accepted once the
+critic panel and scoping are done, and each next wave opens in the store's order without a
+further question; the `sdc` session is told what moved. Releases, tags, version numbers and
+anything hard to reverse stay with the operator himself.
