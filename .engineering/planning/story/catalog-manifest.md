@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:catalog-manifest
 kind: story
-status: draft
+status: active
 title: A manifest lists every catalog file with its id, revision, sha256 and lowest Canon release
 summary: protocols/manifest.yaml, checked against the files in task check.
 relations:
@@ -21,7 +21,10 @@ scope:
   path: crates/canon-engineering/tests
 - confidence: inferred
   path: protocols/manifest.yaml
-revision: 6
+revision: 8
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T02:36:45Z", actor: "human:timo", revision: 7, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "proposed", to: "active", at: "2026-11-21T02:36:45Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":1}}}
 ---
 ## Outcome
 

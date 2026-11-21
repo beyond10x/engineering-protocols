@@ -8,6 +8,7 @@ summary: canon-engineering-docs drops its dependency on b10x-canon-engineering; 
 relations:
 - decomposes: epic:data-only-catalog
 - depends_on: story:catalog-manifest
+- serves: vision:O2
 scope:
 - confidence: cited
   path: Cargo.lock

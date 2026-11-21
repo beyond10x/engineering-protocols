@@ -2,11 +2,12 @@
 format: aep.planning-md/3
 id: story:assertion-catalog-path
 kind: story
-status: draft
+status: active
 title: The assertion function catalog leaves catalog/ for a path that names assertions
 summary: catalog/engineering.yaml is canon-catalog/1 for assertions, not the protocol catalog; it moves, bytes unchanged.
 relations:
 - decomposes: epic:data-only-catalog
+- serves: vision:O2
 scope:
 - confidence: cited
   path: catalog
@@ -16,7 +17,10 @@ scope:
   path: crates/canon-engineering-assertions/src/lib.rs
 - confidence: cited
   path: website/docs/guides/assertions.md
-revision: 4
+revision: 6
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T02:36:51Z", actor: "human:timo", revision: 5, decided_on: {"recorded":{"review_outcome":1}}}
+- {from: "proposed", to: "active", at: "2026-11-21T02:36:51Z", actor: "human:timo", revision: 6, decided_on: {"recorded":{"review_outcome":1}}}
 ---
 ## Outcome
 

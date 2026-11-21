@@ -10,6 +10,7 @@ relations:
 - depends_on: story:catalog-manifest
 - depends_on: story:assertions-frozen-at-0-16-0
 - depends_on: story:catalog-release-archive
+- serves: vision:O2
 scope:
 - confidence: cited
   path: AGENTS.md

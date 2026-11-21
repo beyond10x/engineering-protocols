@@ -11,6 +11,7 @@ relations:
 - depends_on: story:docs-generator-reads-files
 - depends_on: story:agents-boundary-data-only
 - depends_on: story:assertions-frozen-at-0-16-0
+- serves: vision:O2
 scope:
 - confidence: inferred
   path: .github/workflows/check.yml
