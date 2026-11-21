@@ -2,7 +2,7 @@
 format: aep.planning-md/3
 id: story:agents-boundary-data-only
 kind: story
-status: draft
+status: active
 title: AGENTS.md and README.md state the data-only boundary
 summary: No line tells a runtime to pin b10x-canon-engineering; the stale Loom tag in the boundary table goes.
 relations:
@@ -16,7 +16,10 @@ scope:
   path: AGENTS.md
 - confidence: cited
   path: README.md
-revision: 6
+revision: 9
+transitions:
+- {from: "draft", to: "proposed", at: "2026-11-21T06:56:13Z", actor: "human:timo", revision: 8, decided_on: {"recorded":{"review_outcome":2}}}
+- {from: "proposed", to: "active", at: "2026-11-21T06:56:13Z", actor: "human:timo", revision: 9, decided_on: {"recorded":{"review_outcome":2}}}
 ---
 ## Outcome
 
@@ -74,3 +77,33 @@ replaced, naming the Atlas ADR that records it or the words "not yet recorded in
 AGENTS.md's "Not here" row for Loom states no tag; AGENTS.md § ESS states that the two assertion
 crates are frozen at the behaviour of tag 0.16.0 and names
 decision-blocker:assertion-executor-owner.
+
+## Decided before dispatch (wave 2026-11-21-w4)
+
+Settled by the coordinator; where this section and the text above differ, this section holds:
+
+- Line numbers above are from tag 0.16.0. On `main` at `6c9491a` the acceptance grep prints the
+  same 9 lines at AGENTS.md:39, 40, 229 and README.md:50, 56, 69, 78, 84, 95.
+- No published release has a manifest or an archive: tag 0.16.0 predates both, and the next
+  release is the operator's to order. So "running those commands as written on the story's
+  commit exits 0" is measured like this: the tag route on a clean copy of the story's commit
+  (`git archive` of it), and the archive route on the two files `task catalog-archive` builds
+  from that commit, placed where the download command would put them. The download command
+  itself is written with `<version>` and is not run; README.md says that the first release with
+  a manifest and an archive is the one after 0.16.0.
+- The commands a reader runs need no Rust and no tool beyond `git`, `curl` or `gh`, `tar`,
+  `sha256sum` and POSIX `awk` or `sed`: a consumer of a data catalog compiles nothing.
+- The registry crate and its `canon-engineering` binary still exist until
+  story:protocol-check-tool lands. README.md says so once and says they are not the way to
+  consume the catalog; where the assertion commands of § Assertion gates need the binary, the
+  README runs it from a checkout without the option spelling the acceptance grep refuses.
+- AGENTS.md § ESS: the two assertion crates are frozen at the behaviour of tag 0.16.0; the
+  owner of what replaces them is Loom; decision-blocker:assertion-executor-owner (cleared) is
+  the record.
+- Found in wave 3 and fixed here, since this story rewrites the file: AGENTS.md § Public
+  documentation names the workspace `docs` skill at a path that does not exist on the
+  workstation; the file is in the Atlas repository at `.agents/skills/docs/SKILL.md`.
+- Waves 1 to 3 already wrote these parts of AGENTS.md and README.md, and this story keeps them:
+  the manifest's and the archive's rows in § Invariants, § Releases step 5, § Release
+  completion's required artifacts, the frozen crates' and the vocabulary reader's rows, README.md
+  § Assertion gates and § Crates.
