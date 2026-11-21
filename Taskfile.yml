@@ -22,6 +22,11 @@ tasks:
     cmds:
       - cargo run --locked -p canon-engineering-docs -- generate
 
+  catalog-archive:
+    desc: Build the protocol catalog archive and its sha256 into target/catalog.
+    cmds:
+      - cargo run --locked -p canon-engineering-docs -- catalog-archive --out target/catalog
+
   site-build:
     desc: Build the Docusaurus documentation site into website/build.
     cmds:

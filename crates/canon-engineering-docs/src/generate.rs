@@ -41,7 +41,7 @@ pub struct Inputs {
 /// apply, from the same file.
 #[allow(dead_code)] // the generator uses the name rule only
 #[path = "../../canon-engineering/src/builtin_name.rs"]
-mod builtin_name;
+pub mod builtin_name;
 
 use builtin_name::is_name;
 
