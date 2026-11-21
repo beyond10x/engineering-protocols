@@ -8,7 +8,7 @@ summary: Loom executors through Substrate, takt, or a tool on Canon's expression
 relations:
 - blocks: epic:gates-and-delivery-for-any-repository
 - blocks: story:gate-program-identity-bound-to-spawn
-revision: 2
+revision: 3
 ---
 ## The question
 
@@ -33,3 +33,16 @@ name this blocker instead of an owner.
 ## What clears it
 
 The operator's decision naming the owner, recorded as an approval-record or an Atlas ADR.
+
+## Relayed on 2026-11-21, not an answer here
+
+The `sdc` session reported that it decided the owner in Loom's session, as the orchestrator for
+plan and design decisions the operator made it there on 2026-11-21 (Loom recorded
+approval-record:sdc-orchestrates-loom-2026-11-21): Loom owns the design for running observation
+collection and gates, as executors through Substrate, drafted as an epic behind its
+vendored-catalog epic.
+
+The operator did not put this repository's session under that role, and the `sdc` session said
+so. This blocker stays open until the decision is on record as "What clears it" asks: an
+approval-record the operator confirms in this repository, or an Atlas ADR. When it is, the owner
+to name is Loom.

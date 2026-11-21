@@ -7,7 +7,7 @@ title: Loom (four crates, tag 0.15.2) and takt (tag 0.9.0) compile against b10x-
 summary: Cleared when Loom loads the catalog from files and takt reads vendored files or is declared to stay on its pin.
 relations:
 - blocks: story:protocol-check-tool
-revision: 1
+revision: 2
 ---
 ## What is open
 
@@ -28,3 +28,10 @@ A Loom release whose `Cargo.lock` has no `b10x-canon-engineering`, and for takt 
 or the operator's word that takt stays on its pin at tag 0.9.0. Both pin tags, so neither breaks
 when the crate is deleted at HEAD; the blocker stands for the consumer's next move, not its
 current build.
+
+## Relayed on 2026-11-21
+
+The `sdc` session reported an operator decision made in the `sdc` session: takt is frozen as of
+2026-11-21 and stays pinned to its tag. If that is confirmed in this repository, takt's half of
+"What clears it" is met, and Loom's four crates are the one active compile-time consumer. It is a
+relay; this blocker stays open on Loom either way.
