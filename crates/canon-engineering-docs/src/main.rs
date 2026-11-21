@@ -5,6 +5,7 @@
 //! (`website/docs/`): one page per protocol document, compiled by Canon, the protocols index and
 //! the vocabulary. The site build itself is Docusaurus; nothing here touches the network.
 
+mod catalog_archive;
 mod generate;
 mod graph;
 mod lint;
@@ -46,6 +47,16 @@ enum Action {
         /// The full Git revision the site was built from.
         #[arg(long)]
         commit: String,
+    },
+    /// Write the protocol catalog as one reproducible `engineering-protocols-catalog-<version>.tar.gz`
+    /// and its `.sha256` into `--out`: the files `protocols/manifest.yaml` lists, and the manifest.
+    CatalogArchive {
+        /// The repository root that holds `protocols/` and `schema/`.
+        #[arg(long, default_value = ".")]
+        root: PathBuf,
+        /// The directory the archive and its digest file are written into; created when missing.
+        #[arg(long)]
+        out: PathBuf,
     },
 }
 
@@ -92,6 +103,16 @@ fn main() -> Result<()> {
             println!(
                 "canon-engineering-docs: {} declared as engineering-protocols at {commit}, {routes} routes",
                 site.display()
+            );
+        }
+        Action::CatalogArchive { root, out } => {
+            let written = catalog_archive::write(&root, &out)?;
+            println!(
+                "canon-engineering-docs: {} files in {}/{}, sha256 {}",
+                written.files,
+                out.display(),
+                written.archive,
+                written.sha256
             );
         }
     }
