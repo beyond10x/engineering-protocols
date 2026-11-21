@@ -1131,6 +1131,31 @@ fn a_manifest_with_crlf_line_endings_is_a_line_shape_problem() {
     assert_eq!(scratch.check(), vec![Problem::LineShape { parsed, read }]);
 }
 
+/// The reader's pairs are compared with the entries in the order README.md's command prints them,
+/// the vocabulary first. `sha256sum -c` does not need that order, and the document means the same
+/// in any order, but a reorder changes what the command prints and is a shape change someone
+/// should make on purpose, with this test in hand.
+#[test]
+fn a_vocabulary_after_the_protocols_is_a_line_shape_problem() {
+    let mut scratch = Scratch::new();
+    let vocabulary = scratch.parsed_manifest().vocabulary;
+    let block = format!(
+        "vocabulary:\n  path: {}\n  sha256: {}\n",
+        vocabulary.path, vocabulary.sha256
+    );
+    scratch.replace_manifest_text(&format!("{block}\n"), "");
+    scratch.manifest.push('\n');
+    scratch.manifest.push_str(&block);
+    let parsed = parsed_pairs(&scratch.parsed_manifest());
+    assert_eq!(
+        parsed[0].1, VOCABULARY,
+        "serde still parses the vocabulary first"
+    );
+    let mut read = parsed.clone();
+    read.rotate_left(1);
+    assert_eq!(scratch.check(), vec![Problem::LineShape { parsed, read }]);
+}
+
 /// The `awk` program of README.md's manifest check, character for character. [`line_pairs`] is
 /// this program written in Rust, and the two change together; the next test reads README.md.
 const README_AWK: &str = r#"$1 == "path:" {p = $2} $1 == "-" && $2 == "path:" {p = $3} $1 == "sha256:" {print $2 "  " p}"#;
@@ -1149,10 +1174,13 @@ fn the_readme_holds_the_awk_program_the_line_reader_is_written_from() {
 #[test]
 fn catalog_files_are_checked_out_byte_for_byte() {
     let attributes = read(&repository_root(), ".gitattributes");
-    let lines: Vec<&str> = attributes.lines().collect();
-    for line in ["protocols/** -text", "schema/** -text"] {
-        assert!(lines.contains(&line), ".gitattributes lacks {line:?}");
-    }
+    let lines = attributes.strip_suffix('\n').unwrap_or(&attributes);
+    assert_eq!(
+        lines, "protocols/** -text\nschema/** -text",
+        ".gitattributes is exactly the two `-text` lines and nothing else: a later line such as \
+         `*.yaml text eol=crlf` overrides them, so an added attribute line must be made with this \
+         test in hand"
+    );
 }
 
 /// The schema file describes exactly the fields the Rust types accept: at each level its
