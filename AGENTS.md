@@ -1,7 +1,7 @@
 # AGENTS.md — engineering-protocols
 
-This file is for an agent changing the repository. What engineering protocols are, how to depend on
-them and how to run them is in [README.md](README.md); the public site is
+This file is for an agent changing the repository. What engineering protocols are, how to take them
+and check them is in [README.md](README.md); the public site is
 <https://beyond10x.github.io/engineering-protocols/>. The cross-repository architecture is Atlas
 ADRs 0066–0075 and 0094, and Atlas `docs/design/governed-autonomy/`.
 
@@ -15,7 +15,8 @@ ADRs 0066–0075 and 0094, and Atlas `docs/design/governed-autonomy/`.
   actions of the protocols moved from takt that name none: `story.delivery/1`'s
   `tests.write`, `implementation.edit` and `pr.open`, `self.improvement/1`'s `finding.file`,
   `loop.improvement/1`'s `loop.change.deliver` and `loop.finding.file`
-  (`story:takt-protocol-write-capabilities`). Loom's `loom-governor` consumes these protocols.
+  (`story:takt-protocol-write-capabilities`). Loom's `loom-governor` consumes these protocols;
+  § Boundary says how a runtime reads them.
 
 ## Boundary
 
@@ -36,11 +37,30 @@ stay identical to it but for changes agreed with takt, each listed in `AGREED` i
 `tests/takt_protocols_builtin.rs`. The one so far is D257 (2026-10-30, takt agreeing):
 `story.delivery/1`'s `pr.open` opens its pull request through the run's forge, since a public
 protocol names no organisation's delivery route. Any other change needs takt's agreement first,
-or goes into a new revision. A runtime pins a release of
-`b10x-canon-engineering` and reads them through `registry::get`; runtime data that is not a
+or goes into a new revision. Runtime data that is not a
 protocol (takt's `loop-improvement/metrics.yaml`) stays in the runtime. Their terms are in the
 vocabulary, marked `software.change`, `self.improvement` or `loop.improvement` when they mean
 nothing outside that domain or protocol.
+
+A runtime reads a protocol as a file. It takes `protocols/<name>/<major>.yaml` and
+`protocols/vocabulary.yaml` from a release tag or from the release archive (§ Releases), checks
+each file's sha256 against `protocols/manifest.yaml`, and links Canon itself, not
+`b10x-canon-engineering` (`approval-record:data-only-catalog`, operator decision of 2026-11-21;
+README.md § Take the protocols and check them has the commands). That replaces Atlas ADR 0094
+decision 2, which had a runtime pin the registry crate and read protocols through it; the
+replacement is not yet recorded in Atlas (no ADR under `architecture/adr/` says it). Decision 4 of
+that ADR (a protocol change in a runtime is a pin bump, so the pin files are on the runtime's judge
+surface) still describes a Cargo pin and has not been restated for a catalog read as files; that is
+not decided here and not yet recorded in Atlas.
+
+Until `story:protocol-check-tool` lands the registry crate `b10x-canon-engineering` still exists,
+with its `registry` module and the `canon-engineering` binary, and tests under
+`crates/canon-engineering/tests/` still go through it; the invariants below that name them hold
+today. It is not the way to consume the catalog. What still compiles against it is in
+`upstream-blocker:consumers-compile-against-canon-engineering`. That story (draft) deletes the
+crate: the `canon-engineering` binary moves to `b10x-canon-engineering-assertions` under the same
+name with its `assertions` and `gates` commands unchanged, and `protocols list` and `protocols
+show` end.
 
 It does not own:
 
@@ -48,7 +68,7 @@ It does not own:
 |---|---|
 | Claim, evidence and obligation semantics; validation, compilation, evaluation | Canon. Do not re-implement them here. |
 | The live engineering record | AEP (Atlas ADR 0069) |
-| Running agents | Loom; its `loom-governor`, `loom-intake-router` and `loom-intake-slice` crates depend on this crate at tag 0.1.0 |
+| Running agents | Loom. Its `loom-protocols`, `loom-governor`, `loom-intake-slice` and `loom-intake-router` crates still compile against `b10x-canon-engineering` until Loom reads the catalog as files (`upstream-blocker:consumers-compile-against-canon-engineering`); takt is frozen on its tag |
 
 Pressure-test every abstraction against both software delivery and incident response. A rule that
 only makes sense for Git, pull requests or code is not necessarily a core rule of engineering
@@ -74,7 +94,7 @@ protocols.
 | Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
 | The protocols moved from takt are byte-identical to takt tag 0.12.0 but for the changes agreed with takt (`AGREED`) | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
-| `protocols/manifest.yaml` (`b10x-protocol-catalog/1`, schema `schema/b10x.protocol-catalog.v1.schema.json`) lists every other file under `protocols/` with the sha256 of its bytes, and each protocol with the id and revision Canon parses from it and a hand-declared lowest Canon release; a Canon pinned in `Cargo.lock` below a listed release fails, an understated release is not detected | `tests/catalog_manifest.rs::the_manifest_matches_the_catalog` |
+| `protocols/manifest.yaml` (`b10x-protocol-catalog/1`, schema `schema/b10x.protocol-catalog.v1.schema.json`) lists every other file under `protocols/` with the sha256 of its bytes, and each protocol with the id and revision Canon parses from it and a hand-declared lowest Canon release; a Canon pinned in `Cargo.lock` below a listed release fails, an understated release is not detected; its text keeps the line shape of README.md's `awk` check, which the test's `line_pairs` repeats, so a change to that line edits both (`LineShape`) | `tests/catalog_manifest.rs::the_manifest_matches_the_catalog`, `the_readme_holds_the_awk_program_the_line_reader_is_written_from`, `catalog_files_are_checked_out_byte_for_byte` |
 | Every term a built-in other than `support.triage/1` and `protocol.adopt/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
@@ -145,7 +165,7 @@ commit): every built page route with its element IDs; redirects, trailing-slash 
 In `website/docusaurus.config.ts`, `product: 'els'` stays as it is: it is a fixed Docs System
 palette key, not the repository name, and any other value fails the build. For any change to the
 site, its workflows or README.md, follow the workspace `docs` skill
-(`~/beyond10x/.agents/skills/docs/SKILL.md`), and verify the live page before reporting it
+(`~/beyond10x/atlas/.agents/skills/docs/SKILL.md`), and verify the live page before reporting it
 published.
 
 ## ESS
@@ -154,6 +174,12 @@ This repository opts out of ESS for its protocol semantics: protocols are define
 tested by Canon conformance (Atlas ADR 0067). ESS conformance reports are an evidence *kind*
 engineering protocols may admit (`story:ess-conformance-evidence`, draft); that is a use of ESS
 output, not a specification of this repository.
+
+The two assertion crates, `b10x-canon-engineering-assertions` and `b10x-assertion-providers`, are
+frozen at the behaviour of tag 0.16.0 and `publish = false` (§ Invariants). The owner of what
+replaces them is Loom; `decision-blocker:assertion-executor-owner` (cleared) is the record. The
+rest of this section still binds a security fix or a Canon or ESS pin move there; the crates'
+READMEs say what a pin move edits.
 
 Assertion collection and its CLI are not part of that opt-out. Their wire model lives in `ess/`;
 provider envelopes live in `ess/providers/`, both pinned to ESS 0.77.0. The gate document is a
@@ -189,7 +215,8 @@ story's `## Protocol first`.
 - A change to any file under `protocols/` updates its entry in `protocols/manifest.yaml` in the
   same commit: the sha256 (`sha256sum <file>`), and for a protocol the id, the revision and, when
   it uses a newer Canon form, `canon`. The manifest is hand-written, not generated, and carries
-  no comments.
+  no comments. Files under `protocols/` and `schema/` are checked out byte for byte
+  (`.gitattributes`, `-text`), because the manifest lists the sha256 of their bytes.
 - Build into the checkout's own `target/`. The Taskfile sets no `CARGO_TARGET_DIR`; do not set
   one. `crates/canon-engineering/build.rs` embeds `protocols/` by absolute path, so a target
   directory shared between checkouts can embed another checkout's protocol files, and cargo can
@@ -208,7 +235,8 @@ release workflow. A release is:
 
 1. A release commit on `main` (through a wave or a bot pull request): the workspace `version` in
    `Cargo.toml`, `Cargo.lock`, and a `CHANGELOG.md` entry for that version, moved out of
-   `[Unreleased]`.
+   `[Unreleased]`; and README.md § Status (the latest release, its date, the Canon and ESS
+   versions) and, for a protocol the release adds, its `Released in` cell in § Protocols.
 2. `task check` green on that commit, and its CI checks green.
 3. An annotated tag by `b10x-bot[bot]` on that commit: `b10x-gates bot … -- tag -a <version> -m
    "Engineering protocols <version>" <commit>`, then `-- push origin <version>`.
@@ -226,8 +254,9 @@ It is the same bytes for one tree and one `Cargo.lock`: the compressed bytes dep
 locked `flate2`, so the archive of a release is the one attached to it, and a rebuild is compared
 by unpacking, not by digest, once `Cargo.lock` has moved.
 
-Consumers pin `b10x-canon-engineering` by `tag = "<version>"`; README.md's install lines name the
-latest tag and change in the release commit.
+A consumer takes the files of a tag or the archive and checks them against the manifest
+(README.md § Take the protocols and check them). Those commands take `<version>`, so README.md
+names no version in a command and the release commit edits none.
 
 ## Never
 
