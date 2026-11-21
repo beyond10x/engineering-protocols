@@ -2,7 +2,7 @@
 //!
 //! The vocabulary is data. Every term a built-in protocol names is declared once in
 //! `protocols/vocabulary.yaml`, with its category and its marking, except `support.triage/1`'s,
-//! `protocol.adopt/1`'s and the few the spelling rule below refuses
+//! `protocol.adopt/1`'s and the few the spelling rule of `b10x-engineering-vocabulary` refuses
 //! (`tests/builtin_vocabulary_coverage.rs` names them, `NOT_SPELLABLE`). The typed reader of that
 //! document, [`Vocabulary`] and the types it returns, is the crate `b10x-engineering-vocabulary`
 //! (`crates/engineering-vocabulary`) and is re-exported here; the released file is compiled into

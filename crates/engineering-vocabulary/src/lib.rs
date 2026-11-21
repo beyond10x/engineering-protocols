@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 //! The engineering vocabulary: the names the engineering protocols use for their terms.
 //!
 //! The vocabulary is data. Every term a built-in protocol names is declared once in
