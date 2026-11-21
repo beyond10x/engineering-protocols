@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T05:45:01Z",
+  "actor": "human:timo",
+  "artifact": "story:assertion-catalog-path",
+  "kind": "story",
+  "revision": 8,
+  "change": {
+    "change": "evidence",
+    "kind": "test_result",
+    "source": "whole gate on wave/2026-11-21-w1 at 7ec41c9 with the coordinator's AGENTS.md and CHANGELOG.md edits: cargo fmt --all --check, clippy -D warnings, cargo test --workspace --locked --no-fail-fast, generate --check, each exit 0",
+    "reference": "448 passed, 0 failed, 0 ignored in 101 result lines; --list 448; 35 generated files fresh; plan valid"
+  }
+}

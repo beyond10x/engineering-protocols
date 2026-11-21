@@ -8,6 +8,7 @@ summary: protocols/ and its manifest as a reproducible archive attached to the G
 relations:
 - decomposes: epic:data-only-catalog
 - depends_on: story:catalog-manifest
+- serves: vision:O2
 scope:
 - confidence: cited
   path: AGENTS.md

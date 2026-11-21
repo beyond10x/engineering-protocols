@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-21T03:09:16Z",
+  "actor": "human:timo",
+  "artifact": "story:assertion-catalog-path",
+  "kind": "story",
+  "revision": 6,
+  "change": {
+    "change": "evidence",
+    "kind": "verification",
+    "source": "sha256sum of the catalog at d2d567c and at 9e9a2e6; ls catalog; acceptance git grep",
+    "reference": "wave-w1/assertion-catalog-path/scratch/verify.txt in the coordinator's session scratch: same digest d86dca5d..2856 at tag 0.16.0, base and unit; catalog/ absent; grep 0 lines"
+  }
+}

@@ -8,6 +8,7 @@ summary: Replay and the collectors stay until an executor exists elsewhere; they
 relations:
 - decomposes: epic:data-only-catalog
 - depends_on: story:assertion-catalog-path
+- serves: vision:O2
 scope:
 - confidence: cited
   path: README.md

@@ -2,13 +2,15 @@
 format: aep.planning-md/3
 id: story:gate-program-identity-bound-to-spawn
 kind: story
-status: draft
+status: archived
 title: A program binding spawns the bytes admission digested, and a digest read is bounded
 summary: 'a program: match that is a link is re-resolved at spawn; executable_digest reads unbounded'
 relations:
 - decomposes: epic:gates-and-delivery-for-any-repository
 - serves: vision:governed-autonomy
-revision: 2
+revision: 4
+transitions:
+- {from: "draft", to: "archived", at: "2026-11-21T02:36:46Z", actor: "human:timo", revision: 4}
 ---
 # Story: A program binding spawns the bytes admission digested, and a digest read is bounded
 
@@ -31,3 +33,11 @@ The adversary pass on `story:gate-executable-link-keeps-its-name` found two gaps
 ## Out of Scope
 
 - A hostile process of the gate's own user that rewrites the resolved file itself.
+
+## Re-homed to Loom on 2026-11-21
+
+Not implemented here. `b10x-assertion-providers` is frozen at the behaviour of tag 0.16.0
+(epic:data-only-catalog), and decision-blocker:assertion-executor-owner named Loom the owner of
+observation collection. The `loom` session took this story on 2026-11-21 as its own story of the
+same id, with this body's outcome, findings and acceptance, to join its observation-collection
+epic. Archived here for that reason.

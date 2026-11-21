@@ -6,6 +6,23 @@ releases at bare-version tags.
 
 ## [Unreleased]
 
+### Added
+
+- `protocols/manifest.yaml` (format `b10x-protocol-catalog/1`, schema
+  `schema/b10x.protocol-catalog.v1.schema.json`): the vocabulary file and the ten protocol files,
+  each with the sha256 of its bytes, and each protocol with its id, its revision and `canon`, the
+  lowest Canon release that parses, validates and compiles the file (0.8.0 for
+  `story.delivery/2`, 0.4.0 for six protocols, 0.1.0 for three). A consumer checks a file it took
+  from a tag against the manifest of that tag without compiling this repository. `task check`
+  refuses a manifest that disagrees with the files or lists a `canon` above the pinned Canon; an
+  understated `canon` is not detected (story:catalog-manifest).
+
+### Changed
+
+- The assertion function catalog moves from `catalog/engineering.yaml` to
+  `crates/canon-engineering-assertions/catalog.yaml`, bytes unchanged; the directory `catalog/` is
+  gone. `BUILTIN_CATALOG` and every assertion are unchanged (story:assertion-catalog-path).
+
 ## [0.16.0] - 2026-11-21
 
 ### Changed
