@@ -1,7 +1,30 @@
 # Engineering assertion providers
 
 This crate collects observations for the engineering catalog. Canon parses, checks, plans and
-evaluates expressions separately. Offline replay never calls this crate.
+evaluates expressions separately. Offline replay never calls this crate. The library is
+`assertion_providers`; the crate also builds one binary, `assertion-provider-example`.
+
+## Frozen at tag 0.16.0
+
+The crate is frozen at the behaviour of tag 0.16.0. It stays in the tree, builds, passes its tests
+and is marked `publish = false`. Frozen means:
+
+- No new assertion function, provider, CLI command or wire-model field.
+- A Canon or ESS pin still moves when the workspace's does, because the crates share its lockfile.
+- A security defect is still fixed.
+- This README is corrected when what replaces the crate exists.
+
+Why: this repository is becoming a data-only catalog of protocols. The collectors start programs
+(`src/process.rs`) and open sockets (`src/network.rs`), and `b10x-canon-engineering-assertions`
+calls them; they have no other home yet, so the crate stays until one exists. `publish = false`
+stops a crates.io release; it does not affect consumers that depend on the crate by Git tag.
+
+The owner of what replaces it is Loom: observation collection and gates as executors through
+Substrate. That design has not started. The decision is recorded in
+`decision-blocker:assertion-executor-owner`, in this repository's plan store under
+`.engineering/`. Deleting the crate is a later change, after the replacement exists.
+
+## Collection
 
 `collect(operation, &BTreeMap<String, serde_json::Value>, &ProviderContext)` returns
 `Known(value)`, `Unavailable(reason)`, or an error. Missing files, command timeout, inaccessible

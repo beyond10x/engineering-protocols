@@ -113,7 +113,17 @@ for a complete gate and commands. These commands are included in release 0.2.0.
 The generic expression core lives in Canon. This repository supplies files/documents, explicit
 process bindings, test reports, ESS and Codegate dependency reports, DNS and TCP observations,
 recipes and typed external Rust providers. Collection performs IO; retained evaluation is pure.
-Kubernetes providers and AEP acceptance integration remain planned.
+
+The two crates behind these commands, `b10x-canon-engineering-assertions` and
+`b10x-assertion-providers`, are frozen at the behaviour of tag 0.16.0 and marked `publish = false`.
+Frozen means no new assertion function, provider, CLI command or wire-model field; the Canon and
+ESS pins still move with the workspace's, and a security defect is still fixed. The reason is that
+this repository is becoming a data-only catalog, while offline replay and the collectors have no
+other home yet. The owner of what replaces them is Loom (observation collection and gates as
+executors through Substrate, design not started), recorded in
+`decision-blocker:assertion-executor-owner`. See the READMEs of
+[`canon-engineering-assertions`](crates/canon-engineering-assertions/README.md) and
+[`assertion-providers`](crates/assertion-providers/README.md).
 
 ## Crates
 
