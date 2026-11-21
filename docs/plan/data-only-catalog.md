@@ -9,7 +9,7 @@ that each next wave opens in this order without a further question.
 
 | Wave | Stories | Serves | State |
 |---|---|---|---|
-| 1 | `story:catalog-manifest`, `story:assertion-catalog-path` | O2 | [2026-11-21-w1](2026-11-21-w1-catalog-manifest.md), running |
+| 1 | `story:catalog-manifest`, `story:assertion-catalog-path` | O2 | [2026-11-21-w1](2026-11-21-w1-catalog-manifest.md), delivered 2026-11-21 |
 | 2 | `story:catalog-release-archive` | O2 | planned |
 | 3 | `story:assertions-frozen-at-0-16-0`, `story:docs-generator-reads-files` | O2 | planned |
 | 4 | `story:agents-boundary-data-only` | O2 | planned |

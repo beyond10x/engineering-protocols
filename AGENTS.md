@@ -74,6 +74,7 @@ protocols.
 | Every built-in is model-checked: Canon's `check` finds nothing under `STATE_BOUND`, except the built-ins listed in `OVER_BOUND` at their measured state count (`story:builtin-state-bound`) | `tests/builtin_canon_check.rs::every_builtin_checks_clean_under_the_bound` |
 | The protocols moved from takt are byte-identical to takt tag 0.12.0 but for the changes agreed with takt (`AGREED`) | `tests/takt_protocols_builtin.rs::takt_protocols_are_builtins_byte_for_byte` |
 | `protocols/vocabulary.yaml` is the vocabulary's only source | `tests/vocabulary_yaml.rs::vocabulary_yaml_is_the_source` |
+| `protocols/manifest.yaml` (`b10x-protocol-catalog/1`, schema `schema/b10x.protocol-catalog.v1.schema.json`) lists every other file under `protocols/` with the sha256 of its bytes, and each protocol with the id and revision Canon parses from it and a hand-declared lowest Canon release; a Canon pinned in `Cargo.lock` below a listed release fails, an understated release is not detected | `tests/catalog_manifest.rs::the_manifest_matches_the_catalog` |
 | Every term a built-in other than `support.triage/1` and `protocol.adopt/1` names is declared in the vocabulary in the category it is used in, except the four in `NOT_SPELLABLE` (`story:vocabulary-unspellable-terms`) | `tests/builtin_vocabulary_coverage.rs::every_builtin_term_is_declared_in_the_category_it_is_used_in` |
 | Every protocol rule lands with a fixture under `fixtures/` that exercises it, stale-revision cases included | the fixture harness, `tests/fixture_harness.rs`; adding the fixture is review's job |
 | Evaluation adds no hidden clock, network or model call; a fixture's instant is an input | `tests/support/mod.rs` reads the instant from the fixture; review |
@@ -182,6 +183,10 @@ story's `## Protocol first`.
   pull request.
 - Use a managed worktree: `worktree create --repo ~/beyond10x/engineering-protocols --purpose …`,
   and end it with `worktree finish --discard-cache --archive <tree>`.
+- A change to any file under `protocols/` updates its entry in `protocols/manifest.yaml` in the
+  same commit: the sha256 (`sha256sum <file>`), and for a protocol the id, the revision and, when
+  it uses a newer Canon form, `canon`. The manifest is hand-written, not generated, and carries
+  no comments.
 - Build into the checkout's own `target/`. The Taskfile sets no `CARGO_TARGET_DIR`; do not set
   one. `crates/canon-engineering/build.rs` embeds `protocols/` by absolute path, so a target
   directory shared between checkouts can embed another checkout's protocol files, and cargo can
