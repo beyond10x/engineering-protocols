@@ -1,27 +1,38 @@
 //! The protocol catalog as one release asset: `engineering-protocols-catalog-<version>.tar.gz` and
-//! its `.sha256` in `sha256sum` format. The archive holds what `protocols/manifest.yaml` lists
-//! (vocabulary, protocols, schema) and the manifest itself, at their repository-relative paths and
-//! with no top-level directory, so every path in the manifest resolves from the directory the
-//! archive is unpacked into.
+//! its `.sha256` in `sha256sum` format. The archive is everything under `protocols/` plus the
+//! schema file, at repository-relative paths and with no top-level directory, so every path in the
+//! manifest resolves from the directory the archive is unpacked into. The manifest decides it, by
+//! refusal rather than by walk: the files come from `protocols/manifest.yaml` plus the manifest
+//! itself, and a manifest the gate (`crates/canon-engineering/tests/catalog_manifest.rs`) refuses
+//! for its paths is refused here too, before anything is written. Ids, revisions and `canon`
+//! values need Canon and stay with the gate.
 //!
 //! Reproducible: entries in byte order of their paths, each a regular file with mode 0644, owner
 //! and group 0 with empty names and modification time 0, no directory entries, a gzip header with
 //! no time and no name, and a fixed compression level.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
-use std::path::{Component, Path};
+use std::path::Path;
 
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, bail};
 use flate2::{Compression, GzBuilder};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
-/// The manifest, relative to the repository root.
+use crate::generate::builtin_name;
+
+/// The manifest, relative to the repository root. It does not list itself.
 const MANIFEST: &str = "protocols/manifest.yaml";
 /// The only manifest format this command reads.
 const FORMAT: &str = "b10x-protocol-catalog/1";
+/// The one catalog file that is not a protocol.
+const VOCABULARY: &str = "protocols/vocabulary.yaml";
+/// The manifest's JSON Schema, which the manifest's `schema` must name.
+const SCHEMA: &str = "schema/b10x.protocol-catalog.v1.schema.json";
+/// The workspace manifest the version in the archive's file name is read from.
+const WORKSPACE: &str = "Cargo.toml";
 /// The gzip operating system byte, fixed so the header is the same on every platform: Unix.
 const GZIP_OS_UNIX: u8 = 3;
 /// The deflate level, fixed so the bytes do not depend on a default.
@@ -48,12 +59,12 @@ struct Listed {
 #[serde(deny_unknown_fields)]
 struct Protocol {
     path: String,
-    #[allow(dead_code)] // named by the schema; the archive does not read it
+    #[allow(dead_code)] // named by the schema; the gate checks it against Canon
     id: String,
-    #[allow(dead_code)] // named by the schema; the archive does not read it
+    #[allow(dead_code)] // named by the schema; the gate checks it against Canon
     revision: u64,
     sha256: String,
-    #[allow(dead_code)] // named by the schema; the archive does not read it
+    #[allow(dead_code)] // named by the schema; the gate checks it against Canon
     canon: String,
 }
 
@@ -74,21 +85,23 @@ fn hex(bytes: &[u8]) -> String {
         })
 }
 
-/// A listed path stays inside the repository: relative, with only plain components.
-fn ensure_inside(path: &str) -> Result<()> {
-    ensure!(
-        !path.is_empty()
-            && Path::new(path)
-                .components()
-                .all(|part| matches!(part, Component::Normal(_))),
-        "{MANIFEST} lists {path:?}, which is not a path inside the repository"
-    );
-    Ok(())
+/// `protocols/<name>/<major>.yaml`, compared segment by segment as the manifest check does.
+fn is_protocol_path(path: &str) -> bool {
+    let Some(rest) = path.strip_prefix("protocols/") else {
+        return false;
+    };
+    let Some((name, file)) = rest.split_once('/') else {
+        return false;
+    };
+    builtin_name::is_name(name)
+        && file
+            .strip_suffix(".yaml")
+            .and_then(builtin_name::major)
+            .is_some()
 }
 
 /// The bytes of a listed file, which must exist.
 fn read_listed(root: &Path, path: &str) -> Result<Vec<u8>> {
-    ensure_inside(path)?;
     let file = root.join(path);
     if !file.is_file() {
         bail!(
@@ -99,26 +112,116 @@ fn read_listed(root: &Path, path: &str) -> Result<Vec<u8>> {
     fs::read(&file).with_context(|| format!("reading {path}"))
 }
 
-/// The archive of the catalog `root` holds, as its gzip bytes and the number of files in it.
-fn archive(root: &Path) -> Result<(Vec<u8>, usize)> {
+/// Every file below `root/protocols` but the manifest, relative to `root` and `/`-separated.
+fn catalog_files(root: &Path) -> Result<BTreeSet<String>> {
+    let mut found = BTreeSet::new();
+    let mut pending = vec![(root.join("protocols"), String::from("protocols"))];
+    while let Some((dir, relative)) = pending.pop() {
+        for entry in fs::read_dir(&dir).with_context(|| format!("reading {relative}"))? {
+            let entry = entry.with_context(|| format!("reading {relative}"))?;
+            let path = format!("{relative}/{}", entry.file_name().to_string_lossy());
+            if entry.path().is_dir() {
+                pending.push((entry.path(), path));
+            } else if path != MANIFEST {
+                found.insert(path);
+            }
+        }
+    }
+    Ok(found)
+}
+
+/// `[workspace.package] version` of `<root>/Cargo.toml`, which must be usable in a file name.
+fn version(root: &Path) -> Result<String> {
+    let text = fs::read_to_string(root.join(WORKSPACE))
+        .with_context(|| format!("reading {WORKSPACE} for the workspace version"))?;
+    let table: toml::Table =
+        toml::from_str(&text).with_context(|| format!("parsing {WORKSPACE}"))?;
+    let version = table
+        .get("workspace")
+        .and_then(|workspace| workspace.get("package"))
+        .and_then(|package| package.get("version"))
+        .and_then(toml::Value::as_str)
+        .with_context(|| format!("{WORKSPACE} has no [workspace.package] version"))?;
+    if version.is_empty()
+        || !version
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '+'))
+    {
+        bail!("{WORKSPACE} has workspace version {version:?}, not usable in a file name");
+    }
+    Ok(version.to_owned())
+}
+
+/// Every refusal of the manifest's paths the gate makes, each naming the path it is about.
+fn path_problems(root: &Path, catalog: &Catalog) -> Result<Vec<String>> {
+    let mut problems = Vec::new();
+    if catalog.format != FORMAT {
+        problems.push(format!(
+            "{MANIFEST} has format {:?}, not {FORMAT}",
+            catalog.format
+        ));
+    }
+    if catalog.schema != SCHEMA {
+        problems.push(format!(
+            "{MANIFEST} names schema {}, not {SCHEMA}",
+            catalog.schema
+        ));
+    }
+    if catalog.vocabulary.path != VOCABULARY {
+        problems.push(format!(
+            "{MANIFEST} lists the vocabulary at {}, not {VOCABULARY}",
+            catalog.vocabulary.path
+        ));
+    }
+    let mut listed = BTreeSet::new();
+    for path in std::iter::once(&catalog.vocabulary.path)
+        .chain(catalog.protocols.iter().map(|protocol| &protocol.path))
+    {
+        if !listed.insert(path.as_str()) {
+            problems.push(format!("{MANIFEST} lists {path} more than once"));
+        }
+    }
+    for protocol in &catalog.protocols {
+        if !is_protocol_path(&protocol.path) {
+            problems.push(format!(
+                "{MANIFEST} lists {}, which is not protocols/<name>/<major>.yaml",
+                protocol.path
+            ));
+        }
+    }
+    for path in catalog_files(root)? {
+        if !listed.contains(path.as_str()) {
+            problems.push(format!(
+                "{path} is under protocols/ but {MANIFEST} does not list it"
+            ));
+        }
+    }
+    if let Err(error) = version(root) {
+        problems.push(format!("{error:#}"));
+    }
+    Ok(problems)
+}
+
+/// The archive of the catalog `root` holds: the version for its file name, its gzip bytes and the
+/// number of files in it.
+fn archive(root: &Path) -> Result<(String, Vec<u8>, usize)> {
     let text = String::from_utf8(read_listed(root, MANIFEST)?)
         .with_context(|| format!("{MANIFEST} is not UTF-8"))?;
     let catalog: Catalog =
         serde_yaml_ng::from_str(&text).with_context(|| format!("parsing {MANIFEST}"))?;
-    ensure!(
-        catalog.format == FORMAT,
-        "{MANIFEST} has format {:?}, not {FORMAT}",
-        catalog.format
-    );
+    let problems = path_problems(root, &catalog)?;
+    if !problems.is_empty() {
+        bail!("{}", problems.join("\n"));
+    }
+    let version = version(root)?;
 
-    let mut files: BTreeSet<&str> = BTreeSet::from([MANIFEST, catalog.schema.as_str()]);
-    let mut digests = vec![(&catalog.vocabulary.path, &catalog.vocabulary.sha256)];
+    let mut digests =
+        BTreeMap::from([(catalog.vocabulary.path.as_str(), &catalog.vocabulary.sha256)]);
     for protocol in &catalog.protocols {
-        digests.push((&protocol.path, &protocol.sha256));
+        digests.insert(protocol.path.as_str(), &protocol.sha256);
     }
-    for (path, _) in &digests {
-        files.insert(path);
-    }
+    let mut files: BTreeSet<&str> = digests.keys().copied().collect();
+    files.extend([MANIFEST, SCHEMA]);
 
     let gzip = GzBuilder::new()
         .operating_system(GZIP_OS_UNIX)
@@ -126,13 +229,10 @@ fn archive(root: &Path) -> Result<(Vec<u8>, usize)> {
     let mut tar = tar::Builder::new(gzip);
     for path in &files {
         let bytes = read_listed(root, path)?;
-        for (listed, sha256) in &digests {
-            if listed.as_str() == *path {
-                ensure!(
-                    hex(&bytes) == **sha256,
-                    "{path} does not have the sha256 {MANIFEST} lists for it"
-                );
-            }
+        if let Some(sha256) = digests.get(path)
+            && hex(&bytes) != **sha256
+        {
+            bail!("{path} does not have the sha256 {MANIFEST} lists for it");
         }
         let mut header = tar::Header::new_gnu();
         header.set_entry_type(tar::EntryType::Regular);
@@ -146,20 +246,19 @@ fn archive(root: &Path) -> Result<(Vec<u8>, usize)> {
     }
     let gzip = tar.into_inner().context("finishing the tar stream")?;
     Ok((
+        version,
         gzip.finish().context("finishing the gzip stream")?,
         files.len(),
     ))
 }
 
 /// Writes `engineering-protocols-catalog-<version>.tar.gz` and its `.sha256` into `out`, built from
-/// the catalog `root` holds. Nothing is written when a listed file is missing or differs from its
-/// listed digest.
+/// the catalog `root` holds, `<version>` being its `Cargo.toml`'s `[workspace.package] version`.
+/// Nothing is written when the manifest's paths are refused, a listed file is missing or a listed
+/// file differs from its listed digest.
 pub fn write(root: &Path, out: &Path) -> Result<Written> {
-    let (bytes, files) = archive(root)?;
-    let name = format!(
-        "engineering-protocols-catalog-{}.tar.gz",
-        env!("CARGO_PKG_VERSION")
-    );
+    let (version, bytes, files) = archive(root)?;
+    let name = format!("engineering-protocols-catalog-{version}.tar.gz");
     let sha256 = hex(&bytes);
     fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
     fs::write(out.join(&name), &bytes).with_context(|| format!("writing {name}"))?;

@@ -249,25 +249,142 @@ fn entries_are_plain_files_in_byte_order_with_no_ownership_or_time() {
 
 #[test]
 fn a_listed_file_that_does_not_exist_fails_naming_its_path() {
-    let root = fresh("missing-root");
-    let out = fresh("missing-out");
+    let (root, out) = scratch_root("missing");
+    fs::remove_file(root.join("protocols/software-change/1.yaml")).expect("delete listed file");
+    refused_naming(
+        &catalog_archive(&root, &out),
+        &out,
+        "protocols/software-change/1.yaml",
+    );
+}
+
+/// A copy of the inputs the command reads, `Cargo.toml`, `protocols/` and `schema/`, and an empty
+/// `--out` directory beside it.
+fn scratch_root(case: &str) -> (PathBuf, PathBuf) {
+    let root = fresh(&format!("{case}-root"));
+    let out = fresh(&format!("{case}-out"));
+    fs::copy(repository().join("Cargo.toml"), root.join("Cargo.toml")).expect("copy Cargo.toml");
     for dir in ["protocols", "schema"] {
         copy_tree(&repository().join(dir), &root.join(dir));
     }
-    fs::remove_file(root.join("protocols/software-change/1.yaml")).expect("delete listed file");
+    (root, out)
+}
 
-    let run = catalog_archive(&root, &out);
-    assert!(!run.status.success(), "a missing listed file must fail");
+fn edit_manifest(root: &Path, edit: impl FnOnce(&mut Value)) {
+    let path = root.join("protocols/manifest.yaml");
+    let mut value: Value =
+        serde_yaml_ng::from_str(&fs::read_to_string(&path).expect("read manifest"))
+            .expect("parse manifest");
+    edit(&mut value);
+    fs::write(&path, serde_yaml_ng::to_string(&value).expect("write yaml")).expect("write");
+}
+
+/// The run failed, its error names `path` and `--out` is still empty.
+fn refused_naming(run: &Output, out: &Path, path: &str) {
     let stderr = String::from_utf8_lossy(&run.stderr);
-    assert!(
-        stderr.contains("protocols/software-change/1.yaml"),
-        "stderr must name the missing path: {stderr}"
-    );
+    assert!(!run.status.success(), "must be refused; stderr: {stderr}");
+    assert!(stderr.contains(path), "stderr must name {path}: {stderr}");
     assert_eq!(
-        fs::read_dir(&out).expect("list out").count(),
+        fs::read_dir(out).expect("list out").count(),
         0,
         "a refused run leaves no archive or digest"
     );
+}
+
+#[test]
+fn a_vocabulary_listed_elsewhere_is_refused_naming_its_path() {
+    let (root, out) = scratch_root("vocabulary");
+    fs::rename(
+        root.join("protocols/vocabulary.yaml"),
+        root.join("protocols/words.yaml"),
+    )
+    .expect("rename the vocabulary");
+    edit_manifest(&root, |manifest| {
+        manifest["vocabulary"]["path"] = "protocols/words.yaml".into();
+    });
+    refused_naming(&catalog_archive(&root, &out), &out, "protocols/words.yaml");
+}
+
+#[test]
+fn a_protocol_path_not_of_the_form_is_refused_naming_its_path() {
+    let (root, out) = scratch_root("form");
+    fs::rename(
+        root.join("protocols/software-change/1.yaml"),
+        root.join("protocols/software-change/01.yaml"),
+    )
+    .expect("rename listed file");
+    edit_manifest(&root, |manifest| {
+        for protocol in manifest["protocols"].as_sequence_mut().expect("list") {
+            if protocol["path"].as_str() == Some("protocols/software-change/1.yaml") {
+                protocol["path"] = "protocols/software-change/01.yaml".into();
+            }
+        }
+    });
+    refused_naming(
+        &catalog_archive(&root, &out),
+        &out,
+        "protocols/software-change/01.yaml",
+    );
+}
+
+#[test]
+fn a_path_listed_twice_is_refused_naming_its_path() {
+    let (root, out) = scratch_root("twice");
+    edit_manifest(&root, |manifest| {
+        let protocols = manifest["protocols"].as_sequence_mut().expect("list");
+        let first = protocols[0].clone();
+        protocols.push(first);
+    });
+    refused_naming(
+        &catalog_archive(&root, &out),
+        &out,
+        "protocols/eval-gated-change/1.yaml",
+    );
+}
+
+#[test]
+fn a_file_under_protocols_the_manifest_does_not_list_is_refused_naming_its_path() {
+    let (root, out) = scratch_root("unlisted");
+    fs::create_dir_all(root.join("protocols/notes")).expect("mkdir");
+    fs::write(root.join("protocols/notes/draft.txt"), "not listed\n").expect("write");
+    refused_naming(
+        &catalog_archive(&root, &out),
+        &out,
+        "protocols/notes/draft.txt",
+    );
+}
+
+#[test]
+fn the_file_name_carries_the_version_of_the_root_not_of_the_binary() {
+    let (root, out) = scratch_root("version");
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace.package]\nversion = \"9.9.9\"\n",
+    )
+    .expect("write Cargo.toml");
+    let run = catalog_archive(&root, &out);
+    assert!(
+        run.status.success(),
+        "{}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    let name = "engineering-protocols-catalog-9.9.9.tar.gz";
+    let archive = fs::read(out.join(name)).expect("archive named for the root's version");
+    assert_eq!(
+        fs::read_to_string(out.join(format!("{name}.sha256"))).expect("digest file"),
+        format!("{}  {name}\n", sha256_hex(&archive))
+    );
+    assert_eq!(fs::read_dir(&out).expect("list out").count(), 2);
+}
+
+#[test]
+fn a_root_without_a_workspace_version_is_refused_naming_cargo_toml() {
+    let (root, out) = scratch_root("no-version");
+    fs::write(root.join("Cargo.toml"), "[workspace]\nmembers = []\n").expect("write Cargo.toml");
+    refused_naming(&catalog_archive(&root, &out), &out, "Cargo.toml");
+
+    fs::remove_file(root.join("Cargo.toml")).expect("delete Cargo.toml");
+    refused_naming(&catalog_archive(&root, &out), &out, "Cargo.toml");
 }
 
 fn copy_tree(from: &Path, to: &Path) {

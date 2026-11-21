@@ -232,6 +232,7 @@ dependencies = [
  "serde_yaml_ng",
  "sha2",
  "tar",
+ "toml",
 ]
 
 [[package]]
