@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "b10x-protocol-catalog/1",
+  "description": "The manifest of the engineering protocol catalog, protocols/manifest.yaml: every file under protocols/ but the manifest itself, each with the sha256 of its bytes, so a consumer checks a file it took from a tag against the manifest of that tag without compiling anything from this repository. The repository's tests (crates/canon-engineering/tests/catalog_manifest.rs) refuse a manifest that leaves out a file under protocols/, names a file that does not exist, lists a digest, id or revision the file does not have, lists a canon release above the Canon pinned in Cargo.lock, or has a field this schema does not name.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "vocabulary", "protocols"],
+  "properties": {
+    "format": {
+      "description": "The document format, always b10x-protocol-catalog/1.",
+      "const": "b10x-protocol-catalog/1"
+    },
+    "vocabulary": {
+      "description": "The engineering vocabulary, the one catalog file that is not a protocol.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "description": "The vocabulary file relative to the repository root, always protocols/vocabulary.yaml.",
+          "const": "protocols/vocabulary.yaml"
+        },
+        "sha256": {
+          "description": "The SHA-256 of the file's bytes as they are in the repository, in lowercase hexadecimal.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "protocols": {
+      "description": "One entry per protocol file, protocols/<name>/<major>.yaml.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "id", "revision", "sha256", "canon"],
+        "properties": {
+          "path": {
+            "description": "The protocol file relative to the repository root, protocols/<name>/<major>.yaml under the rule crates/canon-engineering/build.rs embeds built-ins by. No path is listed twice.",
+            "type": "string",
+            "pattern": "^protocols/[a-z][a-z0-9-]*/[1-9][0-9]*\\.yaml$"
+          },
+          "id": {
+            "description": "The protocol id Canon parses from the file's protocol.id, such as software.change.",
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "description": "The revision Canon parses from the file's protocol.revision.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "description": "The SHA-256 of the file's bytes as they are in the repository, in lowercase hexadecimal.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "canon": {
+            "description": "The lowest Canon release, MAJOR.MINOR.PATCH, that parses, validates and compiles the file. Canon has no field for it: the value is declared here by hand, from the newest protocol/1 form the file uses. The repository's check only refuses a Canon pinned in Cargo.lock that is lower than this value; a value lower than the release the file really needs is not detected, and a Canon older than that refuses the file with a parse or validation error, not a version message.",
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          }
+        }
+      }
+    }
+  }
+}

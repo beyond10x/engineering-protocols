@@ -307,7 +307,11 @@ fn release(text: &str) -> Option<(u64, u64, u64)> {
         (number.to_string() == part).then_some(number)
     };
     let mut parts = text.split('.');
-    let release = (part(parts.next()?)?, part(parts.next()?)?, part(parts.next()?)?);
+    let release = (
+        part(parts.next()?)?,
+        part(parts.next()?)?,
+        part(parts.next()?)?,
+    );
     parts.next().is_none().then_some(release)
 }
 
@@ -506,7 +510,10 @@ fn a_listed_file_that_does_not_exist_is_a_problem() {
 
     let scratch = Scratch::new();
     fs::remove_file(scratch.path(VOCABULARY)).expect("removing the vocabulary");
-    assert_eq!(scratch.check(), vec![Problem::Missing(VOCABULARY.to_owned())]);
+    assert_eq!(
+        scratch.check(),
+        vec![Problem::Missing(VOCABULARY.to_owned())]
+    );
 }
 
 #[test]
@@ -604,9 +611,9 @@ fn a_pinned_canon_lower_than_a_listed_canon_is_a_problem() {
         })
         .collect();
     assert!(
-        expected
-            .iter()
-            .any(|problem| matches!(problem, Problem::CanonPin { path, .. } if path == STORY_DELIVERY_2)),
+        expected.iter().any(
+            |problem| matches!(problem, Problem::CanonPin { path, .. } if path == STORY_DELIVERY_2)
+        ),
         "{STORY_DELIVERY_2} needs a Canon above 0.1.0"
     );
     let mut expected = expected;
